@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import MyQuizzes from "./pages/MyQuizzes";
 import PrivateRoute from "./components/PrivateRoute";
 import Sidebar from "./components/SideBar";
-import Home from "./pages/Home";
+import Explore from "./pages/Explore";
 import CreateQuiz from "./pages/CreateQuiz";
 import EditQuiz from "./pages/EditQuiz";
 import PlayQuiz from "./pages/PlayQuiz";
@@ -41,7 +41,7 @@ const AppContent: React.FC = () => {
             path="/"
             element={
               <PrivateRoute user={user}>
-                <Home />
+                <Explore />
               </PrivateRoute>
             }
           />
