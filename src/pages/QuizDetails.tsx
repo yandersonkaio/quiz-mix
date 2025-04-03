@@ -1,130 +1,34 @@
-import { useState, useEffect } from "react";
-import { auth, db } from "../db/firebase";
-import { doc, getDoc, collection, onSnapshot, deleteDoc, query, where, getDocs, orderBy } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash, FaPlay } from "react-icons/fa";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
-
-interface Quiz {
-    id: string;
-    name: string;
-    userId: string;
-    createdAt: any;
-    description?: string;
-    settings?: {
-        timeLimitPerQuestion?: number;
-        allowMultipleAttempts?: boolean;
-        showAnswersAfter: "immediately" | "end";
-    };
-}
-
-interface Question {
-    id: string;
-    question: string;
-    type: "multiple-choice" | "true-false" | "fill-in-the-blank";
-}
-
-interface Attempt {
-    userId: string;
-    quizId: string;
-    completedAt: any;
-    correctAnswers: number;
-    displayName: string;
-    photoURL?: string;
-}
+import { useQuizData } from "../hooks/useQuizData";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "../db/firebase";
 
 function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>();
-    const [quiz, setQuiz] = useState<Quiz | null>(null);
-    const [questions, setQuestions] = useState<Question[]>([]);
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [canPlay, setCanPlay] = useState<boolean | null>(null);
-    const [ranking, setRanking] = useState<Attempt[]>([]);
     const navigate = useNavigate();
+    const {
+        quiz,
+        questions,
+        canPlay,
+        ranking,
+        allUserAttempts,
+        loading,
+        fetchRanking,
+        user
+    } = useQuizData();
 
     useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            if (!currentUser) {
-                navigate("/login");
-            }
-        });
+        if (!quizId) {
+            navigate("/login");
+            return;
+        }
 
-        if (!quizId) return;
-
-        const fetchQuizAndCheckAttempts = async () => {
-            try {
-                const quizDoc = await getDoc(doc(db, "quizzes", quizId));
-                if (!quizDoc.exists()) {
-                    console.log("Quiz não encontrado:", quizId);
-                    alert("Quiz não encontrado.");
-                    navigate("/my-quizzes");
-                    return;
-                }
-                const quizData = quizDoc.data();
-                setQuiz({
-                    id: quizDoc.id,
-                    name: quizData.name,
-                    userId: quizData.userId,
-                    createdAt: quizData.createdAt,
-                    description: quizData.description,
-                    settings: {
-                        timeLimitPerQuestion: quizData.settings?.timeLimitPerQuestion || undefined,
-                        allowMultipleAttempts: quizData.settings?.allowMultipleAttempts || false,
-                        showAnswersAfter: quizData.settings?.showAnswersAfter || "end",
-                    },
-                });
-
-                if (user && user.uid !== quizData.userId) {
-                    const attemptsQuery = query(
-                        collection(db, "attempts"),
-                        where("userId", "==", user.uid),
-                        where("quizId", "==", quizId)
-                    );
-                    const attemptsSnapshot = await getDocs(attemptsQuery);
-                    const hasPlayed = !attemptsSnapshot.empty;
-                    setCanPlay(!hasPlayed || quizData.settings?.allowMultipleAttempts || false);
-                } else {
-                    setCanPlay(true);
-                }
-
-                const unsubscribeQuestions = onSnapshot(
-                    collection(db, "quizzes", quizId, "questions"),
-                    (snapshot) => {
-                        const questionsData = snapshot.docs.map((doc) => ({
-                            id: doc.id,
-                            ...doc.data(),
-                        })) as Question[];
-                        console.log("Perguntas carregadas em QuizDetails:", questionsData);
-                        setQuestions(questionsData);
-                        setLoading(false);
-                    }
-                );
-
-                const rankingQuery = query(
-                    collection(db, "attempts"),
-                    where("quizId", "==", quizId),
-                    orderBy("correctAnswers", "desc"),
-                    orderBy("completedAt", "asc")
-                );
-                const rankingSnapshot = await getDocs(rankingQuery);
-                const rankingData = rankingSnapshot.docs.map((doc) => doc.data() as Attempt);
-                console.log("Ranking carregado em QuizDetails:", rankingData);
-                setRanking(rankingData);
-
-                return () => unsubscribeQuestions();
-            } catch (error) {
-                console.error("Erro ao carregar quiz ou ranking:", error);
-                setLoading(false);
-            }
-        };
-
-        if (user) fetchQuizAndCheckAttempts();
-        return () => unsubscribeAuth();
-    }, [quizId, navigate, user]);
+        fetchRanking();
+    }, [quizId, navigate, fetchRanking]);
 
     const handleDeleteQuiz = async () => {
         if (!quiz || !quizId) return;
@@ -151,10 +55,9 @@ function QuizDetails() {
     };
 
     if (loading) return <Loading />;
-    if (!user) return <div className="text-white">Faça login para visualizar os detalhes do quiz.</div>;
     if (!quiz) return <div className="text-white">Quiz não encontrado.</div>;
 
-    const isCreator = user.uid === quiz.userId;
+    const isCreator = quiz.userId === user?.uid;
 
     return (
         <div className="min-h-screen bg-gray-900 p-6 text-white">
@@ -187,7 +90,9 @@ function QuizDetails() {
                                 )}
                                 <li>
                                     Respostas exibidas:{" "}
-                                    {quiz.settings?.showAnswersAfter === "immediately" ? "Logo após cada pergunta" : "No final"}
+                                    {quiz.settings?.showAnswersAfter === "immediately"
+                                        ? "Logo após cada pergunta"
+                                        : "No final"}
                                 </li>
                                 <li>
                                     Tentativas múltiplas: {quiz.settings?.allowMultipleAttempts ? "Permitidas" : "Não permitidas"}
@@ -245,7 +150,11 @@ function QuizDetails() {
                     </div>
                 )}
 
-                <RankingDisplay ranking={ranking} totalQuestions={questions.length} />
+                <RankingDisplay
+                    ranking={ranking}
+                    allUserAttempts={allUserAttempts}
+                    totalQuestions={questions.length}
+                />
             </div>
         </div>
     );

@@ -15,7 +15,7 @@ export interface UserAnswer {
 }
 
 function PlayQuiz() {
-    const { quiz, questions, canPlay, ranking, loading, fetchRanking, saveAttempt } = useQuizData();
+    const { quiz, questions, allUserAttempts, canPlay, ranking, loading, fetchRanking, saveAttempt } = useQuizData();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
     const [showResult, setShowResult] = useState(false);
@@ -118,7 +118,7 @@ function PlayQuiz() {
                             onRestart={handleRestart}
                             onBack={() => navigate("/my-quizzes")}
                         />
-                        <RankingDisplay ranking={ranking} totalQuestions={questions.length} />
+                        <RankingDisplay ranking={ranking} allUserAttempts={allUserAttempts} totalQuestions={questions.length} />
                     </>
                 )}
             </div>
