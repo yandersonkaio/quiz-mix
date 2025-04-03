@@ -1,0 +1,202 @@
+[
+  {
+    "question": "De acordo com a RDC ANVISA nº 34/2014, quais são os principais requisitos para a rastreabilidade dos hemocomponentes em um serviço de hemoterapia?",
+    "options": [
+      "Apenas a identificação do doador e o registro da transfusão.",
+      "Registro detalhado de cada etapa, desde a captação do doador até a transfusão, incluindo processamento, armazenamento e transporte.",
+      "Somente a análise laboratorial dos hemocomponentes antes da distribuição.",
+      "Registro exclusivo do grupo sanguíneo do doador e do receptor."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "No contexto da Garantia de Qualidade aplicada à Indústria Farmacêutica e à Hemoterapia, qual é o principal objetivo da validação de processos?",
+    "options": [
+      "Garantir que um processo seja executado sem falhas humanas.",
+      "Confirmar que um processo realiza consistentemente um produto conforme suas especificações e qualidade requerida.",
+      "Evitar desperdícios na linha de produção, independentemente da conformidade do produto final.",
+      "Certificar que um equipamento pode ser reutilizado sem necessidade de limpeza ou manutenção."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Sobre as Boas Práticas de Fabricação (cGMP) aplicadas à indústria farmacêutica, conforme a RDC ANVISA nº 658/2022, qual é o objetivo principal da implementação dessas normas?",
+    "options": [
+      "Aumentar a velocidade de produção de medicamentos.",
+      "Reduzir os custos operacionais das empresas farmacêuticas.",
+      "Garantir a qualidade, segurança e eficácia dos medicamentos produzidos.",
+      "Facilitar a importação de insumos e matérias-primas."
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "Qual das alternativas abaixo NÃO representa um fator que pode comprometer a qualidade do plasma destinado ao fracionamento industrial?",
+    "options": [
+      "Armazenamento do plasma a temperaturas superiores a -30°C.",
+      "Coleta de plasma de doadores com histórico recente de doenças infecciosas.",
+      "Realização de testes sorológicos e moleculares para triagem de doenças transmissíveis pelo sangue.",
+      "Tempo excessivo entre a coleta do sangue total e a separação do plasma."
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "A RDC ANVISA nº 34/2014 estabelece normas para a triagem clínica de doadores de sangue. Qual dos fatores abaixo NÃO é um critério de inaptidão temporária?",
+    "options": [
+      "Histórico recente de infecção pelo vírus da dengue.",
+      "Realização de tatuagem há menos de 12 meses.",
+      "Uso de antibióticos na semana anterior à doação.",
+      "Idade inferior a 18 anos, independentemente da autorização dos responsáveis."
+    ],
+    "correctAnswer": 3
+  },
+  {
+    "question": "No controle de qualidade de hemocomponentes, a filtração de leucócitos é um processo importante porque:",
+    "options": [
+      "Aumenta o tempo de armazenamento das bolsas de sangue.",
+      "Diminui os riscos de reações transfusionais associadas à presença de leucócitos.",
+      "Elimina completamente a necessidade de testes sorológicos em doadores.",
+      "Reduz a viscosidade do plasma para facilitar o fracionamento."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Em relação à cadeia do frio em Hemoterapia, qual é a temperatura recomendada para armazenamento de concentrados de hemácias?",
+    "options": [
+      "-18°C a -30°C.",
+      "1°C a 6°C.",
+      "15°C a 22°C.",
+      "37°C para evitar a formação de coágulos."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Durante uma auditoria em um serviço de hemoterapia, foram identificados registros inconsistentes na documentação de descarte de bolsas de sangue. Essa situação pode ser classificada como:",
+    "options": [
+      "Desvio crítico, pois compromete a rastreabilidade dos produtos.",
+      "Apenas um erro administrativo sem impacto na qualidade.",
+      "Uma falha no processo de transporte dos hemocomponentes.",
+      "Não representa problema, desde que o descarte tenha sido realizado."
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "question": "Os testes sorológicos e moleculares para triagem de doenças infecciosas em doadores de sangue são essenciais para evitar a transmissão de agentes patogênicos. Qual das doenças abaixo NÃO é obrigatoriamente testada em doadores no Brasil?",
+    "options": [
+      "HIV.",
+      "Doença de Chagas.",
+      "Febre Amarela.",
+      "Hepatite B."
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "A RDC ANVISA nº 34/2014 estabelece que os serviços de hemoterapia devem garantir a rastreabilidade de hemocomponentes. Isso significa que:",
+    "options": [
+      "O serviço deve armazenar amostras de todo o sangue coletado por tempo indeterminado.",
+      "Cada bolsa de sangue deve conter um código de rastreio que permita acompanhar sua trajetória desde a coleta até a transfusão ou descarte.",
+      "Os serviços de hemoterapia devem emitir relatórios diários para a ANVISA sobre o uso de hemocomponentes.",
+      "Apenas o paciente que recebe uma transfusão precisa ter seus dados registrados."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "De acordo com a Portaria de Consolidação nº 5/2017, qual é um dos princípios fundamentais das ações de hemoterapia no Brasil?",
+    "options": [
+      "Privatização dos bancos de sangue para garantir maior eficiência.",
+      "Venda de hemocomponentes para hospitais privados.",
+      "Caráter voluntário, anônimo e não remunerado da doação de sangue.",
+      "Exclusividade do SUS no controle de bancos de sangue."
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "No contexto do planejamento e controle de produção na indústria farmacêutica, qual é a principal vantagem do uso da metodologia Just in Time (JIT)?",
+    "options": [
+      "Aumento dos estoques de segurança para evitar falta de insumos.",
+      "Redução de desperdícios e otimização da produção conforme a demanda.",
+      "Priorização da produção de grandes lotes para diminuir custos.",
+      "Produção em excesso para garantir a oferta contínua de medicamentos."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "A contaminação microbiológica em um laboratório de hemoterapia pode ocorrer por várias razões. Qual dos fatores abaixo é considerado um dos principais responsáveis?",
+    "options": [
+      "Uso excessivo de equipamentos de proteção individual.",
+      "Armazenamento de hemocomponentes em temperaturas muito baixas.",
+      "Manuseio inadequado dos produtos biológicos e falhas nos processos de desinfecção e esterilização.",
+      "Adoção rigorosa das normas de biossegurança nível 3."
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "Qual é o objetivo principal dos testes NAT (Teste de Ácido Nucleico) na triagem de doadores de sangue?",
+    "options": [
+      "Detectar infecções virais com maior sensibilidade e reduzir o período de janela imunológica.",
+      "Substituir completamente os testes sorológicos convencionais.",
+      "Reduzir os custos dos testes laboratoriais nos bancos de sangue.",
+      "Identificar apenas anticorpos contra agentes infecciosos."
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "question": "Qual é a importância da implementação de um Sistema de Gestão da Qualidade (SGQ) em serviços de hemoterapia?",
+    "options": [
+      "Aprimorar a conformidade com normas regulatórias e garantir a segurança transfusional.",
+      "Acelerar os processos de triagem e dispensação de sangue sem comprometer a qualidade.",
+      "Eliminar a necessidade de rastreabilidade de hemocomponentes.",
+      "Reduzir a dependência de auditorias regulatórias."
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "question": "A RDC ANVISA nº 34/2014 estabelece que a qualificação de equipamentos em serviços de hemoterapia deve incluir:",
+    "options": [
+      "Apenas a validação inicial do equipamento após sua instalação.",
+      "Testes periódicos de qualificação para garantir o desempenho dentro dos padrões estabelecidos.",
+      "Uma inspeção visual anual sem necessidade de documentação.",
+      "Somente a qualificação de equipamentos críticos, sem exigência para os demais."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Na gestão de desvios e não conformidades em um serviço de hemoterapia, qual é a ação mais adequada após a identificação de um desvio crítico?",
+    "options": [
+      "Registrar o desvio, analisar a causa raiz e implementar ações corretivas para evitar recorrências.",
+      "Ignorar o problema se não houver impacto imediato para o paciente.",
+      "Repetir o procedimento sem necessidade de revisão dos processos.",
+      "Realizar auditorias apenas se houver exigência da ANVISA."
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "question": "Em relação à produção de hemoderivados, qual é a função principal da crioprecipitação?",
+    "options": [
+      "Separar os glóbulos vermelhos do plasma.",
+      "Concentrar fatores de coagulação como o Fator VIII e o Fibrinogênio.",
+      "Eliminar leucócitos do plasma.",
+      "Realizar a filtração de hemocomponentes para remover resíduos celulares."
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Os serviços de hemoterapia devem seguir rigorosos protocolos de biossegurança. Qual das medidas abaixo NÃO é considerada uma prática essencial para evitar contaminação?",
+    "options": [
+      "Uso de Equipamentos de Proteção Individual (EPIs) adequados.",
+      "Desinfecção de superfícies e equipamentos utilizados no processamento de sangue.",
+      "Manipulação de amostras sem barreiras de proteção para aumentar a eficiência do trabalho.",
+      "Armazenamento adequado e descarte seguro de resíduos biológicos."
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "A RDC ANVISA nº 658/2022 estabelece diretrizes para as Boas Práticas de Fabricação na indústria farmacêutica. Qual das opções abaixo NÃO está entre os princípios dessa regulamentação?",
+    "options": [
+      "Garantia da qualidade desde a aquisição de matérias-primas até a distribuição do produto final.",
+      "Implementação de controles rígidos para evitar contaminação cruzada e desvios de qualidade.",
+      "Registro e rastreabilidade completos de cada lote produzido.",
+      "Eliminação da necessidade de validação de processos para otimizar a produção."
+    ],
+    "correctAnswer": 3
+  }
+]
