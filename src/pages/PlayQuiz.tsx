@@ -21,7 +21,7 @@ function PlayQuiz() {
     const [showResult, setShowResult] = useState(false);
     const navigate = useNavigate();
 
-    const { timeLeft, resetTimer } = useTimer({
+    const { timeLeft, pauseTimer, resetTimer } = useTimer({
         initialTime: quiz?.settings.timeLimitPerQuestion || 0,
         onTimeUp: () => {
             const currentQuestion = questions[currentQuestionIndex];
@@ -53,6 +53,9 @@ function PlayQuiz() {
 
     const handleAnswer = (answer: number | string) => {
         if (!quiz || !canPlay) return;
+        if (quiz.settings.timeLimitPerQuestion) {
+            pauseTimer();
+        }
         const currentQuestion = questions[currentQuestionIndex];
         const isCorrect = checkAnswer(currentQuestion, answer);
         const newAnswer: UserAnswer = { questionId: currentQuestion.id, selectedAnswer: answer, isCorrect };
