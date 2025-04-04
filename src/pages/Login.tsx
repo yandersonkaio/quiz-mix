@@ -1,42 +1,44 @@
-import React, { useEffect, useState } from "react";
-import { auth, googleProvider } from "../db/firebase";
-import { signInWithPopup, User } from "firebase/auth";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect } from 'react';
+import { auth, googleProvider } from '../db/firebase';
+import { signInWithPopup } from 'firebase/auth';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useUserData } from '../hooks/useUserData';
 import Logo from '../assets/logo.svg';
+import Loading from '../components/Loading';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [hasRedirected, setHasRedirected] = useState(false);
+    const { user, loading } = useUserData();
 
-    const from = (location.state as { from?: string })?.from || "/";
-    if (from !== "/") {
-        localStorage.setItem("redirectAfterLogin", from);
+    const from = (location.state as { from?: string })?.from || '/';
+    if (from !== '/') {
+        localStorage.setItem('redirectAfterLogin', from);
     }
-
-    const redirectTo = localStorage.getItem("redirectAfterLogin") || "/";
+    const redirectTo = localStorage.getItem('redirectAfterLogin') || '/';
 
     const handleGoogleLogin = async (): Promise<void> => {
         try {
             await signInWithPopup(auth, googleProvider);
-            localStorage.removeItem("redirectAfterLogin");
-            setHasRedirected(true);
+            localStorage.removeItem('redirectAfterLogin');
             navigate(redirectTo, { replace: true });
         } catch (error) {
-            console.error("Erro ao fazer login:", (error as Error).message);
+            console.error('Erro ao fazer login:', (error as Error).message);
         }
     };
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user: User | null) => {
-            if (user && !hasRedirected) {
-                localStorage.removeItem("redirectAfterLogin");
-                setHasRedirected(true);
-                navigate(redirectTo, { replace: true });
-            }
-        });
-        return () => unsubscribe();
-    }, [navigate, redirectTo, hasRedirected]);
+        if (!loading && user) {
+            localStorage.removeItem('redirectAfterLogin');
+            navigate(redirectTo, { replace: true });
+        }
+    }, [loading, user, navigate, redirectTo]);
+
+    if (loading) {
+        return (
+            <Loading />
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -50,7 +52,8 @@ const Login: React.FC = () => {
                 </p>
                 <button
                     onClick={handleGoogleLogin}
-                    className="flex items-center cursor-pointer justify-center w-full bg-gray-600 hover:bg-gray-500 text-gray-300 text-sm py-3 px-4 rounded-lg transition duration-200"
+                    disabled={loading}
+                    className="flex items-center cursor-pointer justify-center w-full bg-gray-600 hover:bg-gray-500 text-gray-300 text-sm py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50"
                 >
                     <svg
                         className="w-5 h-5 mr-5"

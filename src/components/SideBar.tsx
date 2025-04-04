@@ -1,35 +1,30 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { auth } from '../db/firebase';
-import { User } from 'firebase/auth';
+import { useUserData } from '../hooks/useUserData';
 import {
     FaBars,
     FaTimes,
     FaRegListAlt,
     FaRegUserCircle,
     FaSignOutAlt,
-    FaRegCompass
+    FaRegCompass,
 } from 'react-icons/fa';
-import { IoMdAdd } from "react-icons/io";
+import { IoMdAdd } from 'react-icons/io';
 import Logo from '../assets/logo.svg';
 
 interface SidebarProps {
     isOpen: boolean;
     toggleSidebar: () => void;
-    user: User | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, user }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
+    const { user, logout } = useUserData();
 
-    const handleLogout = async (): Promise<void> => {
-        try {
-            await auth.signOut();
-            navigate("/login");
-            toggleSidebar();
-        } catch (error) {
-            console.error("Erro ao deslogar:", (error as Error).message);
-        }
+    const handleLogoutClick = async () => {
+        await logout();
+        navigate('/login');
+        toggleSidebar();
     };
 
     return (
@@ -99,6 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, user }) => {
                                 <img
                                     src={user.photoURL}
                                     className="w-8 h-8 rounded-full object-cover"
+                                    alt="User avatar"
                                 />
                             ) : (
                                 <FaRegUserCircle className="w-8 h-8 text-gray-400" />
@@ -107,8 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar, user }) => {
                                 <span className="text-sm truncate">{user.displayName}</span>
                                 <span className="text-xs truncate text-gray-400">{user.email}</span>
                             </div>
-
-                            <button onClick={handleLogout} className="focus:outline-none">
+                            <button onClick={handleLogoutClick} className="focus:outline-none">
                                 <FaSignOutAlt className="cursor-pointer w-6 h-6 text-gray-300 hover:text-gray-200" />
                             </button>
                         </div>
