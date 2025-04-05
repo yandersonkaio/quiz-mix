@@ -1,14 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash, FaPlay } from "react-icons/fa";
+import { MdEdit } from "react-icons/md";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
-import { useQuizData } from "../hooks/useQuizData";
+import { Quiz, useQuizData } from "../hooks/useQuizData";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "../db/firebase";
+import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
 
 function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>();
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const navigate = useNavigate();
     const {
         quiz,
@@ -18,8 +21,19 @@ function QuizDetails() {
         allUserAttempts,
         loading,
         fetchRanking,
-        user
+        user,
+        updateQuizDetails,
     } = useQuizData();
+
+    const [quizDetails, setQuizDetails] = useState<Partial<Quiz>>({
+        name: "",
+        description: "",
+        settings: {
+            showAnswersAfter: "end",
+            timeLimitPerQuestion: undefined,
+            allowMultipleAttempts: false,
+        },
+    });
 
     useEffect(() => {
         if (!quizId) {
@@ -29,6 +43,20 @@ function QuizDetails() {
 
         fetchRanking();
     }, [quizId, navigate, fetchRanking]);
+
+    useEffect(() => {
+        if (quiz) {
+            setQuizDetails({
+                name: quiz.name,
+                description: quiz.description || "",
+                settings: {
+                    showAnswersAfter: quiz.settings.showAnswersAfter,
+                    timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
+                    allowMultipleAttempts: quiz.settings.allowMultipleAttempts || true,
+                },
+            });
+        }
+    }, [quiz]);
 
     const handleDeleteQuiz = async () => {
         if (!quiz || !quizId) return;
@@ -54,6 +82,28 @@ function QuizDetails() {
         navigate(`/play-quiz/${quizId}`);
     };
 
+    const handleSaveQuizDetails = async (updatedDetails: Partial<Quiz>) => {
+        try {
+            await updateQuizDetails(updatedDetails);
+            setQuizDetails((prev) => {
+                const newSettings: Quiz["settings"] = {
+                    showAnswersAfter: updatedDetails.settings?.showAnswersAfter ?? prev.settings?.showAnswersAfter ?? "end",
+                    timeLimitPerQuestion: updatedDetails.settings?.timeLimitPerQuestion ?? prev.settings?.timeLimitPerQuestion,
+                    allowMultipleAttempts: updatedDetails.settings?.allowMultipleAttempts ?? prev.settings?.allowMultipleAttempts ?? false,
+                };
+                return {
+                    ...prev,
+                    ...updatedDetails,
+                    settings: newSettings,
+                };
+            });
+            alert("Detalhes do quiz atualizados com sucesso!");
+        } catch (error) {
+            console.error("Erro ao salvar detalhes do quiz:", error);
+            alert("Erro ao salvar detalhes do quiz.");
+        }
+    };
+
     if (loading) return <Loading />;
     if (!quiz) return <div className="text-white">Quiz não encontrado.</div>;
 
@@ -74,9 +124,19 @@ function QuizDetails() {
 
                 <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
                     <div className="space-y-4">
-                        <div>
-                            <h2 className="text-xl font-semibold text-gray-300">Descrição</h2>
-                            <p className="text-gray-400">{quiz.description || "Sem descrição"}</p>
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-300">Descrição</h2>
+                                <p className="text-gray-400">{quiz.description || "Sem descrição"}</p>
+                            </div>
+                            {isCreator && (
+                                <button
+                                    onClick={() => setIsSettingsModalOpen(true)}
+                                    className="text-gray-400 cursor-pointer hover:text-white"
+                                >
+                                    <MdEdit className="w-6 h-6" />
+                                </button>
+                            )}
                         </div>
                         <div>
                             <h2 className="text-xl font-semibold text-gray-300">Detalhes</h2>
@@ -156,6 +216,12 @@ function QuizDetails() {
                     totalQuestions={questions.length}
                 />
             </div>
+            <QuizSettingsModal
+                isOpen={isSettingsModalOpen}
+                onClose={() => setIsSettingsModalOpen(false)}
+                quizDetails={quizDetails}
+                onSave={handleSaveQuizDetails}
+            />
         </div>
     );
 }
