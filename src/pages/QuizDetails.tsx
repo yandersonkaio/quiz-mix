@@ -5,8 +5,6 @@ import { FaEdit, FaTrash, FaPlay } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
 import { Quiz, useQuizData } from "../hooks/useQuizData";
-import { doc, deleteDoc } from "firebase/firestore";
-import { db } from "../db/firebase";
 import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
 
 function QuizDetails() {
@@ -23,6 +21,7 @@ function QuizDetails() {
         fetchRanking,
         user,
         updateQuizDetails,
+        deleteQuiz,
     } = useQuizData();
 
     const [quizDetails, setQuizDetails] = useState<Partial<Quiz>>({
@@ -59,17 +58,10 @@ function QuizDetails() {
     }, [quiz]);
 
     const handleDeleteQuiz = async () => {
-        if (!quiz || !quizId) return;
+        if (!quiz) return;
         if (!confirm(`Tem certeza que deseja excluir o quiz "${quiz.name}"?`)) return;
 
-        try {
-            await deleteDoc(doc(db, "quizzes", quizId));
-            alert("Quiz excluído com sucesso!");
-            navigate("/my-quizzes");
-        } catch (error) {
-            console.error("Erro ao excluir quiz:", error);
-            alert("Erro ao excluir quiz.");
-        }
+        await deleteQuiz();
     };
 
     const handleEditQuiz = () => {

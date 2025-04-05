@@ -1,6 +1,18 @@
 import { useState, useEffect } from "react";
 import { db } from "../db/firebase";
-import { doc, getDoc, collection, onSnapshot, addDoc, query, where, getDocs, orderBy, updateDoc } from "firebase/firestore";
+import {
+    doc,
+    getDoc,
+    collection,
+    onSnapshot,
+    addDoc,
+    query,
+    where,
+    getDocs,
+    orderBy,
+    updateDoc,
+    deleteDoc,
+} from "firebase/firestore";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
@@ -161,7 +173,7 @@ export const useQuizData = () => {
                 description: updatedQuiz.description ?? quiz.description,
                 settings: updatedQuiz.settings ?? quiz.settings,
             });
-            setQuiz((prev) => prev ? { ...prev, ...updatedQuiz } : prev);
+            setQuiz((prev) => (prev ? { ...prev, ...updatedQuiz } : prev));
             return true;
         } catch (error) {
             console.error("Erro ao atualizar detalhes do quiz:", error);
@@ -169,5 +181,32 @@ export const useQuizData = () => {
         }
     };
 
-    return { quiz, questions, canPlay, ranking, allUserAttempts, loading, fetchRanking, saveAttempt, updateQuizDetails, user };
+    const deleteQuiz = async () => {
+        if (!quizId || !quiz) return false;
+
+        try {
+            await deleteDoc(doc(db, "quizzes", quizId));
+            alert("Quiz excluído com sucesso!");
+            navigate("/my-quizzes");
+            return true;
+        } catch (error) {
+            console.error("Erro ao excluir quiz:", error);
+            alert("Erro ao excluir quiz.");
+            throw error;
+        }
+    };
+
+    return {
+        quiz,
+        questions,
+        canPlay,
+        ranking,
+        allUserAttempts,
+        loading,
+        fetchRanking,
+        saveAttempt,
+        updateQuizDetails,
+        deleteQuiz,
+        user,
+    };
 };
