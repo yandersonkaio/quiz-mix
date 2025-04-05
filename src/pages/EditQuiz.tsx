@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { auth, db } from "../db/firebase";
-import { collection, addDoc, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate, useParams } from "react-router-dom";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { useQuizData } from "../hooks/useQuizData";
+import { collection, addDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { db } from "../db/firebase";
 
 interface Question {
     id?: string;
@@ -17,7 +17,8 @@ interface Question {
 
 function EditQuiz() {
     const { quizId } = useParams<{ quizId: string }>();
-    const [questions, setQuestions] = useState<Question[]>([]);
+    const navigate = useNavigate();
+    const { quiz, questions, loading, updateQuizDetails, user } = useQuizData();
     const [newQuestion, setNewQuestion] = useState<Question>({
         type: "multiple-choice",
         question: "",
@@ -25,37 +26,31 @@ function EditQuiz() {
         correctAnswer: 0,
     });
     const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const navigate = useNavigate();
+
+    const [quizDetails, setQuizDetails] = useState({
+        name: "",
+        description: "",
+        settings: {
+            showAnswersAfter: "end" as "immediately" | "end",
+            timeLimitPerQuestion: undefined as number | undefined,
+            allowMultipleAttempts: false,
+        },
+    });
 
     useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-            if (!currentUser) navigate("/login");
-        });
-
-        if (quizId) {
-            const unsubscribeQuestions = onSnapshot(
-                collection(db, "quizzes", quizId, "questions"),
-                (snapshot) => {
-                    const fetchedQuestions = snapshot.docs.map((doc) => ({
-                        id: doc.id,
-                        ...doc.data(),
-                    })) as Question[];
-                    setQuestions(fetchedQuestions);
+        if (quiz) {
+            console.log("EditQuiz: Sincronizando quizDetails com quiz =", quiz);
+            setQuizDetails({
+                name: quiz.name,
+                description: quiz.description || "",
+                settings: {
+                    showAnswersAfter: quiz.settings.showAnswersAfter,
+                    timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
+                    allowMultipleAttempts: quiz.settings.allowMultipleAttempts || false,
                 },
-                (error) => {
-                    console.error("Erro ao carregar perguntas:", error);
-                    alert("Erro ao carregar perguntas.");
-                }
-            );
-            return () => unsubscribeQuestions();
+            });
         }
-
-        return () => unsubscribeAuth();
-    }, [navigate, quizId]);
+    }, [quiz]);
 
     const handleSaveQuestion = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,6 +90,17 @@ function EditQuiz() {
         }
     };
 
+    const handleSaveQuizDetails = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await updateQuizDetails(quizDetails);
+            alert("Detalhes do quiz atualizados com sucesso!");
+        } catch (error) {
+            console.error("Erro ao salvar detalhes do quiz:", error);
+            alert("Erro ao salvar detalhes do quiz.");
+        }
+    };
+
     const handleRemoveQuestion = async (questionId: string) => {
         if (!quizId || !questionId) return;
 
@@ -125,6 +131,7 @@ function EditQuiz() {
 
     if (loading) return <Loading />;
     if (!user) return <div className="text-white">Faça login para editar o quiz.</div>;
+    if (!quiz) return <div className="text-white">Quiz não encontrado.</div>;
 
     return (
         <div className="min-h-screen bg-gray-900 p-6 text-white">
@@ -133,13 +140,98 @@ function EditQuiz() {
                     <h1 className="text-3xl font-bold">Editar Quiz</h1>
                     <div className="space-x-4">
                         <button
-                            onClick={() => alert("Quiz publicado!")}
-                            className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700"
+                            onClick={() => navigate(`/quiz/details/${quizId}`)}
+                            className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
                         >
-                            Publicar
+                            Voltar
                         </button>
                     </div>
                 </div>
+
+                <form onSubmit={handleSaveQuizDetails} className="mb-8 bg-gray-800 p-6 rounded-lg space-y-6">
+                    <h2 className="text-xl font-semibold">Detalhes do Quiz</h2>
+                    <div>
+                        <label className="block text-gray-300 mb-1">Nome do Quiz</label>
+                        <input
+                            type="text"
+                            value={quizDetails.name}
+                            onChange={(e) => setQuizDetails({ ...quizDetails, name: e.target.value })}
+                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            placeholder="Digite o nome do quiz"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-gray-300 mb-1">Descrição</label>
+                        <textarea
+                            value={quizDetails.description}
+                            onChange={(e) => setQuizDetails({ ...quizDetails, description: e.target.value })}
+                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            placeholder="Digite a descrição do quiz"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-gray-300 mb-1">Exibir Respostas</label>
+                        <select
+                            value={quizDetails.settings.showAnswersAfter}
+                            onChange={(e) =>
+                                setQuizDetails({
+                                    ...quizDetails,
+                                    settings: {
+                                        ...quizDetails.settings,
+                                        showAnswersAfter: e.target.value as "immediately" | "end",
+                                    },
+                                })
+                            }
+                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                        >
+                            <option value="immediately">Logo após cada pergunta</option>
+                            <option value="end">No final</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-gray-300 mb-1">Tempo por Pergunta (segundos)</label>
+                        <input
+                            type="number"
+                            value={quizDetails.settings.timeLimitPerQuestion || ""}
+                            onChange={(e) =>
+                                setQuizDetails({
+                                    ...quizDetails,
+                                    settings: {
+                                        ...quizDetails.settings,
+                                        timeLimitPerQuestion: e.target.value ? Number(e.target.value) : undefined,
+                                    },
+                                })
+                            }
+                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            placeholder="Deixe em branco para sem limite"
+                            min="1"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-gray-300 mb-1">Permitir Múltiplas Tentativas</label>
+                        <input
+                            type="checkbox"
+                            checked={quizDetails.settings.allowMultipleAttempts}
+                            onChange={(e) =>
+                                setQuizDetails({
+                                    ...quizDetails,
+                                    settings: {
+                                        ...quizDetails.settings,
+                                        allowMultipleAttempts: e.target.checked,
+                                    },
+                                })
+                            }
+                            className="h-5 w-5 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="w-full py-3 bg-blue-600 rounded-lg hover:bg-blue-700"
+                    >
+                        Salvar Detalhes
+                    </button>
+                </form>
 
                 <div className="mb-8">
                     <h2 className="text-2xl font-semibold mb-4">Perguntas ({questions.length})</h2>

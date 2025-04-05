@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../db/firebase";
-import { doc, getDoc, collection, onSnapshot, addDoc, query, where, getDocs, orderBy } from "firebase/firestore";
+import { doc, getDoc, collection, onSnapshot, addDoc, query, where, getDocs, orderBy, updateDoc } from "firebase/firestore";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
@@ -57,6 +57,7 @@ export const useQuizData = () => {
         const fetchQuizAndCheckAttempts = async () => {
             try {
                 const quizDoc = await getDoc(doc(db, "quizzes", quizId));
+
                 if (!quizDoc.exists()) {
                     alert("Quiz não encontrado.");
                     navigate("/my-quizzes");
@@ -87,11 +88,14 @@ export const useQuizData = () => {
                     })) as Question[];
                     setQuestions(fetchedQuestions);
                     setLoading(false);
+                }, (error) => {
+                    console.error("useQuizData: Erro ao carregar perguntas:", error);
+                    setLoading(false);
                 });
 
                 return () => unsubscribe();
             } catch (error) {
-                console.error("Erro ao carregar quiz:", error);
+                console.error("useQuizData: Erro ao carregar quiz:", error);
                 alert("Erro ao carregar quiz.");
                 setLoading(false);
             }
@@ -148,5 +152,22 @@ export const useQuizData = () => {
         fetchRanking();
     };
 
-    return { quiz, questions, canPlay, ranking, allUserAttempts, loading, fetchRanking, saveAttempt, user };
+    const updateQuizDetails = async (updatedQuiz: Partial<Quiz>) => {
+        if (!quizId || !quiz) return;
+
+        try {
+            await updateDoc(doc(db, "quizzes", quizId), {
+                name: updatedQuiz.name ?? quiz.name,
+                description: updatedQuiz.description ?? quiz.description,
+                settings: updatedQuiz.settings ?? quiz.settings,
+            });
+            setQuiz((prev) => prev ? { ...prev, ...updatedQuiz } : prev);
+            return true;
+        } catch (error) {
+            console.error("Erro ao atualizar detalhes do quiz:", error);
+            throw error;
+        }
+    };
+
+    return { quiz, questions, canPlay, ranking, allUserAttempts, loading, fetchRanking, saveAttempt, updateQuizDetails, user };
 };
