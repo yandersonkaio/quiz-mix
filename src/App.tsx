@@ -7,7 +7,6 @@ import PrivateRoute from "./components/PrivateRoute";
 import Sidebar from "./components/SideBar";
 import Explore from "./pages/Explore";
 import CreateQuiz from "./pages/CreateQuiz";
-import EditQuiz from "./pages/EditQuiz";
 import PlayQuiz from "./pages/PlayQuiz";
 import QuizDetails from "./pages/QuizDetails";
 import Loading from "./components/Loading";
@@ -30,7 +29,6 @@ const AppContent: React.FC = () => {
         <Sidebar
           isOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}
-          user={user}
         />
       )}
       <main
@@ -59,14 +57,6 @@ const AppContent: React.FC = () => {
             element={
               <PrivateRoute user={user}>
                 <CreateQuiz />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/quiz/edit/:quizId"
-            element={
-              <PrivateRoute user={user}>
-                <EditQuiz />
               </PrivateRoute>
             }
           />

@@ -2,19 +2,28 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash, FaPlay } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
-import { Quiz, useQuizData } from "../hooks/useQuizData";
+import { Quiz, Question, useQuizData } from "../hooks/useQuizData";
 import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
+import QuestionModal from "../components/quiz/QuestionModal";
+import { IoMdAdd } from "react-icons/io";
 
 function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>();
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentQuestion, setCurrentQuestion] = useState<Question>({
+        id: "",
+        type: "multiple-choice",
+        question: "",
+        options: ["", "", "", ""],
+        correctAnswer: 0,
+    });
+    const [isEditing, setIsEditing] = useState(false);
     const {
         quiz,
         questions,
-        canPlay,
         ranking,
         allUserAttempts,
         loading,
@@ -22,6 +31,10 @@ function QuizDetails() {
         user,
         updateQuizDetails,
         deleteQuiz,
+        addQuestion,
+        operationLoading,
+        updateQuestion,
+        deleteQuestion
     } = useQuizData();
 
     const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
@@ -66,9 +79,57 @@ function QuizDetails() {
         await deleteQuiz();
     };
 
-    const handleEditQuiz = () => {
-        if (!quizId) return;
-        navigate(`/quiz/edit/${quizId}`);
+    const handleSaveQuestion = async (question: Question) => {
+        const questionData: Omit<Question, "id"> = {
+            type: question.type,
+            question: question.question,
+        };
+
+        if (question.type === "multiple-choice") {
+            questionData.options = question.options;
+            questionData.correctAnswer = question.correctAnswer;
+        } else if (question.type === "true-false") {
+            questionData.correctAnswer = question.correctAnswer;
+        } else if (question.type === "fill-in-the-blank") {
+            questionData.blankAnswer = question.blankAnswer;
+        }
+
+        try {
+            if (isEditing && question.id) {
+                await updateQuestion(question.id, questionData);
+            } else {
+                await addQuestion(questionData);
+            }
+        } catch (error) {
+            console.error("Erro ao processar questão:", error);
+        }
+    };
+
+    const handleRemoveQuestion = async (questionId: string) => {
+        if (operationLoading) return;
+        try {
+            await deleteQuestion(questionId);
+        } catch (error) {
+            console.error("Erro ao remover questão:", error);
+        }
+    };
+
+    const openModalForEdit = (question: Question) => {
+        setCurrentQuestion({ ...question });
+        setIsEditing(true);
+        setIsModalOpen(true);
+    };
+
+    const openModalForAdd = () => {
+        setCurrentQuestion({
+            id: "",
+            type: "multiple-choice",
+            question: "",
+            options: ["", "", "", ""],
+            correctAnswer: 0,
+        });
+        setIsEditing(false);
+        setIsModalOpen(true);
     };
 
     const handlePlayQuiz = () => {
@@ -123,14 +184,6 @@ function QuizDetails() {
                                 <h2 className="text-xl font-semibold text-gray-300">Descrição</h2>
                                 <p className="text-gray-400">{quiz.description || "Sem descrição"}</p>
                             </div>
-                            {isCreator && (
-                                <button
-                                    onClick={() => setIsSettingsModalOpen(true)}
-                                    className="text-gray-400 cursor-pointer hover:text-white"
-                                >
-                                    <MdEdit className="w-6 h-6" />
-                                </button>
-                            )}
                         </div>
                         <div>
                             <h2 className="text-xl font-semibold text-gray-300">Detalhes</h2>
@@ -158,18 +211,16 @@ function QuizDetails() {
                     </div>
 
                     <div className="mt-8 flex space-x-4">
-                        {canPlay && (
-                            <button
-                                onClick={handlePlayQuiz}
-                                className="flex items-center px-4 py-2 cursor-pointer bg-green-600 rounded-lg hover:bg-green-500"
-                            >
-                                <FaPlay className="mr-2" /> Jogar
-                            </button>
-                        )}
+                        <button
+                            onClick={handlePlayQuiz}
+                            className="flex items-center px-4 py-2 cursor-pointer bg-green-600 rounded-lg hover:bg-green-500"
+                        >
+                            <FaPlay className="mr-2" /> Jogar
+                        </button>
                         {isCreator && (
                             <>
                                 <button
-                                    onClick={handleEditQuiz}
+                                    onClick={() => setIsSettingsModalOpen(true)}
                                     className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-500"
                                 >
                                     <FaEdit className="mr-2" /> Editar
@@ -185,24 +236,54 @@ function QuizDetails() {
                     </div>
                 </div>
 
-                {isCreator && questions.length > 0 && (
+                {isCreator && (
                     <div className="mt-8">
-                        <h2 className="text-xl font-semibold mb-4">Perguntas ({questions.length})</h2>
-                        <div className="space-y-4">
-                            {questions.map((question) => (
-                                <div key={question.id} className="bg-gray-700 p-4 rounded-lg">
-                                    <p className="text-gray-300">{question.question}</p>
-                                    <p className="text-gray-500 text-sm">
-                                        Tipo:{" "}
-                                        {question.type === "multiple-choice"
-                                            ? "Múltipla Escolha"
-                                            : question.type === "true-false"
-                                                ? "Verdadeiro/Falso"
-                                                : "Preenchimento"}
-                                    </p>
-                                </div>
-                            ))}
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">Perguntas ({questions.length})</h2>
+                            <button
+                                onClick={openModalForAdd}
+                                className="flex items-center p-3 cursor-pointer bg-green-600 rounded-lg hover:bg-green-700"
+                            >
+                                <IoMdAdd className="w-6 h-6" />
+                            </button>
                         </div>
+                        {questions.length === 0 ? (
+                            <p className="text-gray-400">Nenhuma pergunta adicionada ainda.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {questions.map((question) => (
+                                    <div key={question.id} className="bg-gray-800 p-4 flex justify-between items-center rounded-lg">
+                                        <div>
+                                            <p className="text-gray-300">{question.question}</p>
+                                            <p className="text-gray-500 text-sm">
+                                                Tipo:{" "}
+                                                {question.type === "multiple-choice"
+                                                    ? "Múltipla Escolha"
+                                                    : question.type === "true-false"
+                                                        ? "Verdadeiro/Falso"
+                                                        : "Preenchimento"}
+                                            </p>
+                                        </div>
+                                        <div className="space-x-2 flex flex-row">
+                                            <button
+                                                onClick={() => openModalForEdit(question)}
+                                                className="flex items-center h-10 w-10 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-500 justify-center"
+                                                disabled={operationLoading}
+                                            >
+                                                <FaEdit />
+                                            </button>
+                                            <button
+                                                onClick={() => question.id && handleRemoveQuestion(question.id)}
+                                                className="flex items-center h-10 w-10 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-500 justify-center"
+                                                disabled={operationLoading}
+                                            >
+                                                {operationLoading ? "..." : <FaTrash />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
                 {!isUntilCorrectMode && (
@@ -218,6 +299,13 @@ function QuizDetails() {
                 onClose={() => setIsSettingsModalOpen(false)}
                 quizDetails={quizDetails}
                 onSave={handleSaveQuizDetails}
+            />
+            <QuestionModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                question={currentQuestion}
+                onSave={handleSaveQuestion}
+                isEditing={isEditing}
             />
         </div>
     );
