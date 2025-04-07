@@ -1,55 +1,34 @@
 import { useState, useEffect } from "react";
-import { db } from "../db/firebase";
-import { collection, query, onSnapshot } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import Loading from "../components/Loading";
-
-interface Quiz {
-    id: string;
-    name: string;
-    userId: string;
-    createdAt: any;
-    description?: string;
-    settings?: {
-        timeLimitPerQuestion?: number;
-        allowMultipleAttempts?: boolean;
-        showAnswersAfter: "immediately" | "end" | "untilCorrect";
-    };
-}
+import { useAllQuizzes, Quiz } from "../hooks/useAllQuizzes";
 
 function Explore() {
-    const [allQuizzes, setAllQuizzes] = useState<Quiz[]>([]);
+    const { allQuizzes, loading, error } = useAllQuizzes();
     const [filteredQuizzes, setFilteredQuizzes] = useState<Quiz[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>("");
-    const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        const quizzesQuery = query(collection(db, "quizzes"));
-        const unsubscribe = onSnapshot(quizzesQuery, (snapshot) => {
-            const quizzesData = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Quiz[];
-            setAllQuizzes(quizzesData);
-            setFilteredQuizzes(quizzesData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Erro ao carregar quizzes:", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        const filtered = allQuizzes.filter((quiz) =>
-            quiz.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            quiz.description?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredQuizzes(filtered);
+        if (allQuizzes) {
+            const filtered = allQuizzes.filter((quiz) =>
+                quiz.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                quiz.description?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            setFilteredQuizzes(filtered);
+        } else {
+            setFilteredQuizzes([]);
+        }
     }, [searchTerm, allQuizzes]);
 
     if (loading) return <Loading />;
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-900 p-6 text-white flex items-center justify-center">
+                <p className="text-red-500">Erro ao carregar quizzes: {error.message}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-900 p-6 text-white">
@@ -69,7 +48,12 @@ function Explore() {
                 {filteredQuizzes.length === 0 ? (
                     <div className="text-center py-20">
                         <p className="text-gray-400 text-lg">
-                            {searchTerm ? "Nenhum quiz encontrado." : "Nenhum quiz criado ainda."}
+                            {searchTerm
+                                ? "Nenhum quiz encontrado com esse termo."
+                                : (allQuizzes && allQuizzes.length > 0)
+                                    ? "Nenhum quiz corresponde à busca."
+                                    : "Ainda não há quizzes para explorar."
+                            }
                         </p>
                     </div>
                 ) : (
@@ -84,10 +68,12 @@ function Explore() {
                                 <p className="text-gray-400 text-sm mb-3 line-clamp-2">
                                     {quiz.description || "Sem descrição"}
                                 </p>
-                                <div className="space-y-2 text-gray-500 text-xs">
-                                    <p>Criado em: {new Date(quiz.createdAt.toDate()).toLocaleDateString()}</p>
+                                <div className="space-y-1 text-gray-500 text-xs">
+                                    {quiz.createdAt?.toDate && (
+                                        <p>Criado em: {new Date(quiz.createdAt.toDate()).toLocaleDateString()}</p>
+                                    )}
                                     {quiz.settings?.timeLimitPerQuestion && (
-                                        <p>Tempo por pergunta: {quiz.settings.timeLimitPerQuestion}s</p>
+                                        <p>Tempo/pergunta: {quiz.settings.timeLimitPerQuestion}s</p>
                                     )}
                                     <p>
                                         Respostas: {quiz.settings?.showAnswersAfter === "immediately"

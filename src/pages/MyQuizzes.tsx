@@ -1,61 +1,35 @@
-import { useState, useEffect } from "react";
-import { auth, db } from "../db/firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
-import { Link, useNavigate } from "react-router-dom";
-import Loading from "../components/Loading";
-import { IoMdAdd } from "react-icons/io";
-
-interface Quiz {
-    id: string;
-    name: string;
-    userId: string;
-    createdAt: any;
-    description?: string;
-    settings?: {
-        timeLimitPerQuestion?: number;
-        allowMultipleAttempts?: boolean;
-        showAnswersAfter: "immediately" | "end" | "untilCorrect";
-    };
-}
+import { Link } from 'react-router-dom';
+import { useUserQuizzes } from '../hooks/useUserQuizzes';
+import Loading from '../components/Loading';
+import { IoMdAdd } from 'react-icons/io';
 
 function MyQuizzes() {
-    const [userQuizzes, setUserQuizzes] = useState<Quiz[]>([]);
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const navigate = useNavigate();
+    const { userQuizzes, loading, error, user } = useUserQuizzes();
 
-    useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            if (!currentUser) {
-                setLoading(false);
-                navigate("/login");
-            }
-        });
+    if (loading) {
+        return <Loading />;
+    }
 
-        if (user) {
-            const quizzesQuery = query(collection(db, "quizzes"), where("userId", "==", user.uid));
-            const unsubscribeQuizzes = onSnapshot(quizzesQuery, (snapshot) => {
-                const quizzesData = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })) as Quiz[];
-                setUserQuizzes(quizzesData);
-                setLoading(false);
-            }, (error) => {
-                console.error("Erro ao carregar quizzes:", error);
-                setLoading(false);
-            });
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-900 p-6 text-white flex items-center justify-center">
+                <p className="text-red-500">Erro ao carregar seus quizzes: {error.message}</p>
+            </div>
+        );
+    }
 
-            return () => unsubscribeQuizzes();
-        }
-
-        return () => unsubscribeAuth();
-    }, [navigate, user]);
-
-    if (loading) return <Loading />;
-    if (!user) return <div className="text-white">Faça login para visualizar os quizzes.</div>;
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-gray-900 p-6 text-white flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-lg mb-4">Faça login para visualizar seus quizzes.</p>
+                    <Link to="/login" className="px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">
+                        Entrar
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-900 p-6 text-white">
@@ -93,13 +67,16 @@ function MyQuizzes() {
                                 <p className="text-gray-400 text-sm mb-3 line-clamp-2">
                                     {quiz.description || "Sem descrição"}
                                 </p>
-                                <div className="space-y-2 text-gray-500 text-xs">
-                                    <p>Criado em: {new Date(quiz.createdAt.toDate()).toLocaleDateString()}</p>
+                                <div className="space-y-1 text-gray-500 text-xs">
+                                    {quiz.createdAt?.toDate && (
+                                        <p>Criado em: {new Date(quiz.createdAt.toDate()).toLocaleDateString()}</p>
+                                    )}
                                     {quiz.settings?.timeLimitPerQuestion && (
-                                        <p>Tempo por pergunta: {quiz.settings.timeLimitPerQuestion}s</p>
+                                        <p>Tempo/pergunta: {quiz.settings.timeLimitPerQuestion}s</p>
                                     )}
                                     <p>
-                                        Respostas: {quiz.settings?.showAnswersAfter === "immediately"
+                                        Respostas:{" "}
+                                        {quiz.settings?.showAnswersAfter === "immediately"
                                             ? "Imediato"
                                             : quiz.settings?.showAnswersAfter === "untilCorrect"
                                                 ? "Após acertar"
