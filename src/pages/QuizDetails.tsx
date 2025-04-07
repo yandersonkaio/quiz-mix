@@ -24,6 +24,8 @@ function QuizDetails() {
         deleteQuiz,
     } = useQuizData();
 
+    const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
+
     const [quizDetails, setQuizDetails] = useState<Partial<Quiz>>({
         name: "",
         description: "",
@@ -143,8 +145,10 @@ function QuizDetails() {
                                 <li>
                                     Respostas exibidas:{" "}
                                     {quiz.settings?.showAnswersAfter === "immediately"
-                                        ? "Logo após cada pergunta"
-                                        : "No final"}
+                                        ? "Imediato"
+                                        : quiz.settings?.showAnswersAfter === "untilCorrect"
+                                            ? "Após acertar"
+                                            : "No final"}
                                 </li>
                                 <li>
                                     Tentativas múltiplas: {quiz.settings?.allowMultipleAttempts ? "Permitidas" : "Não permitidas"}
@@ -201,12 +205,13 @@ function QuizDetails() {
                         </div>
                     </div>
                 )}
-
-                <RankingDisplay
-                    ranking={ranking}
-                    allUserAttempts={allUserAttempts}
-                    totalQuestions={questions.length}
-                />
+                {!isUntilCorrectMode && (
+                    <RankingDisplay
+                        ranking={ranking}
+                        allUserAttempts={allUserAttempts}
+                        totalQuestions={questions.length}
+                    />
+                )}
             </div>
             <QuizSettingsModal
                 isOpen={isSettingsModalOpen}

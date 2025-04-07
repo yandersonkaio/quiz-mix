@@ -9,7 +9,7 @@ interface ResultsDisplayProps {
     onBack: () => void;
 }
 
-export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack }: ResultsDisplayProps) => {
+export const ResultsDisplay = ({ questions, userAnswers, onRestart, onBack }: ResultsDisplayProps) => {
     const getAnswerText = (question: Question, answer: number | string) => {
         if (answer === -1) return "Tempo esgotado";
         if (question.type === "multiple-choice" && question.options) return question.options[Number(answer)];
@@ -53,11 +53,9 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                     );
                 })}
             </div>
-            {quiz.settings.allowMultipleAttempts && (
-                <button onClick={onRestart} className="mt-6 px-6 py-3 mr-1 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-700">
-                    Jogar Novamente
-                </button>
-            )}
+            <button onClick={onRestart} className="mt-6 px-6 py-3 mr-1 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-700">
+                Jogar Novamente
+            </button>
             <button onClick={onBack} className="mt-4 px-6 py-3 cursor-pointer bg-gray-600 rounded-lg hover:bg-gray-700">
                 Voltar
             </button>

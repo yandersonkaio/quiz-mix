@@ -33,7 +33,7 @@ export interface Quiz {
     userId: string;
     createdAt: any;
     settings: {
-        showAnswersAfter: "immediately" | "end";
+        showAnswersAfter: "immediately" | "end" | "untilCorrect";
         timeLimitPerQuestion?: number;
         allowMultipleAttempts?: boolean;
     };
@@ -168,18 +168,31 @@ export const useQuizData = () => {
         if (!quizId || !quiz) return;
 
         try {
-            await updateDoc(doc(db, "quizzes", quizId), {
+            const cleanedSettings: any = {
+                ...quiz.settings,
+                ...updatedQuiz.settings,
+            };
+
+            if (cleanedSettings.timeLimitPerQuestion === undefined) {
+                delete cleanedSettings.timeLimitPerQuestion;
+            }
+
+            const updatedData = {
                 name: updatedQuiz.name ?? quiz.name,
                 description: updatedQuiz.description ?? quiz.description,
-                settings: updatedQuiz.settings ?? quiz.settings,
-            });
-            setQuiz((prev) => (prev ? { ...prev, ...updatedQuiz } : prev));
+                settings: cleanedSettings,
+            };
+
+            await updateDoc(doc(db, "quizzes", quizId), updatedData);
+
+            setQuiz((prev) => (prev ? { ...prev, ...updatedQuiz, settings: cleanedSettings } : prev));
             return true;
         } catch (error) {
             console.error("Erro ao atualizar detalhes do quiz:", error);
             throw error;
         }
     };
+
 
     const deleteQuiz = async () => {
         if (!quizId || !quiz) return false;

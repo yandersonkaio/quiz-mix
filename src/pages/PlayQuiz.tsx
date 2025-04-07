@@ -19,24 +19,29 @@ function PlayQuiz() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
     const [showResult, setShowResult] = useState(false);
+    const [currentAttempt, setCurrentAttempt] = useState<(number | string)[]>([]);
     const navigate = useNavigate();
+
+    const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
 
     const { timeLeft, pauseTimer, resetTimer } = useTimer({
         initialTime: quiz?.settings.timeLimitPerQuestion || 0,
         onTimeUp: () => {
-            const currentQuestion = questions[currentQuestionIndex];
-            setUserAnswers([...userAnswers, { questionId: currentQuestion.id, selectedAnswer: -1, isCorrect: false }]);
-            alert("Tempo esgotado!");
-            goToNextQuestion();
+            if (!isUntilCorrectMode) {
+                const currentQuestion = questions[currentQuestionIndex];
+                setUserAnswers([...userAnswers, { questionId: currentQuestion.id, selectedAnswer: -1, isCorrect: false }]);
+                alert("Tempo esgotado!");
+                goToNextQuestion();
+            }
         },
-        isActive: !!quiz?.settings.timeLimitPerQuestion && !showResult && (canPlay ?? false),
+        isActive: !!quiz?.settings.timeLimitPerQuestion && !isUntilCorrectMode && !showResult && (canPlay ?? false),
     });
 
     useEffect(() => {
-        if (quiz?.settings.timeLimitPerQuestion && canPlay && !showResult) {
+        if (quiz?.settings.timeLimitPerQuestion && canPlay && !showResult && !isUntilCorrectMode) {
             resetTimer();
         }
-    }, [quiz, canPlay, showResult, currentQuestionIndex, resetTimer]);
+    }, [quiz, canPlay, showResult, currentQuestionIndex, resetTimer, isUntilCorrectMode]);
 
     useEffect(() => {
         if (showResult) fetchRanking();
@@ -53,31 +58,43 @@ function PlayQuiz() {
 
     const handleAnswer = (answer: number | string) => {
         if (!quiz || !canPlay) return;
-        if (quiz.settings.timeLimitPerQuestion) {
-            pauseTimer();
-        }
+
         const currentQuestion = questions[currentQuestionIndex];
         const isCorrect = checkAnswer(currentQuestion, answer);
-        const newAnswer: UserAnswer = { questionId: currentQuestion.id, selectedAnswer: answer, isCorrect };
-        const updatedAnswers = [...userAnswers, newAnswer];
-        setUserAnswers(updatedAnswers);
 
-        if (quiz.settings.showAnswersAfter !== "immediately") {
-            goToNextQuestion();
-        }
+        if (isUntilCorrectMode) {
+            setCurrentAttempt([...currentAttempt, answer]);
+            if (isCorrect) {
+                const newAnswer: UserAnswer = { questionId: currentQuestion.id, selectedAnswer: answer, isCorrect };
+                setUserAnswers([...userAnswers, newAnswer]);
+            }
+        } else {
+            if (quiz.settings.timeLimitPerQuestion) {
+                pauseTimer();
+            }
+            const newAnswer: UserAnswer = { questionId: currentQuestion.id, selectedAnswer: answer, isCorrect };
+            const updatedAnswers = [...userAnswers, newAnswer];
+            setUserAnswers(updatedAnswers);
 
-        if (currentQuestionIndex + 1 === questions.length) {
-            const correctCount = updatedAnswers.filter((ans) => ans.isCorrect).length;
-            saveAttempt(correctCount).then(() => setShowResult(true));
+            if (quiz.settings.showAnswersAfter !== "immediately") {
+                goToNextQuestion();
+            }
+
+            if (currentQuestionIndex + 1 === questions.length) {
+                const correctCount = updatedAnswers.filter((ans) => ans.isCorrect).length;
+                saveAttempt(correctCount).then(() => setShowResult(true));
+            }
         }
     };
 
     const goToNextQuestion = () => {
         if (currentQuestionIndex + 1 < questions.length) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
-            resetTimer();
+            setCurrentAttempt([]);
+            if (!isUntilCorrectMode) resetTimer();
         } else {
-            setShowResult(true);
+            const correctCount = userAnswers.filter((ans) => ans.isCorrect).length;
+            saveAttempt(correctCount).then(() => setShowResult(true));
         }
     };
 
@@ -85,8 +102,9 @@ function PlayQuiz() {
         if (!canPlay) return;
         setCurrentQuestionIndex(0);
         setUserAnswers([]);
+        setCurrentAttempt([]);
         setShowResult(false);
-        resetTimer();
+        if (!isUntilCorrectMode) resetTimer();
     };
 
     if (loading) return <Loading />;
@@ -103,13 +121,14 @@ function PlayQuiz() {
                             quiz={quiz}
                             currentQuestionIndex={currentQuestionIndex}
                             totalQuestions={questions.length}
-                            timeLeft={timeLeft}
+                            timeLeft={isUntilCorrectMode ? null : timeLeft}
                         />
                         <QuestionDisplay
                             question={questions[currentQuestionIndex]}
                             onAnswer={handleAnswer}
                             showAnswersAfter={quiz.settings.showAnswersAfter}
                             onNext={goToNextQuestion}
+                            currentAttempt={isUntilCorrectMode ? currentAttempt : undefined}
                         />
                     </>
                 ) : (
@@ -121,7 +140,10 @@ function PlayQuiz() {
                             onRestart={handleRestart}
                             onBack={() => navigate("/my-quizzes")}
                         />
-                        <RankingDisplay ranking={ranking} allUserAttempts={allUserAttempts} totalQuestions={questions.length} />
+                        {!isUntilCorrectMode && (
+                            <RankingDisplay ranking={ranking} allUserAttempts={allUserAttempts} totalQuestions={questions.length} />
+
+                        )}
                     </>
                 )}
             </div>

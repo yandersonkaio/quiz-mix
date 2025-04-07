@@ -12,7 +12,7 @@ export const QuizHeader = ({ quiz, currentQuestionIndex, totalQuestions, timeLef
     const timeProgress =
         quiz.settings.timeLimitPerQuestion && timeLeft !== null
             ? (timeLeft / quiz.settings.timeLimitPerQuestion) * 100
-            : 0;
+            : null; // Alterado para null em vez de 0
 
     return (
         <div className="mb-6">
@@ -26,14 +26,14 @@ export const QuizHeader = ({ quiz, currentQuestionIndex, totalQuestions, timeLef
                     <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${progress}%` }} />
                 </div>
             </div>
-            {quiz.settings.timeLimitPerQuestion && (
+            {quiz.settings.timeLimitPerQuestion && timeLeft !== null && (
                 <div className="mt-4">
                     <p className="text-sm text-gray-400 mb-1">
                         Tempo restante: {timeLeft !== null ? `${timeLeft}s` : "Carregando..."}
                     </p>
                     <div className="w-full bg-gray-700 rounded-full h-2">
                         <div
-                            className={`h-2 rounded-full ${timeLeft !== null && timeLeft <= 5 ? "bg-red-500" : "bg-green-500"}`}
+                            className={`h-2 rounded-full ${timeLeft <= 5 ? "bg-red-500" : "bg-green-500"}`}
                             style={{ width: `${timeProgress}%` }}
                         />
                     </div>

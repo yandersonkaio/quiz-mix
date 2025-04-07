@@ -15,7 +15,7 @@ interface Quiz {
     settings?: {
         timeLimitPerQuestion?: number;
         allowMultipleAttempts?: boolean;
-        showAnswersAfter: "immediately" | "end";
+        showAnswersAfter: "immediately" | "end" | "untilCorrect";
     };
 }
 
@@ -99,7 +99,11 @@ function MyQuizzes() {
                                         <p>Tempo por pergunta: {quiz.settings.timeLimitPerQuestion}s</p>
                                     )}
                                     <p>
-                                        Respostas: {quiz.settings?.showAnswersAfter === "immediately" ? "Imediatas" : "No final"}
+                                        Respostas: {quiz.settings?.showAnswersAfter === "immediately"
+                                            ? "Imediato"
+                                            : quiz.settings?.showAnswersAfter === "untilCorrect"
+                                                ? "Após acertar"
+                                                : "No final"}
                                     </p>
                                 </div>
                             </Link>

@@ -24,6 +24,8 @@ export function QuizSettingsModal({
     });
     const [isSaving, setIsSaving] = useState(false);
 
+    const isStudyMode = formData.settings?.showAnswersAfter === "untilCorrect";
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
@@ -42,10 +44,9 @@ export function QuizSettingsModal({
 
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={onClose}>
-
             <div
                 className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()} // Impede que clique dentro feche o modal
+                onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold text-white">Editar Configurações do Quiz</h2>
@@ -89,36 +90,62 @@ export function QuizSettingsModal({
                                     ...formData,
                                     settings: {
                                         ...formData.settings,
-                                        showAnswersAfter: e.target.value as "immediately" | "end",
+                                        showAnswersAfter: e.target.value as "immediately" | "end" | "untilCorrect",
+                                        timeLimitPerQuestion: e.target.value === "untilCorrect"
+                                            ? undefined
+                                            : formData.settings?.timeLimitPerQuestion,
                                     } as Quiz["settings"],
                                 })
                             }
                             className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
                         >
-                            <option value="immediately">Logo após cada pergunta</option>
+                            <option value="immediately">Logo após responder cada pergunta</option>
                             <option value="end">No final</option>
+                            <option value="untilCorrect">Tentar até acertar</option>
                         </select>
                     </div>
 
-                    <div>
-                        <label className="block text-gray-300 mb-1">Tempo por Pergunta (segundos)</label>
-                        <input
-                            type="number"
-                            value={formData.settings?.timeLimitPerQuestion ?? ""}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    settings: {
-                                        ...formData.settings,
-                                        timeLimitPerQuestion: e.target.value ? Number(e.target.value) : undefined,
-                                    } as Quiz["settings"],
-                                })
-                            }
-                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
-                            placeholder="Deixe em branco para sem limite"
-                            min="1"
-                        />
-                    </div>
+                    {isStudyMode ? (
+                        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 flex items-center gap-3">
+                            <svg
+                                className="h-5 w-5 text-blue-400 flex-shrink-0"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13 16h-1v-4h-1m1-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"
+                                />
+                            </svg>
+                            <div className="text-gray-200">
+                                <span className="font-semibold text-blue-300">Modo Estudo ativo:</span> Sem limite de tempo por pergunta e ranking desativado.
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-gray-300 mb-1">Tempo por Pergunta (segundos)</label>
+                            <input
+                                type="number"
+                                value={formData.settings?.timeLimitPerQuestion ?? ""}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        settings: {
+                                            ...formData.settings,
+                                            timeLimitPerQuestion: e.target.value ? Number(e.target.value) : undefined,
+                                        } as Quiz["settings"],
+                                    })
+                                }
+                                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                placeholder="Deixe em branco para sem limite"
+                                min="1"
+                            />
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-gray-300 mb-1">Permitir Múltiplas Tentativas</label>
@@ -150,9 +177,9 @@ export function QuizSettingsModal({
                             type="submit"
                             disabled={isSaving}
                             className={`flex-1 py-3 rounded-lg 
-        ${isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 cursor-pointer'}
-        flex items-center justify-center gap-2
-    `}
+                                ${isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 cursor-pointer'}
+                                flex items-center justify-center gap-2
+                            `}
                         >
                             {isSaving ? (
                                 <>
