@@ -1,25 +1,14 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { useQuizData } from "../hooks/useQuizData";
-import { collection, addDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
-import { db } from "../db/firebase";
-
-interface Question {
-    id?: string;
-    type: "multiple-choice" | "true-false" | "fill-in-the-blank";
-    question: string;
-    options?: string[];
-    correctAnswer?: number;
-    blankAnswer?: string;
-}
+import { useQuizData, Question } from "../hooks/useQuizData";
 
 function EditQuiz() {
-    const { quizId } = useParams<{ quizId: string }>();
     const navigate = useNavigate();
-    const { quiz, questions, loading, user } = useQuizData();
+    const { quiz, questions, loading, operationLoading, user, addQuestion, updateQuestion, deleteQuestion } = useQuizData();
     const [newQuestion, setNewQuestion] = useState<Question>({
+        id: "",
         type: "multiple-choice",
         question: "",
         options: ["", "", "", ""],
@@ -27,53 +16,67 @@ function EditQuiz() {
     });
     const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
 
+    const validateQuestion = (question: Question): boolean => {
+        if (!question.question.trim()) {
+            alert("A pergunta não pode estar vazia.");
+            return false;
+        }
+        if (question.type === "multiple-choice") {
+            if (!question.options || question.options.length < 2 || question.correctAnswer === undefined) {
+                alert("Perguntas de múltipla escolha devem ter pelo menos 2 opções e uma resposta correta definida.");
+                return false;
+            }
+            if (question.options.some((opt) => !opt.trim())) {
+                alert("Todas as opções devem ser preenchidas.");
+                return false;
+            }
+        } else if (question.type === "true-false" && question.correctAnswer === undefined) {
+            alert("Perguntas verdadeiro/falso devem ter uma resposta correta definida.");
+            return false;
+        } else if (question.type === "fill-in-the-blank" && !question.blankAnswer?.trim()) {
+            alert("Perguntas de preenchimento devem ter uma resposta definida.");
+            return false;
+        }
+        return true;
+    };
+
     const handleSaveQuestion = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!quizId || !newQuestion.question.trim()) return;
+        if (!validateQuestion(newQuestion)) return;
 
-        let questionData: any = {
+        const questionData: Omit<Question, "id"> = {
             type: newQuestion.type,
             question: newQuestion.question,
         };
 
         if (newQuestion.type === "multiple-choice") {
-            if (!newQuestion.options || newQuestion.correctAnswer === undefined) return;
-            if (newQuestion.options.some((opt) => !opt.trim())) return;
             questionData.options = newQuestion.options;
             questionData.correctAnswer = newQuestion.correctAnswer;
         } else if (newQuestion.type === "true-false") {
-            if (newQuestion.correctAnswer === undefined) return;
             questionData.correctAnswer = newQuestion.correctAnswer;
         } else if (newQuestion.type === "fill-in-the-blank") {
-            if (!newQuestion.blankAnswer?.trim()) return;
             questionData.blankAnswer = newQuestion.blankAnswer;
         }
 
         try {
             if (editingQuestionId) {
-                await setDoc(doc(db, "quizzes", quizId, "questions", editingQuestionId), questionData, { merge: true });
-                alert("Questão atualizada com sucesso!");
+                await updateQuestion(editingQuestionId, questionData);
             } else {
-                await addDoc(collection(db, "quizzes", quizId, "questions"), questionData);
-                alert("Questão adicionada com sucesso!");
+                await addQuestion(questionData);
             }
-            setNewQuestion({ type: "multiple-choice", question: "", options: ["", "", "", ""], correctAnswer: 0 });
+            setNewQuestion({ id: "", type: "multiple-choice", question: "", options: ["", "", "", ""], correctAnswer: 0 });
             setEditingQuestionId(null);
         } catch (error) {
-            console.error("Erro ao salvar questão:", error);
-            alert("Erro ao salvar questão.");
+            console.error("Erro ao processar questão:", error);
         }
     };
 
     const handleRemoveQuestion = async (questionId: string) => {
-        if (!quizId || !questionId) return;
-
+        if (operationLoading) return;
         try {
-            await deleteDoc(doc(db, "quizzes", quizId, "questions", questionId));
-            alert("Questão removida com sucesso!");
+            await deleteQuestion(questionId);
         } catch (error) {
             console.error("Erro ao remover questão:", error);
-            alert("Erro ao remover questão.");
         }
     };
 
@@ -89,7 +92,7 @@ function EditQuiz() {
     };
 
     const handleCancelEdit = () => {
-        setNewQuestion({ type: "multiple-choice", question: "", options: ["", "", "", ""], correctAnswer: 0 });
+        setNewQuestion({ id: "", type: "multiple-choice", question: "", options: ["", "", "", ""], correctAnswer: 0 });
         setEditingQuestionId(null);
     };
 
@@ -101,10 +104,10 @@ function EditQuiz() {
         <div className="min-h-screen bg-gray-900 p-6 text-white">
             <div className="max-w-4xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold">Editar Quiz</h1>
+                    <h1 className="text-3xl font-bold">Editar Quiz: {quiz.name}</h1>
                     <div className="space-x-4">
                         <button
-                            onClick={() => navigate(`/quiz/details/${quizId}`)}
+                            onClick={() => navigate(`/quiz/details/${quiz.id}`)}
                             className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
                         >
                             Voltar
@@ -124,14 +127,16 @@ function EditQuiz() {
                                         <button
                                             onClick={() => handleEditQuestion(q)}
                                             className="flex items-center h-10 w-10 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-500 justify-center"
+                                            disabled={operationLoading}
                                         >
                                             <FaEdit />
                                         </button>
                                         <button
                                             onClick={() => q.id && handleRemoveQuestion(q.id)}
                                             className="flex items-center h-10 w-10 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-500 justify-center"
+                                            disabled={operationLoading}
                                         >
-                                            <FaTrash />
+                                            {operationLoading ? "..." : <FaTrash />}
                                         </button>
                                     </div>
                                 </div>
@@ -158,6 +163,7 @@ function EditQuiz() {
                                 })
                             }
                             className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                            disabled={operationLoading}
                         >
                             <option value="multiple-choice">Múltipla Escolha</option>
                             <option value="true-false">Verdadeiro ou Falso</option>
@@ -173,6 +179,7 @@ function EditQuiz() {
                             className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                             placeholder="Digite a pergunta"
                             required
+                            disabled={operationLoading}
                         />
                     </div>
 
@@ -189,6 +196,7 @@ function EditQuiz() {
                                         className="w-full p-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                                         placeholder={`Opção ${String.fromCharCode(65 + index)}`}
                                         required
+                                        disabled={operationLoading}
                                     />
                                 </div>
                             ))}
@@ -197,6 +205,7 @@ function EditQuiz() {
                                 value={newQuestion.correctAnswer}
                                 onChange={(e) => setNewQuestion({ ...newQuestion, correctAnswer: Number(e.target.value) })}
                                 className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                                disabled={operationLoading}
                             >
                                 {newQuestion.options?.map((_, index) => (
                                     <option key={index} value={index}>
@@ -214,6 +223,7 @@ function EditQuiz() {
                                 value={newQuestion.correctAnswer}
                                 onChange={(e) => setNewQuestion({ ...newQuestion, correctAnswer: Number(e.target.value) })}
                                 className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                                disabled={operationLoading}
                             >
                                 <option value={1}>Verdadeiro</option>
                                 <option value={0}>Falso</option>
@@ -231,6 +241,7 @@ function EditQuiz() {
                                 className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                                 placeholder="Digite a resposta correta"
                                 required
+                                disabled={operationLoading}
                             />
                         </div>
                     )}
@@ -238,15 +249,17 @@ function EditQuiz() {
                     <div className="flex space-x-4">
                         <button
                             type="submit"
-                            className="w-full py-3 bg-green-600 rounded-lg hover:bg-green-700"
+                            className="w-full py-3 bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-green-400"
+                            disabled={operationLoading}
                         >
-                            {editingQuestionId ? "Salvar Alterações" : "Adicionar Pergunta"}
+                            {operationLoading ? "Salvando..." : editingQuestionId ? "Salvar Alterações" : "Adicionar Pergunta"}
                         </button>
                         {editingQuestionId && (
                             <button
                                 type="button"
                                 onClick={handleCancelEdit}
-                                className="w-full py-3 bg-gray-600 rounded-lg hover:bg-gray-700"
+                                className="w-full py-3 bg-gray-600 rounded-lg hover:bg-gray-700 disabled:bg-gray-400"
+                                disabled={operationLoading}
                             >
                                 Cancelar
                             </button>

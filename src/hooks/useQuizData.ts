@@ -12,6 +12,7 @@ import {
     orderBy,
     updateDoc,
     deleteDoc,
+    setDoc,
 } from "firebase/firestore";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -58,6 +59,7 @@ export const useQuizData = () => {
     const [ranking, setRanking] = useState<Attempt[]>([]);
     const [allUserAttempts, setAllUserAttempts] = useState<{ [userId: string]: Attempt[] }>({});
     const [loading, setLoading] = useState(true);
+    const [operationLoading, setOperationLoading] = useState(false);
 
     useEffect(() => {
         if (!quizId || !user) {
@@ -193,7 +195,6 @@ export const useQuizData = () => {
         }
     };
 
-
     const deleteQuiz = async () => {
         if (!quizId || !quiz) return false;
 
@@ -209,6 +210,51 @@ export const useQuizData = () => {
         }
     };
 
+    const addQuestion = async (questionData: Omit<Question, "id">) => {
+        if (!quizId) return;
+        setOperationLoading(true);
+        try {
+            await addDoc(collection(db, "quizzes", quizId, "questions"), questionData);
+            alert("Questão adicionada com sucesso!");
+        } catch (error) {
+            console.error("Erro ao adicionar questão:", error);
+            alert("Erro ao adicionar questão.");
+            throw error;
+        } finally {
+            setOperationLoading(false);
+        }
+    };
+
+    const updateQuestion = async (questionId: string, questionData: Partial<Question>) => {
+        if (!quizId || !questionId) return;
+        setOperationLoading(true);
+        try {
+            await setDoc(doc(db, "quizzes", quizId, "questions", questionId), questionData, { merge: true });
+            alert("Questão atualizada com sucesso!");
+        } catch (error) {
+            console.error("Erro ao atualizar questão:", error);
+            alert("Erro ao atualizar questão.");
+            throw error;
+        } finally {
+            setOperationLoading(false);
+        }
+    };
+
+    const deleteQuestion = async (questionId: string) => {
+        if (!quizId || !questionId) return;
+        setOperationLoading(true);
+        try {
+            await deleteDoc(doc(db, "quizzes", quizId, "questions", questionId));
+            alert("Questão removida com sucesso!");
+        } catch (error) {
+            console.error("Erro ao remover questão:", error);
+            alert("Erro ao remover questão.");
+            throw error;
+        } finally {
+            setOperationLoading(false);
+        }
+    };
+
     return {
         quiz,
         questions,
@@ -216,10 +262,14 @@ export const useQuizData = () => {
         ranking,
         allUserAttempts,
         loading,
+        operationLoading,
         fetchRanking,
         saveAttempt,
         updateQuizDetails,
         deleteQuiz,
+        addQuestion,
+        updateQuestion,
+        deleteQuestion,
         user,
     };
 };
