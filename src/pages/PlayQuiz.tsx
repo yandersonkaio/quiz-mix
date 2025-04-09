@@ -76,7 +76,7 @@ function PlayQuiz() {
             const updatedAnswers = [...userAnswers, newAnswer];
             setUserAnswers(updatedAnswers);
 
-            if (quiz.settings.showAnswersAfter !== "immediately") {
+            if (quiz.settings.showAnswersAfter === "end") {
                 goToNextQuestion();
             }
 
