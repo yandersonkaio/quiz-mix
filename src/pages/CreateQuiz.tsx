@@ -13,7 +13,7 @@ interface Quiz {
     settings: {
         timeLimitPerQuestion?: number;
         allowMultipleAttempts?: boolean;
-        showAnswersAfter: "immediately" | "end";
+        showAnswersAfter: "immediately" | "end" | "untilCorrect";
     };
 }
 
@@ -62,7 +62,7 @@ function CreateQuiz() {
                 settings,
             });
             alert("Quiz criado com sucesso!");
-            navigate(`/quiz/edit/${quizRef.id}`);
+            navigate(`/quiz/details/${quizRef.id}`);
         } catch (error) {
             console.error("Erro ao criar quiz:", error);
             alert("Erro ao criar quiz.");
@@ -107,13 +107,14 @@ function CreateQuiz() {
                             onChange={(e) =>
                                 setQuiz({
                                     ...quiz,
-                                    settings: { ...quiz.settings, showAnswersAfter: e.target.value as "immediately" | "end" },
+                                    settings: { ...quiz.settings, showAnswersAfter: e.target.value as "immediately" | "end" | "untilCorrect" },
                                 })
                             }
                             className="w-full p-3 bg-gray-800 rounded-lg text-white"
                         >
                             <option value="immediately">Logo após cada pergunta</option>
                             <option value="end">Apenas no final do quiz</option>
+                            <option value="untilCorrect">Após acertar</option>
                         </select>
                         <p className="text-gray-400 text-sm mt-1">
                             Escolha quando os jogadores verão as respostas corretas.
