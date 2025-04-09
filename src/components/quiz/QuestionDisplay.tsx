@@ -35,6 +35,7 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
 
         setSelectedAnswer(answer);
         setLastIncorrect(null);
+
         if (!isUntilCorrect) {
             setIsSubmitted(true);
             onAnswer(answer);
@@ -85,21 +86,20 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
             return "w-full p-3 cursor-pointer bg-gray-700 rounded-lg text-left hover:bg-gray-600";
         }
 
-        if (showAnswersAfter !== "immediately") {
-            return "w-full p-3 bg-gray-700 rounded-lg text-left opacity-50";
+        if (showAnswersAfter === "immediately") {
+            const isCorrectOption =
+                question.type === "multiple-choice" || question.type === "true-false"
+                    ? Number(index) === question.correctAnswer
+                    : String(index).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
+
+            if (selectedAnswer === index && !isCorrectOption) {
+                return "w-full p-3 text-red-400 bg-red-900/50 border border-red-700/50 rounded-lg text-left";
+            }
+            if (isCorrectOption) {
+                return "w-full p-3 text-green-400 bg-green-900/50 border border-green-700/50 rounded-lg text-left";
+            }
         }
 
-        const isCorrectOption =
-            question.type === "multiple-choice" || question.type === "true-false"
-                ? Number(index) === question.correctAnswer
-                : String(index).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
-
-        if (selectedAnswer === index && !isCorrectOption) {
-            return "w-full p-3 text-red-400 bg-red-900/50 border border-red-700/50 rounded-lg text-left";
-        }
-        if (isCorrectOption) {
-            return "w-full p-3 text-green-400 bg-green-900/50 border border-green-700/50 rounded-lg text-left";
-        }
         return "w-full p-3 bg-gray-700 rounded-lg text-left opacity-50";
     };
 
@@ -113,9 +113,11 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
             {question.type === "multiple-choice" && (
                 <div className="space-y-2">
                     {question.options?.map((option: string, index: number) => {
-                        const isOptionCorrect = Number(index) === question.correctAnswer;
-                        const isOptionSelected = selectedAnswer === index;
-                        const isOptionLastIncorrect = lastIncorrect === index;
+                        const isCorrectOption =
+                            question.type === "multiple-choice" || question.type === "true-false"
+                                ? Number(index) === question.correctAnswer
+                                : String(index).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
+                        const isSelected = selectedAnswer === index;
 
                         return (
                             <button
@@ -126,34 +128,34 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                             >
                                 <span
                                     className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${isUntilCorrect
-                                        ? isCorrect && isOptionCorrect
-                                            ? "bg-green-500 text-white "
-                                            : isOptionLastIncorrect
-                                                ? "bg-red-500 text-white "
-                                                : isOptionSelected && !isSubmitted
+                                        ? isCorrect && latestAttempt === index
+                                            ? "bg-green-500 text-white"
+                                            : lastIncorrect === index
+                                                ? "bg-red-500 text-white"
+                                                : isSelected && !isSubmitted
                                                     ? "bg-blue-500 text-white"
                                                     : "bg-gray-600 text-white"
-                                        : isSubmitted
-                                            ? isOptionCorrect
+                                        : showAnswersAfter === "immediately" && isSubmitted
+                                            ? isCorrectOption
                                                 ? "bg-green-500 text-white"
-                                                : isOptionSelected && !isOptionCorrect
+                                                : isSelected && !isCorrectOption
                                                     ? "bg-red-500 text-white"
                                                     : "bg-gray-600 text-white"
-                                            : isOptionSelected
+                                            : isSelected && !isSubmitted
                                                 ? "bg-blue-500 text-white"
                                                 : "bg-gray-600 text-white"
                                         }`}
                                 >
                                     {isUntilCorrect
-                                        ? isCorrect && isOptionCorrect
+                                        ? isCorrect && latestAttempt === index
                                             ? <FaCheck />
-                                            : isOptionLastIncorrect
+                                            : lastIncorrect === index
                                                 ? <FaTimes />
                                                 : getOptionLetter(index)
-                                        : isSubmitted
-                                            ? isOptionCorrect
+                                        : showAnswersAfter === "immediately" && isSubmitted
+                                            ? isCorrectOption
                                                 ? <FaCheck />
-                                                : isOptionSelected && !isOptionCorrect
+                                                : isSelected && !isCorrectOption
                                                     ? <FaTimes />
                                                     : getOptionLetter(index)
                                             : getOptionLetter(index)}
@@ -166,20 +168,61 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
             )}
             {question.type === "true-false" && (
                 <div className="space-y-2">
-                    <button
-                        onClick={() => handleOptionClick(1)}
-                        className={getButtonClass(1)}
-                        disabled={isUntilCorrect && isCorrect}
-                    >
-                        Verdadeiro
-                    </button>
-                    <button
-                        onClick={() => handleOptionClick(0)}
-                        className={getButtonClass(0)}
-                        disabled={isUntilCorrect && isCorrect}
-                    >
-                        Falso
-                    </button>
+                    {[1, 0].map((value) => {
+                        const isCorrectOption = Number(value) === question.correctAnswer;
+                        const isSelected = selectedAnswer === value;
+
+                        return (
+                            <button
+                                key={value}
+                                onClick={() => handleOptionClick(value)}
+                                className={getButtonClass(value)}
+                                disabled={isUntilCorrect && isCorrect}
+                            >
+                                <span
+                                    className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${isUntilCorrect
+                                        ? isCorrect && latestAttempt === value
+                                            ? "bg-green-500 text-white"
+                                            : lastIncorrect === value
+                                                ? "bg-red-500 text-white"
+                                                : isSelected && !isSubmitted
+                                                    ? "bg-blue-500 text-white"
+                                                    : "bg-gray-600 text-white"
+                                        : showAnswersAfter === "immediately" && isSubmitted
+                                            ? isCorrectOption
+                                                ? "bg-green-500 text-white"
+                                                : isSelected && !isCorrectOption
+                                                    ? "bg-red-500 text-white"
+                                                    : "bg-gray-600 text-white"
+                                            : isSelected && !isSubmitted
+                                                ? "bg-blue-500 text-white"
+                                                : "bg-gray-600 text-white"
+                                        }`}
+                                >
+                                    {isUntilCorrect
+                                        ? isCorrect && latestAttempt === value
+                                            ? <FaCheck />
+                                            : lastIncorrect === value
+                                                ? <FaTimes />
+                                                : value === 1
+                                                    ? "V"
+                                                    : "F"
+                                        : showAnswersAfter === "immediately" && isSubmitted
+                                            ? isCorrectOption
+                                                ? <FaCheck />
+                                                : isSelected && !isCorrectOption
+                                                    ? <FaTimes />
+                                                    : value === 1
+                                                        ? "V"
+                                                        : "F"
+                                            : value === 1
+                                                ? "V"
+                                                : "F"}
+                                </span>
+                                {value === 1 ? "Verdadeiro" : "Falso"}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
             {question.type === "fill-in-the-blank" && (
@@ -245,14 +288,6 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                     className="mt-4 w-full p-3 cursor-pointer bg-green-600 rounded-lg hover:bg-green-700"
                 >
                     Avançar
-                </button>
-            )}
-            {!isUntilCorrect && isSubmitted && showAnswersAfter !== "immediately" && (
-                <button
-                    onClick={onNext}
-                    className="mt-4 w-full p-3 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-700"
-                >
-                    Próxima Questão
                 </button>
             )}
         </div>
