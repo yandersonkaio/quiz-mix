@@ -10,6 +10,7 @@ import CreateQuiz from "./pages/CreateQuiz";
 import PlayQuiz from "./pages/PlayQuiz";
 import QuizDetails from "./pages/QuizDetails";
 import Loading from "./components/Loading";
+import NotFound from "./pages/NotFound";
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -78,7 +79,7 @@ const AppContent: React.FC = () => {
           />
           <Route
             path="*"
-            element={<h1 className="text-center mt-10">Página não encontrada</h1>}
+            element={<NotFound />}
           />
         </Routes>
       </main>
