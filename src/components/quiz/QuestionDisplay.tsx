@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Question } from "../../hooks/useQuizData";
+import { FaCheck, FaTimes } from "react-icons/fa";
 
 interface QuestionDisplayProps {
     question: Question;
@@ -71,15 +72,15 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
             if (lastIncorrect === index) {
                 return "w-full p-3 rounded-lg text-left text-red-400 bg-red-900/50 border border-red-700/50";
             }
-            if (selectedAnswer === index) {
-                return "w-full p-3 text-blue-400 bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
+            if (selectedAnswer === index && !isSubmitted) {
+                return "w-full p-3 text-white bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
             }
             return "w-full p-3 cursor-pointer bg-gray-700 rounded-lg text-left hover:bg-gray-600";
         }
 
         if (!isSubmitted) {
             if (selectedAnswer === index) {
-                return "w-full p-3 bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
+                return "w-full p-3 text-white bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
             }
             return "w-full p-3 cursor-pointer bg-gray-700 rounded-lg text-left hover:bg-gray-600";
         }
@@ -102,21 +103,65 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
         return "w-full p-3 bg-gray-700 rounded-lg text-left opacity-50";
     };
 
+    const getOptionLetter = (index: number): string => {
+        return String.fromCharCode(65 + index); // 65 é o código ASCII para 'A'
+    };
+
     return (
         <div className="bg-gray-800 p-6 rounded-lg">
             <h2 className="text-xl font-semibold mb-4">{question.question}</h2>
             {question.type === "multiple-choice" && (
                 <div className="space-y-2">
-                    {question.options?.map((option: string, index: number) => (
-                        <button
-                            key={index}
-                            onClick={() => handleOptionClick(index)}
-                            className={getButtonClass(index)}
-                            disabled={isUntilCorrect && isCorrect}
-                        >
-                            {String.fromCharCode(65 + index)}. {option}
-                        </button>
-                    ))}
+                    {question.options?.map((option: string, index: number) => {
+                        const isOptionCorrect = Number(index) === question.correctAnswer;
+                        const isOptionSelected = selectedAnswer === index;
+                        const isOptionLastIncorrect = lastIncorrect === index;
+
+                        return (
+                            <button
+                                key={index}
+                                onClick={() => handleOptionClick(index)}
+                                className={`flex items-center ${getButtonClass(index)}`}
+                                disabled={isUntilCorrect && isCorrect}
+                            >
+                                <span
+                                    className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full ${isUntilCorrect
+                                        ? isCorrect && isOptionCorrect
+                                            ? "bg-green-500 text-white "
+                                            : isOptionLastIncorrect
+                                                ? "bg-red-500 text-white "
+                                                : isOptionSelected && !isSubmitted
+                                                    ? "bg-blue-500 text-white"
+                                                    : "bg-gray-600 text-white"
+                                        : isSubmitted
+                                            ? isOptionCorrect
+                                                ? "bg-green-500 text-white"
+                                                : isOptionSelected && !isOptionCorrect
+                                                    ? "bg-red-500 text-white"
+                                                    : "bg-gray-600 text-white"
+                                            : isOptionSelected
+                                                ? "bg-blue-500 text-white"
+                                                : "bg-gray-600 text-white"
+                                        }`}
+                                >
+                                    {isUntilCorrect
+                                        ? isCorrect && isOptionCorrect
+                                            ? <FaCheck />
+                                            : isOptionLastIncorrect
+                                                ? <FaTimes />
+                                                : getOptionLetter(index)
+                                        : isSubmitted
+                                            ? isOptionCorrect
+                                                ? <FaCheck />
+                                                : isOptionSelected && !isOptionCorrect
+                                                    ? <FaTimes />
+                                                    : getOptionLetter(index)
+                                            : getOptionLetter(index)}
+                                </span>
+                                <span className="flex-1">{option}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             )}
             {question.type === "true-false" && (
