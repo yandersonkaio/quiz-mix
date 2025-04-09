@@ -74,14 +74,14 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                 return "w-full p-3 rounded-lg text-left text-red-400 bg-red-900/50 border border-red-700/50";
             }
             if (selectedAnswer === index && !isSubmitted) {
-                return "w-full p-3 text-white bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
+                return "w-full p-3 text-blue-400 bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
             }
             return "w-full p-3 cursor-pointer bg-gray-700 rounded-lg text-left hover:bg-gray-600";
         }
 
         if (!isSubmitted) {
             if (selectedAnswer === index) {
-                return "w-full p-3 text-white bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
+                return "w-full p-3 text-blue-400 bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
             }
             return "w-full p-3 cursor-pointer bg-gray-700 rounded-lg text-left hover:bg-gray-600";
         }
