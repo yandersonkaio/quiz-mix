@@ -8,13 +8,18 @@ import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
 import QuestionModal from "../components/quiz/QuestionModal";
 import ImportQuestionsModal from "../components/quiz/ImportQuestionsModal";
 import { IoMdAdd } from "react-icons/io";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>();
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const navigate = useNavigate();
+
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<"quiz" | "question" | null>(null);
+    const [questionIdToDelete, setQuestionIdToDelete] = useState<string | null>(null);
 
     const [currentQuestion, setCurrentQuestion] = useState<Question>({
         id: "",
@@ -23,6 +28,7 @@ function QuizDetails() {
         options: ["", "", "", ""],
         correctAnswer: 0,
     });
+
     const [isEditing, setIsEditing] = useState(false);
 
     const {
@@ -78,9 +84,32 @@ function QuizDetails() {
 
     const handleDeleteQuiz = async () => {
         if (!quiz || operationLoading) return;
-        if (!confirm(`Tem certeza que deseja excluir o quiz "${quiz.name}"?`)) return;
+        setDeleteTarget("quiz");
+        setIsDeleteModalOpen(true);
+    };
 
-        await deleteQuiz();
+    const handleRemoveQuestion = async (questionId: string) => {
+        if (operationLoading) return;
+        setDeleteTarget("question");
+        setQuestionIdToDelete(questionId);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            if (deleteTarget === "quiz") {
+                await deleteQuiz();
+                navigate("/my-quizzes");
+            } else if (deleteTarget === "question" && questionIdToDelete) {
+                await deleteQuestion(questionIdToDelete);
+            }
+            setIsDeleteModalOpen(false);
+            setDeleteTarget(null);
+            setQuestionIdToDelete(null);
+        } catch (error) {
+            console.error("Erro ao excluir:", error);
+            alert("Erro ao realizar a exclusão.");
+        }
     };
 
     const handleSaveQuestion = async (question: Question) => {
@@ -100,15 +129,12 @@ function QuizDetails() {
         try {
             if (isEditing && question.id) {
                 await updateQuestion(question.id, questionData);
-                alert("Pergunta atualizada!");
             } else {
                 await addQuestion(questionData);
-                alert("Pergunta adicionada!");
             }
             setIsModalOpen(false);
         } catch (error) {
             console.error("Erro ao processar questão:", error);
-            alert("Erro ao salvar a pergunta.");
         }
     };
 
@@ -127,16 +153,6 @@ function QuizDetails() {
         } catch (error) {
             console.error("Falha ao chamar addMultipleQuestions a partir de QuizDetails:", error);
             throw error;
-        }
-    };
-
-    const handleRemoveQuestion = async (questionId: string) => {
-        if (operationLoading) return;
-        if (!confirm("Tem certeza que deseja excluir esta pergunta?")) return;
-        try {
-            await deleteQuestion(questionId);
-        } catch (error) {
-            console.error("Erro ao remover questão:", error);
         }
     };
 
@@ -219,7 +235,7 @@ function QuizDetails() {
                         <div>
                             <h2 className="text-xl font-semibold text-gray-300">Detalhes</h2>
                             <ul className="text-gray-400 space-y-1">
-                                <li>Criado em: {quiz.createdAt ? new Date(quiz.createdAt.toDate()).toLocaleDateString() : 'N/A'}</li>
+                                <li>Criado em: {quiz.createdAt ? new Date(quiz.createdAt.toDate()).toLocaleDateString() : "N/A"}</li>
                                 <li>Número de perguntas: {questions.length}</li>
                                 {quiz.settings?.timeLimitPerQuestion ? (
                                     <li>Tempo por pergunta: {quiz.settings.timeLimitPerQuestion}s</li>
@@ -228,13 +244,13 @@ function QuizDetails() {
                                 )}
                                 <li>
                                     Respostas exibidas:{" "}
-                                    {quiz.settings?.showAnswersAfter === "immediately" ? "Imediato"
-                                        : quiz.settings?.showAnswersAfter === "untilCorrect" ? "Após acertar"
+                                    {quiz.settings?.showAnswersAfter === "immediately"
+                                        ? "Imediato"
+                                        : quiz.settings?.showAnswersAfter === "untilCorrect"
+                                            ? "Após acertar"
                                             : "No final"}
                                 </li>
-                                <li>
-                                    Tentativas múltiplas: {quiz.settings?.allowMultipleAttempts ? "Permitidas" : "Não permitidas"}
-                                </li>
+                                <li>Tentativas múltiplas: {quiz.settings?.allowMultipleAttempts ? "Permitidas" : "Não permitidas"}</li>
                             </ul>
                         </div>
                     </div>
@@ -299,7 +315,10 @@ function QuizDetails() {
                         ) : (
                             <div className="flex-grow overflow-y-auto mb-4 border border-gray-700 rounded-lg p-4 bg-gray-900/50 space-y-4">
                                 {questions.map((question, index) => (
-                                    <div key={question.id} className="bg-gray-800 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center rounded-lg"> {/* Melhorado layout responsivo */}
+                                    <div
+                                        key={question.id}
+                                        className="bg-gray-800 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center rounded-lg"
+                                    >
                                         <div className="mb-3 sm:mb-0 mr-4 flex-grow">
                                             <p className="text-gray-300">
                                                 <span className="font-bold mr-2 text-gray-500">{index + 1}.</span>
@@ -307,8 +326,10 @@ function QuizDetails() {
                                             </p>
                                             <p className="text-gray-500 text-sm mt-1">
                                                 Tipo:{" "}
-                                                {question.type === "multiple-choice" ? "Múltipla Escolha"
-                                                    : question.type === "true-false" ? "Verdadeiro/Falso"
+                                                {question.type === "multiple-choice"
+                                                    ? "Múltipla Escolha"
+                                                    : question.type === "true-false"
+                                                        ? "Verdadeiro/Falso"
                                                         : "Preenchimento"}
                                             </p>
                                         </div>
@@ -344,29 +365,45 @@ function QuizDetails() {
                         totalQuestions={questions.length}
                     />
                 )}
-            </div>
 
-            <QuizSettingsModal
-                isOpen={isSettingsModalOpen}
-                onClose={() => setIsSettingsModalOpen(false)}
-                quizDetails={quizDetails}
-                onSave={handleSaveQuizDetails}
-            />
-            <QuestionModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                question={currentQuestion}
-                onSave={handleSaveQuestion}
-                isEditing={isEditing}
-            />
-            {isCreator && (
-                <ImportQuestionsModal
-                    isOpen={isImportModalOpen}
-                    onClose={() => setIsImportModalOpen(false)}
-                    onSaveImportedQuestions={handleSaveImportedQuestions}
-                    quizId={quizId || ""}
-                />
-            )}
+                {isCreator && (
+                    <>
+                        <QuizSettingsModal
+                            isOpen={isSettingsModalOpen}
+                            onClose={() => setIsSettingsModalOpen(false)}
+                            quizDetails={quizDetails}
+                            onSave={handleSaveQuizDetails}
+                        />
+                        <QuestionModal
+                            isOpen={isModalOpen}
+                            onClose={() => setIsModalOpen(false)}
+                            question={currentQuestion}
+                            onSave={handleSaveQuestion}
+                            isEditing={isEditing}
+                        />
+                        <ImportQuestionsModal
+                            isOpen={isImportModalOpen}
+                            onClose={() => setIsImportModalOpen(false)}
+                            onSaveImportedQuestions={handleSaveImportedQuestions}
+                            quizId={quizId || ""}
+                        />
+
+                        <ConfirmDeleteModal
+                            isOpen={isDeleteModalOpen}
+                            onClose={() => setIsDeleteModalOpen(false)}
+                            onConfirm={confirmDelete}
+                            title={deleteTarget === "quiz" ? "Excluir Quiz" : "Excluir Pergunta"}
+                            message={
+                                deleteTarget === "quiz"
+                                    ? `Tem certeza que deseja excluir o quiz "${quiz.name}"? Esta ação não pode ser desfeita.`
+                                    : "Tem certeza que deseja excluir esta pergunta? Esta ação não pode ser desfeita."
+                            }
+                            isLoading={operationLoading}
+                        />
+                    </>
+                )}
+
+            </div>
         </div>
     );
 }
