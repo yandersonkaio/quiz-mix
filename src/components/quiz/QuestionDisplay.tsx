@@ -29,8 +29,8 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
     }, [question]);
 
     const handleOptionClick = (answer: number | string) => {
-        if (isUntilCorrect && isCorrect) return; // Impede novas seleções após acertar no modo "untilCorrect"
-        if (!isUntilCorrect && isSubmitted) return; // Impede múltiplas seleções nos outros modos
+        if (isUntilCorrect && isCorrect) return;
+        if (!isUntilCorrect && isSubmitted) return;
 
         setSelectedAnswer(answer);
         setLastIncorrect(null);
@@ -66,20 +66,20 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
     const getButtonClass = (index: number | string) => {
         if (isUntilCorrect) {
             if (isCorrect && latestAttempt === index) {
-                return "w-full p-3 rounded-lg text-left bg-green-600";
+                return "w-full p-3 rounded-lg text-left text-green-400 bg-green-900/50 border border-green-700/50";
             }
             if (lastIncorrect === index) {
-                return "w-full p-3 rounded-lg text-left bg-red-600";
+                return "w-full p-3 rounded-lg text-left text-red-400 bg-red-900/50 border border-red-700/50";
             }
             if (selectedAnswer === index) {
-                return "w-full p-3 bg-blue-500 rounded-lg text-left";
+                return "w-full p-3 text-blue-400 bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
             }
             return "w-full p-3 cursor-pointer bg-gray-700 rounded-lg text-left hover:bg-gray-600";
         }
 
         if (!isSubmitted) {
             if (selectedAnswer === index) {
-                return "w-full p-3 bg-blue-500 rounded-lg text-left";
+                return "w-full p-3 bg-blue-900/50 border border-blue-700/50 rounded-lg text-left";
             }
             return "w-full p-3 cursor-pointer bg-gray-700 rounded-lg text-left hover:bg-gray-600";
         }
@@ -94,10 +94,10 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                 : String(index).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
 
         if (selectedAnswer === index && !isCorrectOption) {
-            return "w-full p-3 bg-red-600 rounded-lg text-left";
+            return "w-full p-3 text-red-400 bg-red-900/50 border border-red-700/50 rounded-lg text-left";
         }
         if (isCorrectOption) {
-            return "w-full p-3 bg-green-600 rounded-lg text-left";
+            return "w-full p-3 text-green-400 bg-green-900/50 border border-green-700/50 rounded-lg text-left";
         }
         return "w-full p-3 bg-gray-700 rounded-lg text-left opacity-50";
     };
@@ -162,14 +162,14 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                         type="text"
                         className={`w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none ${isUntilCorrect
                             ? isCorrect
-                                ? "bg-green-600"
+                                ? "bg-green-900/50 border border-green-700/50"
                                 : lastIncorrect !== null && !selectedAnswer
-                                    ? "bg-red-600"
+                                    ? "bg-red-900/50 border border-red-700/50"
                                     : selectedAnswer && !isSubmitted
-                                        ? "bg-blue-500"
+                                        ? "bg-blue-900/50 border border-blue-700/50"
                                         : ""
                             : selectedAnswer && !isSubmitted
-                                ? "bg-blue-500"
+                                ? "bg-blue-900/50 border border-blue-700/50"
                                 : ""
                             }`}
                         placeholder="Digite sua resposta"

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
-import { FaEdit, FaTrash, FaPlay } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlay, FaFileUpload } from "react-icons/fa";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
-import { Quiz, Question, useQuizData } from "../hooks/useQuizData";
+import { Quiz, Question, useQuizData, QuestionData } from "../hooks/useQuizData";
 import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
 import QuestionModal from "../components/quiz/QuestionModal";
+import ImportQuestionsModal from "../components/quiz/ImportQuestionsModal";
 import { IoMdAdd } from "react-icons/io";
 
 function QuizDetails() {
@@ -13,6 +14,8 @@ function QuizDetails() {
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
     const [currentQuestion, setCurrentQuestion] = useState<Question>({
         id: "",
         type: "multiple-choice",
@@ -21,6 +24,7 @@ function QuizDetails() {
         correctAnswer: 0,
     });
     const [isEditing, setIsEditing] = useState(false);
+
     const {
         quiz,
         questions,
@@ -32,9 +36,10 @@ function QuizDetails() {
         updateQuizDetails,
         deleteQuiz,
         addQuestion,
+        addMultipleQuestions,
         operationLoading,
         updateQuestion,
-        deleteQuestion
+        deleteQuestion,
     } = useQuizData();
 
     const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
@@ -54,7 +59,6 @@ function QuizDetails() {
             navigate("/login");
             return;
         }
-
         fetchRanking();
     }, [quizId, navigate, fetchRanking]);
 
@@ -73,7 +77,7 @@ function QuizDetails() {
     }, [quiz]);
 
     const handleDeleteQuiz = async () => {
-        if (!quiz) return;
+        if (!quiz || operationLoading) return;
         if (!confirm(`Tem certeza que deseja excluir o quiz "${quiz.name}"?`)) return;
 
         await deleteQuiz();
@@ -83,30 +87,52 @@ function QuizDetails() {
         const questionData: Omit<Question, "id"> = {
             type: question.type,
             question: question.question,
+            ...(question.type === "multiple-choice" && { options: question.options, correctAnswer: question.correctAnswer }),
+            ...(question.type === "true-false" && { correctAnswer: question.correctAnswer }),
+            ...(question.type === "fill-in-the-blank" && { blankAnswer: question.blankAnswer }),
         };
 
-        if (question.type === "multiple-choice") {
-            questionData.options = question.options;
-            questionData.correctAnswer = question.correctAnswer;
-        } else if (question.type === "true-false") {
-            questionData.correctAnswer = question.correctAnswer;
-        } else if (question.type === "fill-in-the-blank") {
-            questionData.blankAnswer = question.blankAnswer;
+        if (!questionData.question.trim()) {
+            alert("A pergunta não pode estar vazia.");
+            return;
         }
 
         try {
             if (isEditing && question.id) {
                 await updateQuestion(question.id, questionData);
+                alert("Pergunta atualizada!");
             } else {
                 await addQuestion(questionData);
+                alert("Pergunta adicionada!");
             }
+            setIsModalOpen(false);
         } catch (error) {
             console.error("Erro ao processar questão:", error);
+            alert("Erro ao salvar a pergunta.");
+        }
+    };
+
+    const handleSaveImportedQuestions = async (importedQuestions: QuestionData[]) => {
+        if (!quizId) {
+            console.error("Quiz ID não encontrado para importar perguntas.");
+            throw new Error("ID do Quiz não encontrado.");
+        }
+        if (!addMultipleQuestions) {
+            console.error("Função addMultipleQuestions não disponível no hook useQuizData.");
+            throw new Error("Funcionalidade de importar não disponível.");
+        }
+
+        try {
+            await addMultipleQuestions(importedQuestions);
+        } catch (error) {
+            console.error("Falha ao chamar addMultipleQuestions a partir de QuizDetails:", error);
+            throw error;
         }
     };
 
     const handleRemoveQuestion = async (questionId: string) => {
         if (operationLoading) return;
+        if (!confirm("Tem certeza que deseja excluir esta pergunta?")) return;
         try {
             await deleteQuestion(questionId);
         } catch (error) {
@@ -134,6 +160,10 @@ function QuizDetails() {
 
     const handlePlayQuiz = () => {
         if (!quizId) return;
+        if (questions.length === 0) {
+            alert("Adicione perguntas ao quiz antes de jogar!");
+            return;
+        }
         navigate(`/play-quiz/${quizId}`);
     };
 
@@ -153,6 +183,7 @@ function QuizDetails() {
                 };
             });
             alert("Detalhes do quiz atualizados com sucesso!");
+            setIsSettingsModalOpen(false);
         } catch (error) {
             console.error("Erro ao salvar detalhes do quiz:", error);
             alert("Erro ao salvar detalhes do quiz.");
@@ -160,7 +191,7 @@ function QuizDetails() {
     };
 
     if (loading) return <Loading />;
-    if (!quiz) return <div className="text-white">Quiz não encontrado.</div>;
+    if (!quiz) return <div className="text-white p-6">Quiz não encontrado.</div>;
 
     const isCreator = quiz.userId === user?.uid;
 
@@ -177,7 +208,7 @@ function QuizDetails() {
                     </button>
                 </div>
 
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
                     <div className="space-y-4">
                         <div className="flex justify-between items-center mb-8">
                             <div>
@@ -188,7 +219,7 @@ function QuizDetails() {
                         <div>
                             <h2 className="text-xl font-semibold text-gray-300">Detalhes</h2>
                             <ul className="text-gray-400 space-y-1">
-                                <li>Criado em: {new Date(quiz.createdAt.toDate()).toLocaleDateString()}</li>
+                                <li>Criado em: {quiz.createdAt ? new Date(quiz.createdAt.toDate()).toLocaleDateString() : 'N/A'}</li>
                                 <li>Número de perguntas: {questions.length}</li>
                                 {quiz.settings?.timeLimitPerQuestion ? (
                                     <li>Tempo por pergunta: {quiz.settings.timeLimitPerQuestion}s</li>
@@ -197,10 +228,8 @@ function QuizDetails() {
                                 )}
                                 <li>
                                     Respostas exibidas:{" "}
-                                    {quiz.settings?.showAnswersAfter === "immediately"
-                                        ? "Imediato"
-                                        : quiz.settings?.showAnswersAfter === "untilCorrect"
-                                            ? "Após acertar"
+                                    {quiz.settings?.showAnswersAfter === "immediately" ? "Imediato"
+                                        : quiz.settings?.showAnswersAfter === "untilCorrect" ? "Após acertar"
                                             : "No final"}
                                 </li>
                                 <li>
@@ -210,10 +239,12 @@ function QuizDetails() {
                         </div>
                     </div>
 
-                    <div className="mt-8 flex space-x-4">
+                    <div className="mt-8 flex flex-wrap gap-4">
                         <button
                             onClick={handlePlayQuiz}
-                            className="flex items-center px-4 py-2 cursor-pointer bg-green-600 rounded-lg hover:bg-green-500"
+                            disabled={questions.length === 0 || operationLoading}
+                            className="flex items-center px-4 py-2 cursor-pointer bg-green-600 rounded-lg hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={questions.length === 0 ? "Adicione perguntas para jogar" : "Jogar o Quiz"}
                         >
                             <FaPlay className="mr-2" /> Jogar
                         </button>
@@ -221,13 +252,17 @@ function QuizDetails() {
                             <>
                                 <button
                                     onClick={() => setIsSettingsModalOpen(true)}
-                                    className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-500"
+                                    disabled={operationLoading}
+                                    className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-500 disabled:opacity-50"
+                                    title="Editar configurações do Quiz"
                                 >
                                     <FaEdit className="mr-2" /> Editar
                                 </button>
                                 <button
                                     onClick={handleDeleteQuiz}
-                                    className="flex items-center px-4 py-2 cursor-pointer bg-red-600 rounded-lg hover:bg-red-500"
+                                    disabled={operationLoading}
+                                    className="flex items-center px-4 py-2 cursor-pointer bg-red-600 rounded-lg hover:bg-red-500 disabled:opacity-50"
+                                    title="Excluir Quiz"
                                 >
                                     <FaTrash className="mr-2" /> Excluir
                                 </button>
@@ -240,42 +275,57 @@ function QuizDetails() {
                     <div className="mt-8">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">Perguntas ({questions.length})</h2>
-                            <button
-                                onClick={openModalForAdd}
-                                className="flex items-center p-3 cursor-pointer bg-green-600 rounded-lg hover:bg-green-700"
-                            >
-                                <IoMdAdd className="w-6 h-6" />
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    disabled={operationLoading}
+                                    title="Importar Perguntas de JSON"
+                                    className="flex items-center p-3 cursor-pointer bg-purple-600 rounded-lg hover:bg-purple-500 disabled:opacity-50"
+                                >
+                                    <FaFileUpload className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={openModalForAdd}
+                                    disabled={operationLoading}
+                                    title="Adicionar Pergunta Manualmente"
+                                    className="flex items-center p-3 cursor-pointer bg-green-600 rounded-lg hover:bg-green-500 disabled:opacity-50"
+                                >
+                                    <IoMdAdd className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                         {questions.length === 0 ? (
-                            <p className="text-gray-400">Nenhuma pergunta adicionada ainda.</p>
+                            <p className="text-gray-400 bg-gray-800 p-4 rounded-lg">Nenhuma pergunta adicionada ainda.</p>
                         ) : (
-                            <div className="space-y-4">
-                                {questions.map((question) => (
-                                    <div key={question.id} className="bg-gray-800 p-4 flex justify-between items-center rounded-lg">
-                                        <div>
-                                            <p className="text-gray-300">{question.question}</p>
-                                            <p className="text-gray-500 text-sm">
+                            <div className="flex-grow overflow-y-auto mb-4 border border-gray-700 rounded-lg p-4 bg-gray-900/50 space-y-4">
+                                {questions.map((question, index) => (
+                                    <div key={question.id} className="bg-gray-800 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center rounded-lg"> {/* Melhorado layout responsivo */}
+                                        <div className="mb-3 sm:mb-0 mr-4 flex-grow">
+                                            <p className="text-gray-300">
+                                                <span className="font-bold mr-2 text-gray-500">{index + 1}.</span>
+                                                {question.question}
+                                            </p>
+                                            <p className="text-gray-500 text-sm mt-1">
                                                 Tipo:{" "}
-                                                {question.type === "multiple-choice"
-                                                    ? "Múltipla Escolha"
-                                                    : question.type === "true-false"
-                                                        ? "Verdadeiro/Falso"
+                                                {question.type === "multiple-choice" ? "Múltipla Escolha"
+                                                    : question.type === "true-false" ? "Verdadeiro/Falso"
                                                         : "Preenchimento"}
                                             </p>
                                         </div>
-                                        <div className="space-x-2 flex flex-row">
+                                        <div className="space-x-2 flex flex-shrink-0">
                                             <button
                                                 onClick={() => openModalForEdit(question)}
-                                                className="flex items-center h-10 w-10 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-500 justify-center"
+                                                className="flex items-center h-10 w-10 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-500 justify-center disabled:opacity-50"
                                                 disabled={operationLoading}
+                                                title="Editar Pergunta"
                                             >
                                                 <FaEdit />
                                             </button>
                                             <button
                                                 onClick={() => question.id && handleRemoveQuestion(question.id)}
-                                                className="flex items-center h-10 w-10 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-500 justify-center"
+                                                className="flex items-center h-10 w-10 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-500 justify-center disabled:opacity-50"
                                                 disabled={operationLoading}
+                                                title="Excluir Pergunta"
                                             >
                                                 {operationLoading ? "..." : <FaTrash />}
                                             </button>
@@ -286,6 +336,7 @@ function QuizDetails() {
                         )}
                     </div>
                 )}
+
                 {!isUntilCorrectMode && (
                     <RankingDisplay
                         ranking={ranking}
@@ -294,6 +345,7 @@ function QuizDetails() {
                     />
                 )}
             </div>
+
             <QuizSettingsModal
                 isOpen={isSettingsModalOpen}
                 onClose={() => setIsSettingsModalOpen(false)}
@@ -307,6 +359,14 @@ function QuizDetails() {
                 onSave={handleSaveQuestion}
                 isEditing={isEditing}
             />
+            {isCreator && (
+                <ImportQuestionsModal
+                    isOpen={isImportModalOpen}
+                    onClose={() => setIsImportModalOpen(false)}
+                    onSaveImportedQuestions={handleSaveImportedQuestions}
+                    quizId={quizId || ""}
+                />
+            )}
         </div>
     );
 }
