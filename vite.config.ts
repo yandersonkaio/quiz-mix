@@ -9,9 +9,5 @@ export default defineConfig({
     react(),
     tailwindcss(),
     svgr()
-  ],
-  // server: {
-  //   host: '192.168.1.243',  // Ou use o seu IP local, como '192.168.x.x'
-  //   port: 5173,        // Você pode alterar a porta se quiser
-  // },
+  ]
 })
