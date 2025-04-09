@@ -33,7 +33,8 @@ const AppContent: React.FC = () => {
         />
       )}
       <main
-        className={`flex-1 h-screen overflow-y-auto ${!isPublicRoute ? "md:ml-72" : ""}`}
+        className={`flex-1 h-screen overflow-y-auto bg-gray-900 text-white transition-all duration-300 ease-in-out
+                ${!isPublicRoute ? "md:ml-20 lg:ml-72" : ""}`}
       >
         <Routes>
           <Route
