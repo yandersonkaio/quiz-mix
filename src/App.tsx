@@ -1,26 +1,26 @@
+import React, { Suspense } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import Loading from "./components/Loading";
 import AppRoutes from "./routes/AppRoutes";
-import MainLayout from "./components/MainLayout";
+import Loading from "./components/Loading";
 
 const AppContent: React.FC = () => {
   const { loading } = useAuth();
 
-  if (loading) return <Loading />;
+  if (loading) {
+    return <Loading />;
+  }
 
-  return (
-    <MainLayout>
-      <AppRoutes />
-    </MainLayout>
-  );
+  return <AppRoutes />;
 };
 
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppContent />
+        <Suspense fallback={<Loading />}>
+          <AppContent />
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   );
