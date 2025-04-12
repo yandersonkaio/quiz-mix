@@ -78,9 +78,7 @@ function PlayQuiz() {
 
             if (quiz.settings.showAnswersAfter === "end") {
                 goToNextQuestion();
-            }
-
-            if (currentQuestionIndex + 1 === questions.length) {
+            } else if (currentQuestionIndex + 1 === questions.length) {
                 const correctCount = updatedAnswers.filter((ans) => ans.isCorrect).length;
                 saveAttempt(correctCount).then(() => setShowResult(true));
             }
@@ -92,7 +90,7 @@ function PlayQuiz() {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
             setCurrentAttempt([]);
             if (!isUntilCorrectMode) resetTimer();
-        } else {
+        } else if (!isUntilCorrectMode && quiz?.settings.showAnswersAfter === "end") {
             const correctCount = userAnswers.filter((ans) => ans.isCorrect).length;
             saveAttempt(correctCount).then(() => setShowResult(true));
         }
@@ -104,7 +102,7 @@ function PlayQuiz() {
         setUserAnswers([]);
         setCurrentAttempt([]);
         setShowResult(false);
-        if (!isUntilCorrectMode) resetTimer();
+        if (!isUntilCorrectMode && quiz?.settings.timeLimitPerQuestion) resetTimer();
     };
 
     if (loading) return <Loading />;
@@ -142,7 +140,6 @@ function PlayQuiz() {
                         />
                         {!isUntilCorrectMode && (
                             <RankingDisplay ranking={ranking} allUserAttempts={allUserAttempts} totalQuestions={questions.length} />
-
                         )}
                     </>
                 )}
