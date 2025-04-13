@@ -31,6 +31,9 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
         setTestDateTime(dateTime);
     }, []);
 
+    const correctCount = userAnswers.filter((ans) => ans.isCorrect).length;
+    const percentage = questions.length > 0 ? ((correctCount / questions.length) * 100).toFixed(2) : "0.00";
+
     const getAnswerText = (question: Question, answer: number | string) => {
         if (answer === -1) return "Tempo esgotado";
         if (question.type === "multiple-choice" && question.options) return question.options[Number(answer)];
@@ -66,7 +69,7 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                 await navigator.share({
                     files: [file],
                     title: `Meu resultado no quiz "${quiz.name}"`,
-                    text: `Acertei ${userAnswers.filter((ans) => ans.isCorrect).length} de ${questions.length} perguntas! Realizado em: ${testDateTime}`,
+                    text: `Acertei ${correctCount} de ${questions.length} perguntas (${percentage}%)! Realizado em: ${testDateTime}`,
                 });
             } else {
                 const link = document.createElement("a");
@@ -99,10 +102,9 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                 </h2>
                 <p className="text-lg text-white">
                     {user?.displayName} você acertou{" "}
-                    <span className="font-semibold text-green-400">
-                        {userAnswers.filter((ans) => ans.isCorrect).length}
-                    </span>{" "}
-                    de <span className="font-semibold">{questions.length}</span> perguntas!
+                    <span className="font-semibold text-green-400">{correctCount}</span>{" "}
+                    de <span className="font-semibold">{questions.length}</span> perguntas
+                    {" "}({percentage}%)!
                 </p>
                 <p className="text-sm text-gray-400 mt-2">
                     Teste realizado em: {testDateTime}
@@ -142,8 +144,7 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                 <button
                     onClick={handleShare}
                     disabled={isSharing}
-                    className={`px-6 py-3 rounded-lg cursor-pointer text-white ${isSharing ? "bg-purple-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-500"
-                        }`}
+                    className={`px-6 py-3 rounded-lg cursor-pointer text-white ${isSharing ? "bg-purple-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-500"}`}
                     aria-label="Compartilhar resultado como imagem"
                 >
                     {isSharing ? "Gerando..." : "Compartilhar Resultado"}

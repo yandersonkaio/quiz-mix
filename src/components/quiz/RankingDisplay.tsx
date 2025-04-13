@@ -1,18 +1,28 @@
-import { Attempt } from "../../hooks/useQuizData";
+import { Attempt, Question } from "../../hooks/useQuizData";
 import { useState } from "react";
-import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { IoMdArrowDropdown, IoMdArrowDropup, IoMdEye } from "react-icons/io";
+import AnswersModal from "./AnswersModal";
 
 interface RankingDisplayProps {
     ranking: Attempt[];
     allUserAttempts: { [userId: string]: Attempt[] };
-    totalQuestions: number;
+    questions: Question[]; // Necessário para o AnswersModal
 }
 
-export const RankingDisplay = ({ ranking, allUserAttempts, totalQuestions }: RankingDisplayProps) => {
+export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingDisplayProps) => {
     const [expandedUser, setExpandedUser] = useState<string | null>(null);
+    const [selectedAttempt, setSelectedAttempt] = useState<Attempt | null>(null);
 
     const toggleExpand = (userId: string) => {
         setExpandedUser(expandedUser === userId ? null : userId);
+    };
+
+    const openAnswersModal = (attempt: Attempt) => {
+        setSelectedAttempt(attempt);
+    };
+
+    const closeAnswersModal = () => {
+        setSelectedAttempt(null);
     };
 
     return (
@@ -29,12 +39,12 @@ export const RankingDisplay = ({ ranking, allUserAttempts, totalQuestions }: Ran
                             <div key={uniqueKey}>
                                 <div
                                     className={`flex items-center p-4 rounded-lg ${index === 0
-                                        ? "bg-yellow-600"
-                                        : index === 1
-                                            ? "bg-gray-400"
-                                            : index === 2
-                                                ? "bg-yellow-800"
-                                                : "bg-gray-700"
+                                            ? "bg-yellow-600"
+                                            : index === 1
+                                                ? "bg-gray-400"
+                                                : index === 2
+                                                    ? "bg-yellow-800"
+                                                    : "bg-gray-700"
                                         }`}
                                 >
                                     <span className="mr-4 text-lg font-bold">{index + 1}º</span>
@@ -48,17 +58,30 @@ export const RankingDisplay = ({ ranking, allUserAttempts, totalQuestions }: Ran
                                     <div className="flex-1">
                                         <p className="font-medium">{attempt.displayName}</p>
                                         <p className="text-sm text-gray-300">
-                                            Acertos: {attempt.correctAnswers} / {totalQuestions}
+                                            Acertos: {attempt.correctAnswers} / {attempt.totalQuestions} (
+                                            {attempt.percentage}%)
                                         </p>
                                     </div>
-                                    {hasMultipleAttempts && (
+                                    <div className="flex items-center space-x-2">
                                         <button
-                                            onClick={() => toggleExpand(attempt.userId)}
+                                            onClick={() => openAnswersModal(attempt)}
                                             className="text-gray-300 hover:text-white focus:outline-none"
                                         >
-                                            {expandedUser === attempt.userId ? <IoMdArrowDropup className="w-10 h-10 cursor-pointer" /> : <IoMdArrowDropdown className="w-10 h-10 cursor-pointer" />}
+                                            <IoMdEye className="w-6 h-6 cursor-pointer" />
                                         </button>
-                                    )}
+                                        {hasMultipleAttempts && (
+                                            <button
+                                                onClick={() => toggleExpand(attempt.userId)}
+                                                className="text-gray-300 hover:text-white focus:outline-none"
+                                            >
+                                                {expandedUser === attempt.userId ? (
+                                                    <IoMdArrowDropup className="w-10 h-10 cursor-pointer" />
+                                                ) : (
+                                                    <IoMdArrowDropdown className="w-10 h-10 cursor-pointer" />
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {hasMultipleAttempts && expandedUser === attempt.userId && (
@@ -68,11 +91,20 @@ export const RankingDisplay = ({ ranking, allUserAttempts, totalQuestions }: Ran
                                             .map((extraAttempt, idx) => (
                                                 <div
                                                     key={`${extraAttempt.userId}-${extraAttempt.completedAt.toMillis()}`}
-                                                    className="p-2 bg-gray-600 rounded-lg text-sm text-gray-300"
+                                                    className="p-2 bg-gray-600 rounded-lg text-sm text-gray-300 flex items-center justify-between"
                                                 >
-                                                    Tentativa {idx + 1}: {extraAttempt.correctAnswers} /{" "}
-                                                    {totalQuestions} (Concluída em:{" "}
-                                                    {extraAttempt.completedAt.toDate().toLocaleString()})
+                                                    <span>
+                                                        Tentativa {idx + 1}: {extraAttempt.correctAnswers} /{" "}
+                                                        {extraAttempt.totalQuestions} ({extraAttempt.percentage}%) (
+                                                        Concluída em:{" "}
+                                                        {extraAttempt.completedAt.toDate().toLocaleString()})
+                                                    </span>
+                                                    <button
+                                                        onClick={() => openAnswersModal(extraAttempt)}
+                                                        className="text-gray-300 hover:text-white focus:outline-none"
+                                                    >
+                                                        <IoMdEye className="w-6 h-6 cursor-pointer" />
+                                                    </button>
                                                 </div>
                                             ))}
                                     </div>
@@ -83,6 +115,15 @@ export const RankingDisplay = ({ ranking, allUserAttempts, totalQuestions }: Ran
                 </div>
             ) : (
                 <p className="text-gray-400">Nenhum jogador no ranking ainda.</p>
+            )}
+
+            {selectedAttempt && (
+                <AnswersModal
+                    isOpen={!!selectedAttempt}
+                    onClose={closeAnswersModal}
+                    attempt={selectedAttempt}
+                    questions={questions}
+                />
             )}
         </div>
     );

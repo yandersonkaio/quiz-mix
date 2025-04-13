@@ -18,6 +18,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
+import { UserAnswer } from "../pages/PlayQuiz";
 
 export interface Question {
     id: string;
@@ -46,8 +47,11 @@ export interface Attempt {
     quizId: string;
     completedAt: any;
     correctAnswers: number;
+    totalQuestions: number;
+    percentage: number;
     displayName: string;
     photoURL?: string;
+    answers: UserAnswer[];
 }
 
 export interface QuestionData extends Omit<Question, "id"> { }
@@ -154,18 +158,29 @@ export const useQuizData = () => {
         setAllUserAttempts(userAttemptsMap);
     };
 
-    const saveAttempt = async (correctAnswers: number) => {
+    const saveAttempt = async (correctAnswers: number, totalQuestions: number, answers: UserAnswer[]) => {
         if (!user || !quizId) return;
+
+        const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
         await addDoc(collection(db, "attempts"), {
             userId: user.uid,
             quizId,
             completedAt: Timestamp.now(),
             correctAnswers,
+            totalQuestions,
+            percentage: Number(percentage.toFixed(2)),
             displayName: user.displayName || "Anônimo",
             photoURL: user.photoURL || undefined,
+            answers,
         });
-        console.log("Tentativa salva com sucesso:", { correctAnswers, displayName: user.displayName });
+        console.log("Tentativa salva com sucesso:", {
+            correctAnswers,
+            totalQuestions,
+            percentage,
+            displayName: user.displayName,
+            answers,
+        });
 
         fetchRanking();
     };
@@ -357,7 +372,7 @@ export const useQuizData = () => {
         loading,
         operationLoading,
         fetchRanking,
-        saveAttempt,
+        saveAttempt: (correctAnswers: number, totalQuestions: number, answers: UserAnswer[]) => saveAttempt(correctAnswers, totalQuestions, answers),
         updateQuizDetails,
         deleteQuiz,
         addQuestion,

@@ -362,7 +362,7 @@ function QuizDetails() {
                     <RankingDisplay
                         ranking={ranking}
                         allUserAttempts={allUserAttempts}
-                        totalQuestions={questions.length}
+                        questions={questions}
                     />
                 )}
 
