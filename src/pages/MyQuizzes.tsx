@@ -35,7 +35,7 @@ function MyQuizzes() {
         <div className="min-h-screen bg-gray-900 p-6 text-white">
             <div className="max-w-5xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold">Meus Quizzes</h1>
+                    <h1 className="text-3xl font-bold ml-12 md:ml-0">Meus Quizzes</h1>
                     <Link
                         to="/create-quiz"
                         className="p-3 bg-blue-700 rounded-lg hover:bg-blue-600 transition-colors duration-200"

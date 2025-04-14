@@ -12,7 +12,7 @@ export const QuizHeader = ({ quiz, currentQuestionIndex, totalQuestions, timeLef
     const timeProgress =
         quiz.settings.timeLimitPerQuestion && timeLeft !== null
             ? (timeLeft / quiz.settings.timeLimitPerQuestion) * 100
-            : null; // Alterado para null em vez de 0
+            : null;
 
     return (
         <div className="mb-6">

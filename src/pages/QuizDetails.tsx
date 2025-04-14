@@ -215,13 +215,7 @@ function QuizDetails() {
         <div className="min-h-screen bg-gray-900 p-6 text-white">
             <div className="max-w-4xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold">{quiz.name}</h1>
-                    <button
-                        onClick={() => navigate("/my-quizzes")}
-                        className="px-4 py-2 cursor-pointer bg-gray-700 rounded-lg hover:bg-gray-600"
-                    >
-                        Voltar
-                    </button>
+                    <h1 className="text-3xl font-bold ml-12 md:ml-0">{quiz.name}</h1>
                 </div>
 
                 <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">

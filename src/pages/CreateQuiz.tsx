@@ -76,7 +76,7 @@ function CreateQuiz() {
         <div className="min-h-screen bg-gray-900 p-6 text-white">
             <div className="max-w-4xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold">Criar Novo Quiz</h1>
+                    <h1 className="text-3xl font-bold ml-12 md:ml-0">Criar Novo Quiz</h1>
                 </div>
 
                 <form onSubmit={handleCreateQuiz} className="space-y-6 mb-8">

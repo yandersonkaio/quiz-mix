@@ -33,7 +33,7 @@ function Explore() {
     return (
         <div className="min-h-screen bg-gray-900 p-6 text-white">
             <div className="max-w-5xl mx-auto">
-                <h1 className="text-3xl font-bold mb-6">Explorar Quizzes</h1>
+                <h1 className="text-3xl font-bold mb-6 ml-12 md:ml-0">Explorar Quizzes</h1>
 
                 <div className="mb-8">
                     <input
