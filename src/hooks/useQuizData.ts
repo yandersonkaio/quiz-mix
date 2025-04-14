@@ -65,12 +65,16 @@ export const useQuizData = () => {
     const [canPlay, setCanPlay] = useState<boolean>(false);
     const [ranking, setRanking] = useState<Attempt[]>([]);
     const [allUserAttempts, setAllUserAttempts] = useState<{ [userId: string]: Attempt[] }>({});
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!!quizId);
     const [operationLoading, setOperationLoading] = useState(false);
 
     useEffect(() => {
-        console.log(quizId)
-        if (!quizId || !user) {
+        if (!quizId) {
+            setLoading(false);
+            return;
+        }
+
+        if (!user) {
             setLoading(false);
             navigate("/login");
             return;
@@ -103,17 +107,21 @@ export const useQuizData = () => {
 
                 setCanPlay(true);
 
-                const unsubscribe = onSnapshot(collection(db, "quizzes", quizId, "questions"), (snapshot) => {
-                    const fetchedQuestions = snapshot.docs.map((doc) => ({
-                        id: doc.id,
-                        ...doc.data(),
-                    })) as Question[];
-                    setQuestions(fetchedQuestions);
-                    setLoading(false);
-                }, (error) => {
-                    console.error("useQuizData: Erro ao carregar perguntas:", error);
-                    setLoading(false);
-                });
+                const unsubscribe = onSnapshot(
+                    collection(db, "quizzes", quizId, "questions"),
+                    (snapshot) => {
+                        const fetchedQuestions = snapshot.docs.map((doc) => ({
+                            id: doc.id,
+                            ...doc.data(),
+                        })) as Question[];
+                        setQuestions(fetchedQuestions);
+                        setLoading(false);
+                    },
+                    (error) => {
+                        console.error("useQuizData: Erro ao carregar perguntas:", error);
+                        setLoading(false);
+                    }
+                );
 
                 return () => unsubscribe();
             } catch (error) {
@@ -125,6 +133,41 @@ export const useQuizData = () => {
 
         fetchQuizAndCheckAttempts();
     }, [quizId, navigate, user]);
+
+    const createQuiz = async (quizData: Omit<Quiz, "id" | "createdAt">) => {
+        if (!user) {
+            alert("Faça login para criar um quiz.");
+            return null;
+        }
+
+        try {
+            setOperationLoading(true);
+            const settings: Quiz["settings"] = {
+                showAnswersAfter: quizData.settings.showAnswersAfter,
+                allowMultipleAttempts: quizData.settings.allowMultipleAttempts || false,
+            };
+            if (quizData.settings.timeLimitPerQuestion !== undefined) {
+                settings.timeLimitPerQuestion = quizData.settings.timeLimitPerQuestion;
+            }
+
+            const quizRef = await addDoc(collection(db, "quizzes"), {
+                name: quizData.name,
+                description: quizData.description || "",
+                userId: user.uid,
+                createdAt: Timestamp.now(),
+                settings,
+            });
+
+            alert("Quiz criado com sucesso!");
+            return quizRef.id;
+        } catch (error) {
+            console.error("Erro ao criar quiz:", error);
+            alert("Erro ao criar quiz.");
+            return null;
+        } finally {
+            setOperationLoading(false);
+        }
+    };
 
     const fetchRanking = async () => {
         if (!quizId) return;
@@ -172,13 +215,6 @@ export const useQuizData = () => {
             percentage: Number(percentage.toFixed(2)),
             displayName: user.displayName || "Anônimo",
             photoURL: user.photoURL || undefined,
-            answers,
-        });
-        console.log("Tentativa salva com sucesso:", {
-            correctAnswers,
-            totalQuestions,
-            percentage,
-            displayName: user.displayName,
             answers,
         });
 
@@ -248,14 +284,14 @@ export const useQuizData = () => {
                 question: questionData.question,
                 ...(questionData.type === "multiple-choice" && {
                     options: questionData.options,
-                    correctAnswer: questionData.correctAnswer
+                    correctAnswer: questionData.correctAnswer,
                 }),
                 ...(questionData.type === "true-false" && {
-                    correctAnswer: questionData.correctAnswer
+                    correctAnswer: questionData.correctAnswer,
                 }),
                 ...(questionData.type === "fill-in-the-blank" && {
-                    blankAnswer: questionData.blankAnswer || ""
-                })
+                    blankAnswer: questionData.blankAnswer || "",
+                }),
             };
 
             await addDoc(collection(db, "quizzes", quizId, "questions"), cleanedQuestion);
@@ -282,14 +318,14 @@ export const useQuizData = () => {
                     question: question.question,
                     ...(question.type === "multiple-choice" && {
                         options: question.options,
-                        correctAnswer: question.correctAnswer
+                        correctAnswer: question.correctAnswer,
                     }),
                     ...(question.type === "true-false" && {
-                        correctAnswer: question.correctAnswer
+                        correctAnswer: question.correctAnswer,
                     }),
                     ...(question.type === "fill-in-the-blank" && {
-                        blankAnswer: question.blankAnswer || ""
-                    })
+                        blankAnswer: question.blankAnswer || "",
+                    }),
                 };
 
                 const docRef = doc(questionsRef);
@@ -317,27 +353,29 @@ export const useQuizData = () => {
                 ...(questionData.type === "multiple-choice" && {
                     options: questionData.options,
                     correctAnswer: questionData.correctAnswer,
-                    blankAnswer: undefined
+                    blankAnswer: undefined,
                 }),
                 ...(questionData.type === "true-false" && {
                     correctAnswer: questionData.correctAnswer,
                     options: undefined,
-                    blankAnswer: undefined
+                    blankAnswer: undefined,
                 }),
                 ...(questionData.type === "fill-in-the-blank" && {
                     blankAnswer: questionData.blankAnswer || "",
                     options: undefined,
-                    correctAnswer: undefined
-                })
+                    correctAnswer: undefined,
+                }),
             };
 
-            Object.keys(cleanedQuestion).forEach(key => {
+            Object.keys(cleanedQuestion).forEach((key) => {
                 if (cleanedQuestion[key as keyof Question] === undefined) {
                     delete cleanedQuestion[key as keyof Question];
                 }
             });
 
-            await setDoc(doc(db, "quizzes", quizId, "questions", questionId), cleanedQuestion, { merge: true });
+            await setDoc(doc(db, "quizzes", quizId, "questions", questionId), cleanedQuestion, {
+                merge: true,
+            });
             alert("Questão atualizada com sucesso!");
         } catch (error) {
             console.error("Erro ao atualizar questão:", error);
@@ -372,7 +410,7 @@ export const useQuizData = () => {
         loading,
         operationLoading,
         fetchRanking,
-        saveAttempt: (correctAnswers: number, totalQuestions: number, answers: UserAnswer[]) => saveAttempt(correctAnswers, totalQuestions, answers),
+        saveAttempt,
         updateQuizDetails,
         deleteQuiz,
         addQuestion,
@@ -380,5 +418,6 @@ export const useQuizData = () => {
         updateQuestion,
         deleteQuestion,
         user,
+        createQuiz,
     };
 };

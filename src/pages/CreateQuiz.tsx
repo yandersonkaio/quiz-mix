@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
-import { auth, db } from "../db/firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
+import { useQuizData } from "../hooks/useQuizData";
 
 interface Quiz {
     name: string;
@@ -27,45 +25,25 @@ function CreateQuiz() {
             allowMultipleAttempts: false,
         },
     });
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const { user, loading, operationLoading, createQuiz } = useQuizData();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-            if (!currentUser) navigate("/login");
-            else setQuiz((prev) => ({ ...prev, userId: currentUser.uid }));
-        });
-        return () => unsubscribe();
-    }, [navigate]);
 
     const handleCreateQuiz = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !quiz.name.trim()) return;
+        if (!quiz.name.trim()) {
+            alert("O nome do quiz é obrigatório.");
+            return;
+        }
 
-        try {
-            const settings: Quiz["settings"] = {
-                showAnswersAfter: quiz.settings.showAnswersAfter,
-                allowMultipleAttempts: quiz.settings.allowMultipleAttempts || false,
-            };
-            if (quiz.settings.timeLimitPerQuestion !== undefined) {
-                settings.timeLimitPerQuestion = quiz.settings.timeLimitPerQuestion;
-            }
+        const quizId = await createQuiz({
+            name: quiz.name,
+            description: quiz.description,
+            userId: user?.uid || "",
+            settings: quiz.settings,
+        });
 
-            const quizRef = await addDoc(collection(db, "quizzes"), {
-                name: quiz.name,
-                description: quiz.description || "",
-                userId: user.uid,
-                createdAt: Timestamp.now(),
-                settings,
-            });
-            alert("Quiz criado com sucesso!");
-            navigate(`/quiz/details/${quizRef.id}`);
-        } catch (error) {
-            console.error("Erro ao criar quiz:", error);
-            alert("Erro ao criar quiz.");
+        if (quizId) {
+            navigate(`/quiz/details/${quizId}`);
         }
     };
 
@@ -107,7 +85,10 @@ function CreateQuiz() {
                             onChange={(e) =>
                                 setQuiz({
                                     ...quiz,
-                                    settings: { ...quiz.settings, showAnswersAfter: e.target.value as "immediately" | "end" | "untilCorrect" },
+                                    settings: {
+                                        ...quiz.settings,
+                                        showAnswersAfter: e.target.value as "immediately" | "end" | "untilCorrect",
+                                    },
                                 })
                             }
                             className="w-full p-3 bg-gray-800 rounded-lg text-white"
@@ -163,9 +144,11 @@ function CreateQuiz() {
                     </div>
                     <button
                         type="submit"
-                        className="w-full py-3 cursor-pointer bg-blue-700 rounded-lg hover:bg-blue-600"
+                        disabled={operationLoading}
+                        className={`w-full py-3 cursor-pointer bg-blue-700 rounded-lg hover:bg-blue-600 ${operationLoading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
                     >
-                        Criar Quiz
+                        {operationLoading ? "Criando..." : "Criar Quiz"}
                     </button>
                 </form>
             </div>
