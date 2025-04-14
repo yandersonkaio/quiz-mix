@@ -66,23 +66,30 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={onClose}>
+        <div
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300"
+            onClick={onClose}
+        >
             <div
-                className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-none shadow-lg dark:shadow-lg transition-colors duration-200 animate-fadeIn"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                         {isEditing ? "Editar Pergunta" : "Adicionar Nova Pergunta"}
                     </h2>
-                    <button onClick={onClose} className="text-gray-400 cursor-pointer hover:text-white">
+                    <button
+                        onClick={onClose}
+                        className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                        aria-label="Fechar modal"
+                    >
                         ✕
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-gray-300 mb-1">Tipo de Pergunta</label>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-1">Tipo de Pergunta</label>
                         <select
                             value={formData.type}
                             onChange={(e) =>
@@ -94,7 +101,7 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
                                     blankAnswer: e.target.value === "fill-in-the-blank" ? "" : undefined,
                                 })
                             }
-                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none transition-colors duration-200"
                             disabled={isSaving}
                         >
                             <option value="multiple-choice">Múltipla Escolha</option>
@@ -103,12 +110,12 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
                         </select>
                     </div>
                     <div>
-                        <label className="block text-gray-300 mb-1">Pergunta</label>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-1">Pergunta</label>
                         <input
                             type="text"
                             value={formData.question}
                             onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors duration-200"
                             placeholder="Digite a pergunta"
                             required
                             disabled={isSaving}
@@ -117,26 +124,28 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
 
                     {formData.type === "multiple-choice" && (
                         <div>
-                            <label className="block text-gray-300 mb-1">Opções</label>
+                            <label className="block text-gray-700 dark:text-gray-300 mb-1">Opções</label>
                             {formData.options?.map((option: string, index: number) => (
                                 <div key={index} className="flex items-center space-x-2 mb-2">
-                                    <span className="text-gray-400">{String.fromCharCode(65 + index)}</span>
+                                    <span className="text-gray-600 dark:text-gray-400">
+                                        {String.fromCharCode(65 + index)}
+                                    </span>
                                     <input
                                         type="text"
                                         value={option}
                                         onChange={(e) => handleOptionChange(index, e.target.value)}
-                                        className="w-full p-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                        className="w-full p-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors duration-200"
                                         placeholder={`Opção ${String.fromCharCode(65 + index)}`}
                                         required
                                         disabled={isSaving}
                                     />
                                 </div>
                             ))}
-                            <label className="block text-gray-300 mb-1 mt-4">Resposta Correta</label>
+                            <label className="block text-gray-700 dark:text-gray-300 mb-1 mt-4">Resposta Correta</label>
                             <select
                                 value={formData.correctAnswer}
                                 onChange={(e) => setFormData({ ...formData, correctAnswer: Number(e.target.value) })}
-                                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none transition-colors duration-200"
                                 disabled={isSaving}
                             >
                                 {formData.options?.map((_: string, index: number) => (
@@ -150,11 +159,11 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
 
                     {formData.type === "true-false" && (
                         <div>
-                            <label className="block text-gray-300 mb-1">Resposta Correta</label>
+                            <label className="block text-gray-700 dark:text-gray-300 mb-1">Resposta Correta</label>
                             <select
                                 value={formData.correctAnswer}
                                 onChange={(e) => setFormData({ ...formData, correctAnswer: Number(e.target.value) })}
-                                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none transition-colors duration-200"
                                 disabled={isSaving}
                             >
                                 <option value={1}>Verdadeiro</option>
@@ -165,12 +174,12 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
 
                     {formData.type === "fill-in-the-blank" && (
                         <div>
-                            <label className="block text-gray-300 mb-1">Resposta da Lacuna</label>
+                            <label className="block text-gray-700 dark:text-gray-300 mb-1">Resposta da Lacuna</label>
                             <input
                                 type="text"
                                 value={formData.blankAnswer || ""}
                                 onChange={(e) => setFormData({ ...formData, blankAnswer: e.target.value })}
-                                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors duration-200"
                                 placeholder="Digite a resposta correta"
                                 required
                                 disabled={isSaving}
@@ -182,7 +191,7 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 cursor-pointer bg-gray-600 rounded-lg hover:bg-gray-500"
+                            className="flex-1 py-3 cursor-pointer bg-gray-500 dark:bg-gray-600 rounded-lg text-white hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-200"
                             disabled={isSaving}
                         >
                             Cancelar
@@ -190,10 +199,10 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className={`flex-1 py-3 rounded-lg 
-                                ${isSaving ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 cursor-pointer'}
-                                flex items-center justify-center gap-2
-                            `}
+                            className={`flex-1 py-3 rounded-lg text-white flex items-center justify-center gap-2 transition-colors duration-200 ${isSaving
+                                ? "bg-green-400 cursor-not-allowed dark:bg-green-400"
+                                : "bg-green-600 hover:bg-green-700 cursor-pointer dark:bg-green-600 dark:hover:bg-green-700"
+                                }`}
                         >
                             {isSaving ? (
                                 <>

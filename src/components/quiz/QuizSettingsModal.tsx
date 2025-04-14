@@ -85,18 +85,21 @@ export function QuizSettingsModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={onClose}>
+        <div
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50"
+            onClick={onClose}
+        >
             <div
-                className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                         {isCreating ? "Criar Novo Quiz" : "Editar Configurações do Quiz"}
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 cursor-pointer hover:text-white"
+                        className="text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white"
                         disabled={isSaving || operationLoading}
                     >
                         ✕
@@ -105,12 +108,14 @@ export function QuizSettingsModal({
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-gray-300 mb-1">Nome do Quiz</label>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                            Nome do Quiz
+                        </label>
                         <input
                             type="text"
                             value={formData.name ?? ""}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
                             placeholder="Digite o nome do quiz"
                             required
                             disabled={isSaving || operationLoading}
@@ -118,18 +123,24 @@ export function QuizSettingsModal({
                     </div>
 
                     <div>
-                        <label className="block text-gray-300 mb-1">Descrição</label>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                            Descrição
+                        </label>
                         <textarea
                             value={formData.description ?? ""}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                            onChange={(e) =>
+                                setFormData({ ...formData, description: e.target.value })
+                            }
+                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
                             placeholder="Digite a descrição do quiz"
                             disabled={isSaving || operationLoading}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-gray-300 mb-1">Exibir Respostas</label>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                            Exibir Respostas
+                        </label>
                         <select
                             value={formData.settings?.showAnswersAfter ?? "end"}
                             onChange={(e) =>
@@ -137,26 +148,32 @@ export function QuizSettingsModal({
                                     ...formData,
                                     settings: {
                                         ...formData.settings,
-                                        showAnswersAfter: e.target.value as "immediately" | "end" | "untilCorrect",
-                                        timeLimitPerQuestion: e.target.value === "untilCorrect"
-                                            ? undefined
-                                            : formData.settings?.timeLimitPerQuestion,
+                                        showAnswersAfter: e.target.value as
+                                            | "immediately"
+                                            | "end"
+                                            | "untilCorrect",
+                                        timeLimitPerQuestion:
+                                            e.target.value === "untilCorrect"
+                                                ? undefined
+                                                : formData.settings?.timeLimitPerQuestion,
                                     } as Quiz["settings"],
                                 })
                             }
-                            className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none"
                             disabled={isSaving || operationLoading}
                         >
-                            <option value="immediately">Logo após responder cada pergunta</option>
+                            <option value="immediately">
+                                Logo após responder cada pergunta
+                            </option>
                             <option value="end">No final</option>
                             <option value="untilCorrect">Tentar até acertar</option>
                         </select>
                     </div>
 
                     {isStudyMode ? (
-                        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 flex items-center gap-3">
+                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-500/50 rounded-lg p-4 flex items-center gap-3">
                             <svg
-                                className="h-5 w-5 text-blue-400 flex-shrink-0"
+                                className="h-5 w-5 text-blue-500 dark:text-blue-400 flex-shrink-0"
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
                                 viewBox="0 0 24 24"
@@ -169,13 +186,18 @@ export function QuizSettingsModal({
                                     d="M13 16h-1v-4h-1m1-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"
                                 />
                             </svg>
-                            <div className="text-gray-200">
-                                <span className="font-semibold text-blue-300">Modo Estudo ativo:</span> Sem limite de tempo por pergunta e ranking desativado.
+                            <div className="text-gray-800 dark:text-gray-200">
+                                <span className="font-semibold text-blue-600 dark:text-blue-300">
+                                    Modo Estudo ativo:
+                                </span>{" "}
+                                Sem limite de tempo por pergunta e ranking desativado.
                             </div>
                         </div>
                     ) : (
                         <div>
-                            <label className="block text-gray-300 mb-1">Tempo por Pergunta (segundos)</label>
+                            <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                                Tempo por Pergunta (segundos)
+                            </label>
                             <input
                                 type="number"
                                 value={formData.settings?.timeLimitPerQuestion ?? ""}
@@ -184,11 +206,13 @@ export function QuizSettingsModal({
                                         ...formData,
                                         settings: {
                                             ...formData.settings,
-                                            timeLimitPerQuestion: e.target.value ? Number(e.target.value) : undefined,
+                                            timeLimitPerQuestion: e.target.value
+                                                ? Number(e.target.value)
+                                                : undefined,
                                         } as Quiz["settings"],
                                     })
                                 }
-                                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none"
                                 placeholder="Deixe em branco para sem limite"
                                 min="1"
                                 disabled={isSaving || operationLoading}
@@ -197,7 +221,9 @@ export function QuizSettingsModal({
                     )}
 
                     <div>
-                        <label className="block text-gray-300 mb-1">Permitir Múltiplas Tentativas</label>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                            Permitir Múltiplas Tentativas
+                        </label>
                         <input
                             type="checkbox"
                             checked={formData.settings?.allowMultipleAttempts ?? false}
@@ -210,7 +236,7 @@ export function QuizSettingsModal({
                                     } as Quiz["settings"],
                                 })
                             }
-                            className="h-5 w-5 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                            className="h-5 w-5 text-blue-600 dark:text-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-600 dark:focus:ring-blue-500"
                             disabled={isSaving || operationLoading}
                         />
                     </div>
@@ -219,7 +245,7 @@ export function QuizSettingsModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 cursor-pointer bg-gray-600 rounded-lg hover:bg-gray-500"
+                            className="flex-1 py-3 cursor-pointer bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors duration-200"
                             disabled={isSaving || operationLoading}
                         >
                             Cancelar
@@ -227,10 +253,11 @@ export function QuizSettingsModal({
                         <button
                             type="submit"
                             disabled={isSaving || operationLoading}
-                            className={`flex-1 py-3 rounded-lg 
-                                ${isSaving || operationLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 cursor-pointer'}
-                                flex items-center justify-center gap-2
-                            `}
+                            className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200
+                                ${isSaving || operationLoading
+                                    ? "bg-blue-300 dark:bg-blue-400 cursor-not-allowed"
+                                    : "bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 cursor-pointer"
+                                } text-white`}
                         >
                             {isSaving || operationLoading ? (
                                 <>
@@ -257,7 +284,7 @@ export function QuizSettingsModal({
                                     {isCreating ? "Criando..." : "Salvando..."}
                                 </>
                             ) : (
-                                isCreating ? "Criar Quiz" : "Salvar"
+                                <>{isCreating ? "Criar Quiz" : "Salvar"}</>
                             )}
                         </button>
                     </div>

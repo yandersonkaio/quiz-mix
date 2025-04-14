@@ -116,7 +116,10 @@ function QuizDetails() {
         const questionData: Omit<Question, "id"> = {
             type: question.type,
             question: question.question,
-            ...(question.type === "multiple-choice" && { options: question.options, correctAnswer: question.correctAnswer }),
+            ...(question.type === "multiple-choice" && {
+                options: question.options,
+                correctAnswer: question.correctAnswer,
+            }),
             ...(question.type === "true-false" && { correctAnswer: question.correctAnswer }),
             ...(question.type === "fill-in-the-blank" && { blankAnswer: question.blankAnswer }),
         };
@@ -207,29 +210,42 @@ function QuizDetails() {
     };
 
     if (loading) return <Loading />;
-    if (!quiz) return <div className="text-white p-6">Quiz não encontrado.</div>;
+    if (!quiz) return <div className="text-gray-900 dark:text-white p-6">Quiz não encontrado.</div>;
 
     const isCreator = quiz.userId === user?.uid;
 
     return (
-        <div className="min-h-screen bg-gray-900 p-6 text-white">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white">
             <div className="max-w-4xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold ml-12 md:ml-0">{quiz.name}</h1>
+                    <h1 className="text-3xl font-bold ml-12 md:ml-0 text-gray-900 dark:text-white">
+                        {quiz.name}
+                    </h1>
                 </div>
 
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md dark:shadow-lg border border-gray-200 dark:border-none mb-8">
                     <div className="space-y-4">
                         <div className="flex justify-between items-center mb-8">
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-300">Descrição</h2>
-                                <p className="text-gray-400">{quiz.description || "Sem descrição"}</p>
+                                <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                                    Descrição
+                                </h2>
+                                <p className="text-gray-600 dark:text-gray-400">
+                                    {quiz.description || "Sem descrição"}
+                                </p>
                             </div>
                         </div>
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-300">Detalhes</h2>
-                            <ul className="text-gray-400 space-y-1">
-                                <li>Criado em: {quiz.createdAt ? new Date(quiz.createdAt.toDate()).toLocaleDateString() : "N/A"}</li>
+                            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+                                Detalhes
+                            </h2>
+                            <ul className="text-gray-600 dark:text-gray-400 space-y-1">
+                                <li>
+                                    Criado em:{" "}
+                                    {quiz.createdAt
+                                        ? new Date(quiz.createdAt.toDate()).toLocaleDateString()
+                                        : "N/A"}
+                                </li>
                                 <li>Número de perguntas: {questions.length}</li>
                                 {quiz.settings?.timeLimitPerQuestion ? (
                                     <li>Tempo por pergunta: {quiz.settings.timeLimitPerQuestion}s</li>
@@ -244,7 +260,12 @@ function QuizDetails() {
                                             ? "Após acertar"
                                             : "No final"}
                                 </li>
-                                <li>Tentativas múltiplas: {quiz.settings?.allowMultipleAttempts ? "Permitidas" : "Não permitidas"}</li>
+                                <li>
+                                    Tentativas múltiplas:{" "}
+                                    {quiz.settings?.allowMultipleAttempts
+                                        ? "Permitidas"
+                                        : "Não permitidas"}
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -253,7 +274,7 @@ function QuizDetails() {
                         <button
                             onClick={handlePlayQuiz}
                             disabled={questions.length === 0 || operationLoading}
-                            className="flex items-center px-4 py-2 cursor-pointer bg-green-600 rounded-lg hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center px-4 py-2 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                             title={questions.length === 0 ? "Adicione perguntas para jogar" : "Jogar o Quiz"}
                         >
                             <FaPlay className="mr-2" /> Jogar
@@ -263,7 +284,7 @@ function QuizDetails() {
                                 <button
                                     onClick={() => setIsSettingsModalOpen(true)}
                                     disabled={operationLoading}
-                                    className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-500 disabled:opacity-50"
+                                    className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 disabled:opacity-50 transition-colors duration-200"
                                     title="Editar configurações do Quiz"
                                 >
                                     <FaEdit className="mr-2" /> Editar
@@ -271,7 +292,7 @@ function QuizDetails() {
                                 <button
                                     onClick={handleDeleteQuiz}
                                     disabled={operationLoading}
-                                    className="flex items-center px-4 py-2 cursor-pointer bg-red-600 rounded-lg hover:bg-red-500 disabled:opacity-50"
+                                    className="flex items-center px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 disabled:opacity-50 transition-colors duration-200"
                                     title="Excluir Quiz"
                                 >
                                     <FaTrash className="mr-2" /> Excluir
@@ -284,13 +305,15 @@ function QuizDetails() {
                 {isCreator && (
                     <div className="mt-8">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">Perguntas ({questions.length})</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                Perguntas ({questions.length})
+                            </h2>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setIsImportModalOpen(true)}
                                     disabled={operationLoading}
                                     title="Importar Perguntas de JSON"
-                                    className="flex items-center p-3 cursor-pointer bg-purple-600 rounded-lg hover:bg-purple-500 disabled:opacity-50"
+                                    className="flex items-center p-3 cursor-pointer bg-purple-600 text-white rounded-lg hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 disabled:opacity-50 transition-colors duration-200"
                                 >
                                     <FaFileUpload className="w-5 h-5" />
                                 </button>
@@ -298,27 +321,31 @@ function QuizDetails() {
                                     onClick={openModalForAdd}
                                     disabled={operationLoading}
                                     title="Adicionar Pergunta Manualmente"
-                                    className="flex items-center p-3 cursor-pointer bg-green-600 rounded-lg hover:bg-green-500 disabled:opacity-50"
+                                    className="flex items-center p-3 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 disabled:opacity-50 transition-colors duration-200"
                                 >
                                     <IoMdAdd className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
                         {questions.length === 0 ? (
-                            <p className="text-gray-400 bg-gray-800 p-4 rounded-lg">Nenhuma pergunta adicionada ainda.</p>
+                            <p className="text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                                Nenhuma pergunta adicionada ainda.
+                            </p>
                         ) : (
-                            <div className="flex-grow overflow-y-auto mb-4 border border-gray-700 rounded-lg p-4 bg-gray-900/50 space-y-4">
+                            <div className="flex-grow overflow-y-auto mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4 dark:bg-gray-900/50 space-y-4">
                                 {questions.map((question, index) => (
                                     <div
                                         key={question.id}
-                                        className="bg-gray-800 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center rounded-lg"
+                                        className="bg-white dark:bg-gray-800 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center rounded-lg border border-gray-200 dark:border-none"
                                     >
                                         <div className="mb-3 sm:mb-0 mr-4 flex-grow">
-                                            <p className="text-gray-300">
-                                                <span className="font-bold mr-2 text-gray-500">{index + 1}.</span>
+                                            <p className="text-gray-800 dark:text-gray-300">
+                                                <span className="font-bold mr-2 text-gray-500 dark:text-gray-500">
+                                                    {index + 1}.
+                                                </span>
                                                 {question.question}
                                             </p>
-                                            <p className="text-gray-500 text-sm mt-1">
+                                            <p className="text-gray-500 dark:text-gray-500 text-sm mt-1">
                                                 Tipo:{" "}
                                                 {question.type === "multiple-choice"
                                                     ? "Múltipla Escolha"
@@ -330,7 +357,7 @@ function QuizDetails() {
                                         <div className="space-x-2 flex flex-shrink-0">
                                             <button
                                                 onClick={() => openModalForEdit(question)}
-                                                className="flex items-center h-10 w-10 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-500 justify-center disabled:opacity-50"
+                                                className="flex items-center h-10 w-10 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 justify-center disabled:opacity-50 transition-colors duration-200"
                                                 disabled={operationLoading}
                                                 title="Editar Pergunta"
                                             >
@@ -338,7 +365,7 @@ function QuizDetails() {
                                             </button>
                                             <button
                                                 onClick={() => question.id && handleRemoveQuestion(question.id)}
-                                                className="flex items-center h-10 w-10 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-500 justify-center disabled:opacity-50"
+                                                className="flex items-center h-10 w-10 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 justify-center disabled:opacity-50 transition-colors duration-200"
                                                 disabled={operationLoading}
                                                 title="Excluir Pergunta"
                                             >
@@ -396,7 +423,6 @@ function QuizDetails() {
                         />
                     </>
                 )}
-
             </div>
         </div>
     );

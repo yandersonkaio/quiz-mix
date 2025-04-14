@@ -6,7 +6,7 @@ import AnswersModal from "./AnswersModal";
 interface RankingDisplayProps {
     ranking: Attempt[];
     allUserAttempts: { [userId: string]: Attempt[] };
-    questions: Question[]; // Necessário para o AnswersModal
+    questions: Question[];
 }
 
 export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingDisplayProps) => {
@@ -26,8 +26,8 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
     };
 
     return (
-        <div className="mt-8">
-            <h3 className="text-xl font-semibold mb-4">Ranking</h3>
+        <div className="mt-8 bg-transparent dark:bg-transparent p-6 rounded-lg transition-colors duration-200">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Ranking</h3>
             {ranking.length > 0 ? (
                 <div className="space-y-4">
                     {ranking.map((attempt, index) => {
@@ -38,13 +38,13 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                         return (
                             <div key={uniqueKey}>
                                 <div
-                                    className={`flex items-center p-4 rounded-lg ${index === 0
-                                            ? "bg-yellow-600"
-                                            : index === 1
-                                                ? "bg-gray-400"
-                                                : index === 2
-                                                    ? "bg-yellow-800"
-                                                    : "bg-gray-700"
+                                    className={`flex items-center p-4 rounded-lg transition-colors duration-200 ${index === 0
+                                        ? "bg-yellow-200 dark:bg-yellow-600 text-gray-900 dark:text-white"
+                                        : index === 1
+                                            ? "bg-gray-200 dark:bg-gray-400 text-gray-900 dark:text-white"
+                                            : index === 2
+                                                ? "bg-yellow-200 dark:bg-yellow-800 text-gray-900 dark:text-white"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
                                         }`}
                                 >
                                     <span className="mr-4 text-lg font-bold">{index + 1}º</span>
@@ -56,8 +56,10 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                                         />
                                     )}
                                     <div className="flex-1">
-                                        <p className="font-medium">{attempt.displayName}</p>
-                                        <p className="text-sm text-gray-300">
+                                        <p className="font-medium text-gray-900 dark:text-white">
+                                            {attempt.displayName}
+                                        </p>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300">
                                             Acertos: {attempt.correctAnswers} / {attempt.totalQuestions} (
                                             {attempt.percentage}%)
                                         </p>
@@ -65,14 +67,20 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                                     <div className="flex items-center space-x-2">
                                         <button
                                             onClick={() => openAnswersModal(attempt)}
-                                            className="text-gray-300 hover:text-white focus:outline-none"
+                                            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200"
+                                            aria-label={`Ver respostas de ${attempt.displayName}`}
                                         >
                                             <IoMdEye className="w-6 h-6 cursor-pointer" />
                                         </button>
                                         {hasMultipleAttempts && (
                                             <button
                                                 onClick={() => toggleExpand(attempt.userId)}
-                                                className="text-gray-300 hover:text-white focus:outline-none"
+                                                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200"
+                                                aria-label={
+                                                    expandedUser === attempt.userId
+                                                        ? "Ocultar tentativas"
+                                                        : "Mostrar tentativas"
+                                                }
                                             >
                                                 {expandedUser === attempt.userId ? (
                                                     <IoMdArrowDropup className="w-10 h-10 cursor-pointer" />
@@ -91,7 +99,7 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                                             .map((extraAttempt, idx) => (
                                                 <div
                                                     key={`${extraAttempt.userId}-${extraAttempt.completedAt.toMillis()}`}
-                                                    className="p-2 bg-gray-600 rounded-lg text-sm text-gray-300 flex items-center justify-between"
+                                                    className="p-2 bg-gray-50 dark:bg-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 flex items-center justify-between border border-gray-200 dark:border-none transition-colors duration-200"
                                                 >
                                                     <span>
                                                         Tentativa {idx + 1}: {extraAttempt.correctAnswers} /{" "}
@@ -101,7 +109,8 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                                                     </span>
                                                     <button
                                                         onClick={() => openAnswersModal(extraAttempt)}
-                                                        className="text-gray-300 hover:text-white focus:outline-none"
+                                                        className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200"
+                                                        aria-label={`Ver respostas da tentativa ${idx + 1}`}
                                                     >
                                                         <IoMdEye className="w-6 h-6 cursor-pointer" />
                                                     </button>
@@ -114,7 +123,7 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                     })}
                 </div>
             ) : (
-                <p className="text-gray-400">Nenhum jogador no ranking ainda.</p>
+                <p className="text-gray-600 dark:text-gray-400">Nenhum jogador no ranking ainda.</p>
             )}
 
             {selectedAttempt && (

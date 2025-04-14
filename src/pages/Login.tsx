@@ -33,19 +33,21 @@ const Login: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-            <div className="bg-gray-800 rounded-lg shadow-lg p-16 max-w-md w-full text-center">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
+            <div
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-16 max-w-md w-full text-center border border-gray-200 dark:border-none transition-colors duration-200 animate-fadeIn"
+            >
                 <div className="flex justify-center mb-4">
                     <img src={Logo} className="w-52 h-24" alt="Logo" />
                 </div>
-                <h2 className="text-xl font-semibold text-white mb-2">Acesse sua conta</h2>
-                <p className="text-sm text-gray-400 mb-24">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Acesse sua conta</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-24">
                     Seja bem-vindo! Por favor, entre para continuar
                 </p>
                 <button
                     onClick={handleGoogleLogin}
                     disabled={loading}
-                    className="flex items-center cursor-pointer justify-center w-full bg-gray-600 hover:bg-gray-500 text-gray-300 text-sm py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50"
+                    className="flex items-center cursor-pointer justify-center w-full bg-gray-400 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-white dark:text-gray-300 text-sm py-3 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
                 >
                     <svg
                         className="w-5 h-5 mr-5"

@@ -106,12 +106,22 @@ function PlayQuiz() {
     };
 
     if (loading) return <Loading />;
-    if (!quiz) return <div className="text-white text-center mt-10">Quiz não encontrado.</div>;
-    if (questions.length === 0) return <div className="min-h-screen bg-gray-900 p-6 text-white flex items-center justify-center">...</div>;
-    if (canPlay === false) return <div className="min-h-screen bg-gray-900 p-6 text-white flex items-center justify-center">...</div>;
+    if (!quiz) return <div className="text-gray-900 dark:text-white text-center mt-10">Quiz não encontrado.</div>;
+    if (questions.length === 0)
+        return (
+            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center transition-colors duration-200">
+                <p>Nenhuma pergunta disponível no quiz.</p>
+            </div>
+        );
+    if (canPlay === false)
+        return (
+            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center transition-colors duration-200">
+                <p>Você não tem permissão para jogar este quiz.</p>
+            </div>
+        );
 
     return (
-        <div className="min-h-screen bg-gray-900 p-6 text-white flex items-center justify-center">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center transition-colors duration-200">
             <div className="max-w-2xl w-full">
                 {!showResult ? (
                     <>

@@ -4,7 +4,6 @@ import { Question, Quiz } from "../../hooks/useQuizData";
 import { UserAnswer } from "../../pages/PlayQuiz";
 import { useAuth } from '../../contexts/AuthContext';
 
-
 interface ResultsDisplayProps {
     quiz: Quiz;
     questions: Question[];
@@ -55,10 +54,10 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
         setIsSharing(true);
         try {
             const image = await domToImage.toPng(resultRef.current, {
-                bgcolor: "#1F2937",
+                bgcolor: document.documentElement.classList.contains('dark') ? "#1F2937" : "#f9fafb",
                 quality: 1,
                 style: {
-                    backgroundColor: "#1F2937",
+                    backgroundColor: document.documentElement.classList.contains('dark') ? "#1F2937" : "#f9fafb",
                 },
             });
 
@@ -96,25 +95,25 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
     const reviewQuestions = questions.length > 10 ? wrongAnswers : questions;
 
     return (
-        <div className="bg-gray-800 p-6 rounded-lg text-center">
-            <div ref={resultRef} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h2 className="text-2xl font-bold mb-4 text-white">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg text-center border border-gray-200 dark:border-none shadow-md dark:shadow-lg transition-colors duration-200">
+            <div ref={resultRef} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
                     Resultado do Quiz: {quiz.name}
                 </h2>
-                <p className="text-lg text-white">
+                <p className="text-lg text-gray-900 dark:text-white">
                     {user?.displayName} você acertou{" "}
-                    <span className="font-semibold text-green-400">{correctCount}</span>{" "}
+                    <span className="font-semibold text-green-600 dark:text-green-400">{correctCount}</span>{" "}
                     de <span className="font-semibold">{questions.length}</span> perguntas
                     {" "}({percentage}%)!
                 </p>
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                     Teste realizado em: {testDateTime}
                 </p>
-                <p className="text-sm text-gray-400 mt-2">Compartilhe seu resultado!</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Compartilhe seu resultado!</p>
 
                 {shouldShowReview && (
                     <div className="mt-6 space-y-4">
-                        <h3 className="text-xl font-semibold text-white">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                             {questions.length > 10 && wrongAnswers.length > 0
                                 ? "Perguntas que Você Errou"
                                 : "Revisão das Respostas"}
@@ -122,18 +121,23 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                         {reviewQuestions.map((q) => {
                             const userAnswer = userAnswers.find((ans) => ans.questionId === q.id);
                             return (
-                                <div key={q.id} className="text-left bg-gray-700 p-4 rounded-lg">
-                                    <p className="font-medium text-white">{q.question}</p>
-                                    <p className="text-gray-400">
+                                <div
+                                    key={q.id}
+                                    className="text-left bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-none transition-colors duration-200"
+                                >
+                                    <p className="font-medium text-gray-900 dark:text-white">{q.question}</p>
+                                    <p className="text-gray-600 dark:text-gray-400">
                                         Sua resposta: {userAnswer ? getAnswerText(q, userAnswer.selectedAnswer) : "Não respondida"}
                                         {userAnswer?.isCorrect ? (
-                                            <span className="text-green-400"> (Correto)</span>
+                                            <span className="text-green-600 dark:text-green-400"> (Correto)</span>
                                         ) : (
-                                            <span className="text-red-400"> (Errado)</span>
+                                            <span className="text-red-600 dark:text-red-400"> (Errado)</span>
                                         )}
                                     </p>
                                     {!userAnswer?.isCorrect && (
-                                        <p className="text-gray-300">Resposta correta: {getCorrectAnswerText(q)}</p>
+                                        <p className="text-gray-700 dark:text-gray-300">
+                                            Resposta correta: {getCorrectAnswerText(q)}
+                                        </p>
                                     )}
                                 </div>
                             );
@@ -145,20 +149,21 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                 <button
                     onClick={handleShare}
                     disabled={isSharing}
-                    className={`px-6 py-3 rounded-lg cursor-pointer text-white ${isSharing ? "bg-purple-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-500"}`}
+                    className={`px-6 py-3 rounded-lg cursor-pointer text-white transition-colors duration-200 ${isSharing ? "bg-purple-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500"
+                        }`}
                     aria-label="Compartilhar resultado como imagem"
                 >
                     {isSharing ? "Gerando..." : "Compartilhar Resultado"}
                 </button>
                 <button
                     onClick={onRestart}
-                    className="px-6 py-3 cursor-pointer bg-blue-600 rounded-lg text-white hover:bg-blue-500"
+                    className="px-6 py-3 cursor-pointer bg-blue-600 rounded-lg text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
                 >
                     Responder Novamente
                 </button>
                 <button
                     onClick={onBack}
-                    className="px-6 py-3 cursor-pointer bg-gray-600 rounded-lg text-white hover:bg-gray-500"
+                    className="px-6 py-3 cursor-pointer bg-gray-500 rounded-lg text-white hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-200"
                 >
                     Voltar
                 </button>

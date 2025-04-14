@@ -37,27 +37,36 @@ export default function AnswersModal({ isOpen, onClose, attempt, questions }: An
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={onClose}>
+        <div
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300"
+            onClick={onClose}
+        >
             <div
-                className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-none shadow-lg dark:shadow-lg transition-colors duration-200 animate-fadeIn"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                         Respostas de {attempt.displayName}
                     </h2>
-                    <button onClick={onClose} className="text-gray-400 cursor-pointer hover:text-white">
+                    <button
+                        onClick={onClose}
+                        className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                        aria-label="Fechar modal"
+                    >
                         <IoMdClose className="w-6 h-6" />
                     </button>
                 </div>
 
-                <div className="mb-6 text-gray-300">
+                <div className="mb-6 text-gray-700 dark:text-gray-300">
                     <p>
-                        Acertos: <span className="font-semibold text-green-400">{attempt.correctAnswers}</span> de{" "}
+                        Acertos: <span className="font-semibold text-green-600 dark:text-green-400">{attempt.correctAnswers}</span> de{" "}
                         <span className="font-semibold">{attempt.totalQuestions}</span> (
                         <span className="font-semibold">{attempt.percentage}%</span>)
                     </p>
-                    <p>Concluído em: <span className="font-semibold">{formattedDateTime}</span></p>
+                    <p>
+                        Concluído em: <span className="font-semibold">{formattedDateTime}</span>
+                    </p>
                 </div>
 
                 <div className="space-y-4">
@@ -65,18 +74,23 @@ export default function AnswersModal({ isOpen, onClose, attempt, questions }: An
                         const question = questions.find((q) => q.id === answer.questionId);
                         if (!question) return null;
                         return (
-                            <div key={idx} className="text-left bg-gray-700 p-4 rounded-lg">
-                                <p className="font-medium text-white">{question.question}</p>
-                                <p className="text-gray-400">
+                            <div
+                                key={idx}
+                                className="text-left bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-none transition-colors duration-200"
+                            >
+                                <p className="font-medium text-gray-900 dark:text-white">{question.question}</p>
+                                <p className="text-gray-600 dark:text-gray-400">
                                     Resposta: {getAnswerText(question, answer.selectedAnswer)}
                                     {answer.isCorrect ? (
-                                        <span className="text-green-400"> (Correto)</span>
+                                        <span className="text-green-600 dark:text-green-400"> (Correto)</span>
                                     ) : (
-                                        <span className="text-red-400"> (Errado)</span>
+                                        <span className="text-red-600 dark:text-red-400"> (Errado)</span>
                                     )}
                                 </p>
                                 {!answer.isCorrect && (
-                                    <p className="text-gray-300">Resposta correta: {getCorrectAnswerText(question)}</p>
+                                    <p className="text-gray-700 dark:text-gray-300">
+                                        Resposta correta: {getCorrectAnswerText(question)}
+                                    </p>
                                 )}
                             </div>
                         );
@@ -86,7 +100,7 @@ export default function AnswersModal({ isOpen, onClose, attempt, questions }: An
                 <div className="flex justify-end mt-6">
                     <button
                         onClick={onClose}
-                        className="px-6 py-3 cursor-pointer bg-gray-600 rounded-lg text-white hover:bg-gray-500"
+                        className="px-6 py-3 cursor-pointer bg-gray-500 dark:bg-gray-600 rounded-lg text-white hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-200"
                     >
                         Fechar
                     </button>

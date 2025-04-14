@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import {
     FaBars,
     FaTimes,
@@ -8,6 +9,8 @@ import {
     FaRegUserCircle,
     FaSignOutAlt,
     FaRegCompass,
+    FaSun,
+    FaMoon,
 } from 'react-icons/fa';
 import Logo from '../assets/logo.svg';
 import LogoSmall from '../assets/logo-small.svg';
@@ -20,6 +23,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
 
     const handleLogoutClick = async () => {
         try {
@@ -34,14 +38,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     return (
         <>
             <button
-                className="md:hidden fixed cursor-pointer top-5 left-5 z-50 text-gray-700 hover:text-gray-600 p-2"
+                className="md:hidden fixed cursor-pointer top-5 left-5 z-50 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 p-2"
                 onClick={toggleSidebar}
             >
                 {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
             </button>
 
             <div
-                className={`fixed top-0 left-0 h-full bg-gray-800 text-white transform transition-all duration-300 ease-in-out z-40 overflow-y-auto
+                className={`fixed top-0 left-0 h-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white transform transition-all duration-300 ease-in-out z-40 overflow-y-auto
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
                 md:translate-x-0 
                 w-72 md:w-20 lg:w-72 flex flex-col p-3 md:p-2 lg:p-3`}
@@ -66,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                             <NavLink
                                 to="/"
                                 className={({ isActive }) =>
-                                    `flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md hover:bg-gray-700 transition-all duration-300 ease-in-out ${isActive ? 'text-purple-400 font-bold' : 'text-gray-300'
+                                    `flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out ${isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-gray-800 dark:text-gray-300'
                                     }`
                                 }
                             >
@@ -78,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                             <NavLink
                                 to="/my-quizzes"
                                 className={({ isActive }) =>
-                                    `flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md hover:bg-gray-700 transition-all duration-300 ease-in-out ${isActive ? 'text-purple-400 font-bold' : 'text-gray-300'
+                                    `flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out ${isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-gray-800 dark:text-gray-300'
                                     }`
                                 }
                             >
@@ -86,10 +90,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                 <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">Meus quizzes</span>
                             </NavLink>
                         </li>
+                        <li>
+                            <button
+                                onClick={toggleTheme}
+                                className="flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out w-full text-gray-800 dark:text-gray-300"
+                            >
+                                {theme === 'light' ? (
+                                    <FaMoon className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
+                                ) : (
+                                    <FaSun className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
+                                )}
+                                <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">
+                                    {theme === 'light' ? 'Tema Escuro' : 'Tema Claro'}
+                                </span>
+                            </button>
+                        </li>
                     </ul>
                 </nav>
                 <div className="mt-auto">
-                    <hr className="mb-4 border-t-2 border-gray-600" />
+                    <hr className="mb-4 border-t-2 border-gray-300 dark:border-gray-700" />
                     {user ? (
                         <div className="p-4 md:p-2 lg:p-4 flex items-center justify-between md:justify-center lg:justify-between space-x-2 transition-all duration-300 ease-in-out">
                             {user.photoURL ? (
@@ -99,23 +118,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                                     alt="User avatar"
                                 />
                             ) : (
-                                <FaRegUserCircle className="w-8 h-8 text-gray-400" />
+                                <FaRegUserCircle className="w-8 h-8 text-gray-600 dark:text-gray-300" />
                             )}
                             <div className="flex flex-col mr-5 md:hidden lg:flex transition-opacity duration-300 ease-in-out">
-                                <span className="text-sm truncate">{user.displayName}</span>
-                                <span className="text-xs truncate text-gray-400">{user.email}</span>
+                                <span className="text-sm truncate text-gray-900 dark:text-white">{user.displayName}</span>
+                                <span className="text-xs truncate text-gray-500 dark:text-gray-500">{user.email}</span>
                             </div>
                             <button onClick={handleLogoutClick} className="focus:outline-none">
-                                <FaSignOutAlt className="cursor-pointer w-6 h-6 text-gray-300 hover:text-gray-200" />
+                                <FaSignOutAlt className="cursor-pointer w-6 h-6 text-gray-600 dark:text-gray-200 hover:text-gray-800 dark:hover:text-gray-100" />
                             </button>
                         </div>
                     ) : (
                         <div className="p-4 md:p-2 lg:p-4">
                             <button
                                 onClick={() => navigate('/login')}
-                                className="flex items-center w-full text-gray-300 hover:text-gray-200"
+                                className="flex items-center w-full text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100"
                             >
-                                <FaRegUserCircle className="w-6 h-6 mr-3 md:mr-0 lg:mr-3" />
+                                <FaRegUserCircle className="w-6 h-6 mr-3 md:mr-0 lg:mr-3 text-gray-600 dark:text-gray-200" />
                                 <span className="md:hidden cursor-pointer lg:inline">Login</span>
                             </button>
                         </div>

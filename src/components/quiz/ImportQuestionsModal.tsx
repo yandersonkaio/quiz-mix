@@ -136,24 +136,31 @@ export default function ImportQuestionsModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={handleClose}>
+        <div
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300"
+            onClick={handleClose}
+        >
             <div
-                className="bg-gray-800 rounded-lg p-6 w-full max-w-3xl max-h-[90vh] flex flex-col"
+                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-3xl max-h-[90vh] flex flex-col border border-gray-200 dark:border-none shadow-lg dark:shadow-lg transition-colors duration-200 animate-fadeIn"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex justify-between items-center mb-6 text-white">
+                <div className="flex justify-between items-center mb-6 text-gray-900 dark:text-white">
                     <h2 className="text-xl font-semibold">Importar Perguntas de Arquivo JSON</h2>
-                    <button onClick={handleClose} className="text-gray-400 cursor-pointer hover:text-white">
+                    <button
+                        onClick={handleClose}
+                        className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                        aria-label="Fechar modal"
+                    >
                         ✕
                     </button>
                 </div>
 
                 <div className="mb-4">
-                    <label className="block mb-2 text-sm font-medium text-gray-300" htmlFor="file_input">
+                    <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="file_input">
                         Selecione o arquivo JSON
                     </label>
                     <input
-                        className="block w-full text-sm text-gray-400 border border-gray-600 rounded-lg cursor-pointer bg-gray-700 focus:outline-none placeholder-gray-500 p-2.5"
+                        className="block w-full text-sm text-gray-900 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 placeholder-gray-500 p-2.5 transition-colors duration-200"
                         id="file_input"
                         type="file"
                         accept=".json"
@@ -162,32 +169,55 @@ export default function ImportQuestionsModal({
                     />
                     <p className="mt-1 text-xs text-gray-500">
                         O arquivo deve ser .json contendo um array de objetos de perguntas.
-                        <a href="#" className="text-blue-400 hover:underline ml-1" onClick={(e) => { e.preventDefault(); alert('Exemplo de formato JSON:\n[\n  {\n    "type": "multiple-choice",\n    "question": "Sua pergunta?",\n    "options": ["Opção A", "Opção B"],\n    "correctAnswer": 0\n  },\n  ...\n]'); }}>
+                        <a
+                            href="#"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline ml-1 transition-colors duration-200"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                alert(
+                                    'Exemplo de formato JSON:\n[\n  {\n    "type": "multiple-choice",\n    "question": "Sua pergunta?",\n    "options": ["Opção A", "Opção B"],\n    "correctAnswer": 0\n  },\n  ...\n]'
+                                );
+                            }}
+                        >
                             Ver formato exemplo
                         </a>
                     </p>
-                    {isProcessing && <p className="text-yellow-400 mt-2">Processando arquivo...</p>}
-                    {fileError && <p className="text-red-500 text-sm mt-2">{fileError}</p>}
+                    {isProcessing && <p className="text-yellow-600 dark:text-yellow-400 mt-2">Processando arquivo...</p>}
+                    {fileError && <p className="text-red-600 dark:text-red-500 text-sm mt-2">{fileError}</p>}
                 </div>
 
                 {previewQuestions.length > 0 && (
-                    <div className="flex-grow overflow-y-auto mb-4 border border-gray-700 rounded-lg p-4 bg-gray-900/50">
-                        <h3 className="text-lg font-semibold text-gray-300 mb-3">
+                    <div className="flex-grow overflow-y-auto mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-100 dark:bg-gray-900/50 transition-colors duration-200">
+                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">
                             Pré-visualização ({validCount} válidas, {invalidCount} inválidas)
                         </h3>
                         <div className="space-y-3">
                             {previewQuestions.map((pq, index) => (
-                                <div key={index} className={`p-3 rounded ${pq.isValid ? 'bg-green-900/50 border border-green-700/50' : 'bg-red-900/50 border border-red-700/50'}`}>
-                                    <p className="text-gray-300 font-medium">
-                                        <span className={`font-bold mr-2 ${pq.isValid ? 'text-green-400' : 'text-red-400'}`}>
+                                <div
+                                    key={index}
+                                    className={`p-3 rounded transition-colors duration-200 ${pq.isValid
+                                        ? 'bg-green-100 border border-green-200'
+                                        : 'bg-red-100 border border-red-200'
+                                        } dark:${pq.isValid ? 'bg-green-900/50 border-green-700/50' : 'bg-red-900/50 border-red-700/50'
+                                        }`}
+                                >
+                                    <p className="text-gray-900 dark:text-gray-300 font-medium">
+                                        <span
+                                            className={`font-bold mr-2 ${pq.isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                                                }`}
+                                        >
                                             {index + 1}.
                                         </span>
                                         {pq.data.question || <span className="text-gray-500 italic">Pergunta em branco</span>}
-                                        <span className="text-xs text-gray-500 ml-2">({pq.data.type || 'Tipo inválido'})</span>
+                                        <span className="text-xs text-gray-500 ml-2">
+                                            ({pq.data.type || 'Tipo inválido'})
+                                        </span>
                                     </p>
                                     {!pq.isValid && pq.errors.length > 0 && (
-                                        <ul className="list-disc list-inside mt-1 ml-4 text-red-400 text-xs">
-                                            {pq.errors.map((err, i) => <li key={i}>{err}</li>)}
+                                        <ul className="list-disc list-inside mt-1 ml-4 text-red-600 dark:text-red-400 text-xs">
+                                            {pq.errors.map((err, i) => (
+                                                <li key={i}>{err}</li>
+                                            ))}
                                         </ul>
                                     )}
                                 </div>
@@ -196,11 +226,11 @@ export default function ImportQuestionsModal({
                     </div>
                 )}
 
-                <div className="flex space-x-4 mt-auto pt-4 border-t border-gray-700">
+                <div className="flex space-x-4 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
                     <button
                         type="button"
                         onClick={handleClose}
-                        className="flex-1 py-2 px-4 cursor-pointer bg-gray-600 text-white rounded-lg hover:bg-gray-500 disabled:opacity-50"
+                        className="flex-1 py-2 px-4 cursor-pointer bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 disabled:opacity-50 transition-colors duration-200"
                         disabled={isProcessing || isSaving}
                     >
                         Cancelar
@@ -209,17 +239,32 @@ export default function ImportQuestionsModal({
                         type="button"
                         onClick={handleSave}
                         disabled={isProcessing || isSaving || validCount === 0}
-                        className={`flex-1 py-2 px-4 rounded-lg text-white flex items-center justify-center gap-2
-                           ${(isSaving || validCount === 0 || isProcessing)
-                                ? 'bg-blue-400 cursor-not-allowed opacity-70'
-                                : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'}
-                         `}
+                        className={`flex-1 py-2 px-4 rounded-lg text-white flex items-center justify-center gap-2 transition-colors duration-200 ${isSaving || validCount === 0 || isProcessing
+                            ? 'bg-blue-400 dark:bg-blue-400 cursor-not-allowed opacity-70'
+                            : 'bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-700 cursor-pointer'
+                            }`}
                     >
                         {isSaving ? (
                             <>
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                <svg
+                                    className="animate-spin h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    ></path>
                                 </svg>
                                 Salvando...
                             </>

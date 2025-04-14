@@ -22,15 +22,19 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/70 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full">
-                <h2 className="text-xl font-semibold text-white mb-4">{title}</h2>
-                <p className="text-gray-300 mb-6">{message}</p>
+        <div
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300"
+        >
+            <div
+                className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full border border-gray-200 dark:border-none transition-colors duration-200 animate-fadeIn"
+            >
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{title}</h2>
+                <p className="text-gray-700 dark:text-gray-300 mb-6">{message}</p>
                 <div className="flex justify-end gap-4">
                     <button
                         onClick={onClose}
                         disabled={isLoading}
-                        className="flex items-center px-6 py-4 bg-gray-600 cursor-pointer text-white rounded-lg hover:bg-gray-500 disabled:opacity-50"
+                        className="flex items-center px-6 py-4 cursor-pointer bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 disabled:opacity-50 transition-colors duration-200"
                     >
                         <MdCancel className="mr-2" />
                         Cancelar
@@ -38,9 +42,10 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
                     <button
                         onClick={onConfirm}
                         disabled={isLoading}
-                        className={`px-6 py-4 rounded-lg cursor-pointer 
-                            ${isLoading ? 'bg-red-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 cursor-pointer'}
-                            flex items-center justify-center gap-2`}
+                        className={`px-6 py-4 rounded-lg text-white flex items-center justify-center gap-2 transition-colors duration-200 ${isLoading
+                            ? "bg-red-400 dark:bg-red-400 cursor-not-allowed"
+                            : "bg-red-600 dark:bg-red-600 hover:bg-red-700 dark:hover:bg-red-700 cursor-pointer"
+                            }`}
                     >
                         {isLoading ? (
                             <>
