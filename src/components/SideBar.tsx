@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { useUserData } from '../hooks/useUserData';
+import { useAuth } from '../contexts/AuthContext';
 import {
     FaBars,
     FaTimes,
@@ -20,12 +20,16 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
-    const { user, logout } = useUserData();
+    const { user, logout } = useAuth();
 
     const handleLogoutClick = async () => {
-        await logout();
-        navigate('/login');
-        toggleSidebar();
+        try {
+            await logout();
+            navigate('/login');
+            toggleSidebar();
+        } catch (error) {
+            console.error('Sidebar - logout error:', error);
+        }
     };
 
     return (
@@ -99,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                 </nav>
                 <div className="mt-auto">
                     <hr className="mb-4 border-t-2 border-gray-600" />
-                    {user && (
+                    {user ? (
                         <div className="p-4 md:p-2 lg:p-4 flex items-center justify-between md:justify-center lg:justify-between space-x-2 transition-all duration-300 ease-in-out">
                             {user.photoURL ? (
                                 <img
@@ -116,6 +120,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                             </div>
                             <button onClick={handleLogoutClick} className="focus:outline-none">
                                 <FaSignOutAlt className="cursor-pointer w-6 h-6 text-gray-300 hover:text-gray-200" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="p-4 md:p-2 lg:p-4">
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="flex items-center w-full text-gray-300 hover:text-gray-200"
+                            >
+                                <FaRegUserCircle className="w-6 h-6 mr-3 md:mr-0 lg:mr-3" />
+                                <span className="md:hidden cursor-pointer lg:inline">Login</span>
                             </button>
                         </div>
                     )}

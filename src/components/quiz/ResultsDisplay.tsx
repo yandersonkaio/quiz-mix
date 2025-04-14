@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import domToImage from "dom-to-image";
 import { Question, Quiz } from "../../hooks/useQuizData";
 import { UserAnswer } from "../../pages/PlayQuiz";
-import { useUserData } from '../../hooks/useUserData';
+import { useAuth } from '../../contexts/AuthContext';
+
 
 interface ResultsDisplayProps {
     quiz: Quiz;
@@ -17,7 +18,7 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
     const [isSharing, setIsSharing] = useState(false);
     const [testDateTime, setTestDateTime] = useState<string>("");
 
-    const { user } = useUserData();
+    const { user } = useAuth();
 
     useEffect(() => {
         const dateTime = new Date().toLocaleString("pt-BR", {

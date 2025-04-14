@@ -1,43 +1,35 @@
 import React, { useEffect } from 'react';
 import { auth, googleProvider } from '../db/firebase';
 import { signInWithPopup } from 'firebase/auth';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useUserData } from '../hooks/useUserData';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Logo from '../assets/logo.svg';
 import Loading from '../components/Loading';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    const { user, loading } = useUserData();
+    const [searchParams] = useSearchParams();
+    const { user, loading } = useAuth();
 
-    const from = (location.state as { from?: string })?.from || '/';
-    if (from !== '/') {
-        localStorage.setItem('redirectAfterLogin', from);
-    }
-    const redirectTo = localStorage.getItem('redirectAfterLogin') || '/';
-
-    const handleGoogleLogin = async (): Promise<void> => {
-        try {
-            await signInWithPopup(auth, googleProvider);
-            localStorage.removeItem('redirectAfterLogin');
-            navigate(redirectTo, { replace: true });
-        } catch (error) {
-            console.error('Erro ao fazer login:', (error as Error).message);
-        }
-    };
+    const rawRedirectTo = searchParams.get('redirectTo');
+    const redirectTo = rawRedirectTo && rawRedirectTo.startsWith('/') ? rawRedirectTo : '/';
 
     useEffect(() => {
         if (!loading && user) {
-            localStorage.removeItem('redirectAfterLogin');
             navigate(redirectTo, { replace: true });
         }
     }, [loading, user, navigate, redirectTo]);
 
+    const handleGoogleLogin = async (): Promise<void> => {
+        try {
+            await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+            console.error('Login - error during Google login:', (error as Error).message);
+        }
+    };
+
     if (loading) {
-        return (
-            <Loading />
-        );
+        return <Loading />;
     }
 
     return (
@@ -48,7 +40,7 @@ const Login: React.FC = () => {
                 </div>
                 <h2 className="text-xl font-semibold text-white mb-2">Acesse sua conta</h2>
                 <p className="text-sm text-gray-400 mb-24">
-                    Seja bem vindo! Por favor, entre para continuar
+                    Seja bem-vindo! Por favor, entre para continuar
                 </p>
                 <button
                     onClick={handleGoogleLogin}
