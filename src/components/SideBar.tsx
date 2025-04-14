@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 import {
     FaBars,
     FaTimes,
@@ -9,9 +8,8 @@ import {
     FaRegUserCircle,
     FaSignOutAlt,
     FaRegCompass,
-    FaSun,
-    FaMoon,
 } from 'react-icons/fa';
+import { IoIosSettings } from "react-icons/io";
 import Logo from '../assets/logo.svg';
 import LogoSmall from '../assets/logo-small.svg';
 
@@ -23,7 +21,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const { theme, toggleTheme } = useTheme();
 
     const handleLogoutClick = async () => {
         try {
@@ -91,19 +88,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                             </NavLink>
                         </li>
                         <li>
-                            <button
-                                onClick={toggleTheme}
-                                className="flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out w-full text-gray-800 dark:text-gray-300"
+                            <NavLink
+                                to="/settings"
+                                className={({ isActive }) =>
+                                    `flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out ${isActive ? 'text-purple-600 dark:text-purple-400 font-bold' : 'text-gray-800 dark:text-gray-300'
+                                    }`
+                                }
                             >
-                                {theme === 'light' ? (
-                                    <FaMoon className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
-                                ) : (
-                                    <FaSun className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
-                                )}
-                                <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">
-                                    {theme === 'light' ? 'Tema Escuro' : 'Tema Claro'}
-                                </span>
-                            </button>
+                                <IoIosSettings className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
+                                <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">Configurações</span>
+                            </NavLink>
                         </li>
                     </ul>
                 </nav>
