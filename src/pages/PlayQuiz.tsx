@@ -15,7 +15,7 @@ export interface UserAnswer {
 }
 
 function PlayQuiz() {
-    const { quiz, questions, allUserAttempts, canPlay, ranking, loading, fetchRanking, saveAttempt } = useQuizData();
+    const { quiz, questions, allUserAttempts, ranking, loading, fetchRanking, saveAttempt } = useQuizData();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
     const [showResult, setShowResult] = useState(false);
@@ -34,14 +34,14 @@ function PlayQuiz() {
                 goToNextQuestion();
             }
         },
-        isActive: !!quiz?.settings.timeLimitPerQuestion && !isUntilCorrectMode && !showResult && (canPlay ?? false),
+        isActive: !!quiz?.settings.timeLimitPerQuestion && !isUntilCorrectMode && !showResult,
     });
 
     useEffect(() => {
-        if (quiz?.settings.timeLimitPerQuestion && canPlay && !showResult && !isUntilCorrectMode) {
+        if (quiz?.settings.timeLimitPerQuestion && !showResult && !isUntilCorrectMode) {
             resetTimer();
         }
-    }, [quiz, canPlay, showResult, currentQuestionIndex, resetTimer, isUntilCorrectMode]);
+    }, [quiz, showResult, currentQuestionIndex, resetTimer, isUntilCorrectMode]);
 
     useEffect(() => {
         if (showResult) fetchRanking();
@@ -57,7 +57,7 @@ function PlayQuiz() {
     };
 
     const handleAnswer = (answer: number | string) => {
-        if (!quiz || !canPlay) return;
+        if (!quiz) return;
 
         const currentQuestion = questions[currentQuestionIndex];
         const isCorrect = checkAnswer(currentQuestion, answer);
@@ -97,7 +97,6 @@ function PlayQuiz() {
     };
 
     const handleRestart = () => {
-        if (!canPlay) return;
         setCurrentQuestionIndex(0);
         setUserAnswers([]);
         setCurrentAttempt([]);
@@ -111,12 +110,6 @@ function PlayQuiz() {
         return (
             <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center transition-colors duration-200">
                 <p>Nenhuma pergunta disponível no quiz.</p>
-            </div>
-        );
-    if (canPlay === false)
-        return (
-            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center transition-colors duration-200">
-                <p>Você não tem permissão para jogar este quiz.</p>
             </div>
         );
 

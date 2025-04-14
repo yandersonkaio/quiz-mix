@@ -20,7 +20,6 @@ export function QuizSettingsModal({
         settings: {
             showAnswersAfter: "end",
             timeLimitPerQuestion: undefined,
-            allowMultipleAttempts: false,
         },
     },
     onSave,
@@ -31,7 +30,6 @@ export function QuizSettingsModal({
         settings: {
             showAnswersAfter: quizDetails.settings?.showAnswersAfter ?? "end",
             timeLimitPerQuestion: quizDetails.settings?.timeLimitPerQuestion,
-            allowMultipleAttempts: quizDetails.settings?.allowMultipleAttempts ?? false,
         },
     });
     const [isSaving, setIsSaving] = useState(false);
@@ -62,7 +60,6 @@ export function QuizSettingsModal({
                     settings: {
                         showAnswersAfter: formData.settings?.showAnswersAfter ?? "end",
                         timeLimitPerQuestion: formData.settings?.timeLimitPerQuestion,
-                        allowMultipleAttempts: formData.settings?.allowMultipleAttempts ?? false,
                     },
                 };
                 const createdQuizId = await createQuiz(newQuiz);
@@ -219,27 +216,6 @@ export function QuizSettingsModal({
                             />
                         </div>
                     )}
-
-                    <div>
-                        <label className="block text-gray-700 dark:text-gray-300 mb-1">
-                            Permitir Múltiplas Tentativas
-                        </label>
-                        <input
-                            type="checkbox"
-                            checked={formData.settings?.allowMultipleAttempts ?? false}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    settings: {
-                                        ...formData.settings,
-                                        allowMultipleAttempts: e.target.checked,
-                                    } as Quiz["settings"],
-                                })
-                            }
-                            className="h-5 w-5 text-blue-600 dark:text-blue-500 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-600 dark:focus:ring-blue-500"
-                            disabled={isSaving || operationLoading}
-                        />
-                    </div>
 
                     <div className="flex space-x-4">
                         <button

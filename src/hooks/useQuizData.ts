@@ -38,7 +38,6 @@ export interface Quiz {
     settings: {
         showAnswersAfter: "immediately" | "end" | "untilCorrect";
         timeLimitPerQuestion?: number;
-        allowMultipleAttempts?: boolean;
     };
 }
 
@@ -62,7 +61,6 @@ export const useQuizData = () => {
     const { user } = useAuth();
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [questions, setQuestions] = useState<Question[]>([]);
-    const [canPlay, setCanPlay] = useState<boolean>(false);
     const [ranking, setRanking] = useState<Attempt[]>([]);
     const [allUserAttempts, setAllUserAttempts] = useState<{ [userId: string]: Attempt[] }>({});
     const [loading, setLoading] = useState(!!quizId);
@@ -94,7 +92,6 @@ export const useQuizData = () => {
                 const quizSettings = {
                     showAnswersAfter: quizData.settings?.showAnswersAfter || "end",
                     timeLimitPerQuestion: quizData.settings?.timeLimitPerQuestion || undefined,
-                    allowMultipleAttempts: quizData.settings?.allowMultipleAttempts || false,
                 };
                 setQuiz({
                     id: quizDoc.id,
@@ -104,8 +101,6 @@ export const useQuizData = () => {
                     createdAt: quizData.createdAt,
                     settings: quizSettings,
                 });
-
-                setCanPlay(true);
 
                 const unsubscribe = onSnapshot(
                     collection(db, "quizzes", quizId, "questions"),
@@ -144,7 +139,6 @@ export const useQuizData = () => {
             setOperationLoading(true);
             const settings: Quiz["settings"] = {
                 showAnswersAfter: quizData.settings.showAnswersAfter,
-                allowMultipleAttempts: quizData.settings.allowMultipleAttempts || false,
             };
             if (quizData.settings.timeLimitPerQuestion !== undefined) {
                 settings.timeLimitPerQuestion = quizData.settings.timeLimitPerQuestion;
@@ -404,7 +398,6 @@ export const useQuizData = () => {
     return {
         quiz,
         questions,
-        canPlay,
         ranking,
         allUserAttempts,
         loading,

@@ -18,7 +18,6 @@ export interface Quiz {
     description?: string;
     settings?: {
         timeLimitPerQuestion?: number;
-        allowMultipleAttempts?: boolean;
         showAnswersAfter: "immediately" | "end" | "untilCorrect";
     };
 }

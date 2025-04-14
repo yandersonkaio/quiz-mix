@@ -56,7 +56,6 @@ function QuizDetails() {
         settings: {
             showAnswersAfter: "end",
             timeLimitPerQuestion: undefined,
-            allowMultipleAttempts: false,
         },
     });
 
@@ -76,7 +75,6 @@ function QuizDetails() {
                 settings: {
                     showAnswersAfter: quiz.settings.showAnswersAfter,
                     timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
-                    allowMultipleAttempts: quiz.settings.allowMultipleAttempts || true,
                 },
             });
         }
@@ -193,7 +191,6 @@ function QuizDetails() {
                 const newSettings: Quiz["settings"] = {
                     showAnswersAfter: updatedDetails.settings?.showAnswersAfter ?? prev.settings?.showAnswersAfter ?? "end",
                     timeLimitPerQuestion: updatedDetails.settings?.timeLimitPerQuestion ?? prev.settings?.timeLimitPerQuestion,
-                    allowMultipleAttempts: updatedDetails.settings?.allowMultipleAttempts ?? prev.settings?.allowMultipleAttempts ?? false,
                 };
                 return {
                     ...prev,
@@ -259,12 +256,6 @@ function QuizDetails() {
                                         : quiz.settings?.showAnswersAfter === "untilCorrect"
                                             ? "Após acertar"
                                             : "No final"}
-                                </li>
-                                <li>
-                                    Tentativas múltiplas:{" "}
-                                    {quiz.settings?.allowMultipleAttempts
-                                        ? "Permitidas"
-                                        : "Não permitidas"}
                                 </li>
                             </ul>
                         </div>
