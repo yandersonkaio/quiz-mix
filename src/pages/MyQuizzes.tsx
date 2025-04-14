@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
-import { useUserQuizzes } from '../hooks/useUserQuizzes';
-import Loading from '../components/Loading';
-import { IoMdAdd } from 'react-icons/io';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useUserQuizzes } from "../hooks/useUserQuizzes";
+import Loading from "../components/Loading";
+import { IoMdAdd } from "react-icons/io";
+import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
 
 function MyQuizzes() {
     const { userQuizzes, loading, error, user } = useUserQuizzes();
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     if (loading) {
         return <Loading />;
@@ -36,24 +39,24 @@ function MyQuizzes() {
             <div className="max-w-5xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold ml-12 md:ml-0">Meus Quizzes</h1>
-                    <Link
-                        to="/create-quiz"
-                        className="p-3 bg-blue-700 rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="p-3 cursor-pointer bg-blue-700 rounded-lg hover:bg-blue-600 transition-colors duration-200"
                         title="Criar um quiz"
                     >
                         <IoMdAdd className="w-6 h-6" />
-                    </Link>
+                    </button>
                 </div>
 
                 {userQuizzes.length === 0 ? (
                     <div className="text-center py-20">
                         <p className="text-gray-400 text-lg">Você ainda não criou nenhum quiz.</p>
-                        <Link
-                            to="/create-quiz"
-                            className="mt-4 inline-block px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700"
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="mt-4 inline-block px-6 py-2 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-700"
                         >
                             Criar seu primeiro quiz
-                        </Link>
+                        </button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -88,6 +91,11 @@ function MyQuizzes() {
                     </div>
                 )}
             </div>
+            <QuizSettingsModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                isCreating={true}
+            />
         </div>
     );
 }

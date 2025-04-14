@@ -1,18 +1,30 @@
 import { useState } from "react";
-import { Quiz } from "../../hooks/useQuizData";
+import { useNavigate } from "react-router-dom";
+import { Quiz, useQuizData } from "../../hooks/useQuizData";
 
 interface QuizSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    quizDetails: Partial<Quiz>;
-    onSave: (updatedDetails: Partial<Quiz>) => Promise<void>;
+    quizDetails?: Partial<Quiz>;
+    quizId?: string;
+    onSave?: (updatedDetails: Partial<Quiz>) => Promise<void>;
+    isCreating?: boolean;
 }
 
 export function QuizSettingsModal({
     isOpen,
     onClose,
-    quizDetails,
+    quizDetails = {
+        name: "",
+        description: "",
+        settings: {
+            showAnswersAfter: "end",
+            timeLimitPerQuestion: undefined,
+            allowMultipleAttempts: false,
+        },
+    },
     onSave,
+    isCreating = false,
 }: QuizSettingsModalProps) {
     const [formData, setFormData] = useState<Partial<Quiz>>({
         ...quizDetails,
@@ -23,18 +35,48 @@ export function QuizSettingsModal({
         },
     });
     const [isSaving, setIsSaving] = useState(false);
+    const { user, createQuiz, operationLoading } = useQuizData();
+    const navigate = useNavigate();
 
     const isStudyMode = formData.settings?.showAnswersAfter === "untilCorrect";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.name?.trim()) {
+            alert("O nome do quiz é obrigatório.");
+            return;
+        }
+
         setIsSaving(true);
         try {
-            await onSave(formData);
-            onClose();
+            if (isCreating) {
+                if (!user?.uid) {
+                    alert("Você precisa estar logado para criar um quiz.");
+                    return;
+                }
+
+                const newQuiz: Omit<Quiz, "id" | "createdAt"> = {
+                    name: formData.name,
+                    description: formData.description,
+                    userId: user.uid,
+                    settings: {
+                        showAnswersAfter: formData.settings?.showAnswersAfter ?? "end",
+                        timeLimitPerQuestion: formData.settings?.timeLimitPerQuestion,
+                        allowMultipleAttempts: formData.settings?.allowMultipleAttempts ?? false,
+                    },
+                };
+                const createdQuizId = await createQuiz(newQuiz);
+                if (createdQuizId) {
+                    navigate(`/quiz/details/${createdQuizId}`);
+                    onClose();
+                }
+            } else if (onSave) {
+                await onSave(formData);
+                onClose();
+            }
         } catch (error) {
             console.error("Erro ao salvar configurações:", error);
-            alert("Erro ao salvar configurações do quiz.");
+            alert(`Erro ao ${isCreating ? "criar" : "salvar"} o quiz.`);
         } finally {
             setIsSaving(false);
         }
@@ -49,10 +91,13 @@ export function QuizSettingsModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-white">Editar Configurações do Quiz</h2>
+                    <h2 className="text-xl font-semibold text-white">
+                        {isCreating ? "Criar Novo Quiz" : "Editar Configurações do Quiz"}
+                    </h2>
                     <button
                         onClick={onClose}
                         className="text-gray-400 cursor-pointer hover:text-white"
+                        disabled={isSaving || operationLoading}
                     >
                         ✕
                     </button>
@@ -68,6 +113,7 @@ export function QuizSettingsModal({
                             className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                             placeholder="Digite o nome do quiz"
                             required
+                            disabled={isSaving || operationLoading}
                         />
                     </div>
 
@@ -78,6 +124,7 @@ export function QuizSettingsModal({
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                             placeholder="Digite a descrição do quiz"
+                            disabled={isSaving || operationLoading}
                         />
                     </div>
 
@@ -98,6 +145,7 @@ export function QuizSettingsModal({
                                 })
                             }
                             className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none appearance-none"
+                            disabled={isSaving || operationLoading}
                         >
                             <option value="immediately">Logo após responder cada pergunta</option>
                             <option value="end">No final</option>
@@ -143,6 +191,7 @@ export function QuizSettingsModal({
                                 className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
                                 placeholder="Deixe em branco para sem limite"
                                 min="1"
+                                disabled={isSaving || operationLoading}
                             />
                         </div>
                     )}
@@ -162,6 +211,7 @@ export function QuizSettingsModal({
                                 })
                             }
                             className="h-5 w-5 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                            disabled={isSaving || operationLoading}
                         />
                     </div>
 
@@ -170,18 +220,19 @@ export function QuizSettingsModal({
                             type="button"
                             onClick={onClose}
                             className="flex-1 py-3 cursor-pointer bg-gray-600 rounded-lg hover:bg-gray-500"
+                            disabled={isSaving || operationLoading}
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
-                            disabled={isSaving}
+                            disabled={isSaving || operationLoading}
                             className={`flex-1 py-3 rounded-lg 
-                                ${isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 cursor-pointer'}
+                                ${isSaving || operationLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 cursor-pointer'}
                                 flex items-center justify-center gap-2
                             `}
                         >
-                            {isSaving ? (
+                            {isSaving || operationLoading ? (
                                 <>
                                     <svg
                                         className="animate-spin h-5 w-5 text-white"
@@ -203,10 +254,10 @@ export function QuizSettingsModal({
                                             d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                         ></path>
                                     </svg>
-                                    Salvando...
+                                    {isCreating ? "Criando..." : "Salvando..."}
                                 </>
                             ) : (
-                                "Salvar"
+                                isCreating ? "Criar Quiz" : "Salvar"
                             )}
                         </button>
                     </div>

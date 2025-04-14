@@ -9,7 +9,6 @@ import {
     FaSignOutAlt,
     FaRegCompass,
 } from 'react-icons/fa';
-import { IoMdAdd } from 'react-icons/io';
 import Logo from '../assets/logo.svg';
 import LogoSmall from '../assets/logo-small.svg';
 
@@ -85,18 +84,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                             >
                                 <FaRegListAlt className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
                                 <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">Meus quizzes</span>
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink
-                                to="/create-quiz"
-                                className={({ isActive }) =>
-                                    `flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md hover:bg-gray-700 transition-all duration-300 ease-in-out ${isActive ? 'text-purple-400 font-bold' : 'text-gray-300'
-                                    }`
-                                }
-                            >
-                                <IoMdAdd className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
-                                <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">Criar quiz</span>
                             </NavLink>
                         </li>
                     </ul>
