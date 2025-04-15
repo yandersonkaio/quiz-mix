@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Question } from "../../hooks/useQuizData";
 import { FaCheck, FaTimes } from "react-icons/fa";
+import { Question } from "../../types/quiz";
 
 interface QuestionDisplayProps {
     question: Question;
@@ -128,22 +128,22 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                             >
                                 <span
                                     className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full transition-colors duration-200 ${isUntilCorrect
-                                            ? isCorrect && latestAttempt === index
-                                                ? "bg-green-600 text-white dark:bg-green-500"
-                                                : lastIncorrect === index
-                                                    ? "bg-red-600 text-white dark:bg-red-500"
-                                                    : isSelected && !isSubmitted
-                                                        ? "bg-blue-600 text-white dark:bg-blue-500"
-                                                        : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
-                                            : showAnswersAfter === "immediately" && isSubmitted
-                                                ? isCorrectOption
-                                                    ? "bg-green-600 text-white dark:bg-green-500"
-                                                    : isSelected && !isCorrectOption
-                                                        ? "bg-red-600 text-white dark:bg-red-500"
-                                                        : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
+                                        ? isCorrect && latestAttempt === index
+                                            ? "bg-green-600 text-white dark:bg-green-500"
+                                            : lastIncorrect === index
+                                                ? "bg-red-600 text-white dark:bg-red-500"
                                                 : isSelected && !isSubmitted
                                                     ? "bg-blue-600 text-white dark:bg-blue-500"
                                                     : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
+                                        : showAnswersAfter === "immediately" && isSubmitted
+                                            ? isCorrectOption
+                                                ? "bg-green-600 text-white dark:bg-green-500"
+                                                : isSelected && !isCorrectOption
+                                                    ? "bg-red-600 text-white dark:bg-red-500"
+                                                    : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
+                                            : isSelected && !isSubmitted
+                                                ? "bg-blue-600 text-white dark:bg-blue-500"
+                                                : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
                                         }`}
                                 >
                                     {isUntilCorrect
@@ -181,22 +181,22 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                             >
                                 <span
                                     className={`flex items-center justify-center w-8 h-8 mr-3 rounded-full transition-colors duration-200 ${isUntilCorrect
-                                            ? isCorrect && latestAttempt === value
-                                                ? "bg-green-600 text-white dark:bg-green-500"
-                                                : lastIncorrect === value
-                                                    ? "bg-red-600 text-white dark:bg-red-500"
-                                                    : isSelected && !isSubmitted
-                                                        ? "bg-blue-600 text-white dark:bg-blue-500"
-                                                        : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
-                                            : showAnswersAfter === "immediately" && isSubmitted
-                                                ? isCorrectOption
-                                                    ? "bg-green-600 text-white dark:bg-green-500"
-                                                    : isSelected && !isCorrectOption
-                                                        ? "bg-red-600 text-white dark:bg-red-500"
-                                                        : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
+                                        ? isCorrect && latestAttempt === value
+                                            ? "bg-green-600 text-white dark:bg-green-500"
+                                            : lastIncorrect === value
+                                                ? "bg-red-600 text-white dark:bg-red-500"
                                                 : isSelected && !isSubmitted
                                                     ? "bg-blue-600 text-white dark:bg-blue-500"
                                                     : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
+                                        : showAnswersAfter === "immediately" && isSubmitted
+                                            ? isCorrectOption
+                                                ? "bg-green-600 text-white dark:bg-green-500"
+                                                : isSelected && !isCorrectOption
+                                                    ? "bg-red-600 text-white dark:bg-red-500"
+                                                    : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
+                                            : isSelected && !isSubmitted
+                                                ? "bg-blue-600 text-white dark:bg-blue-500"
+                                                : "bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white"
                                         }`}
                                 >
                                     {isUntilCorrect
@@ -249,16 +249,16 @@ export const QuestionDisplay = ({ question, onAnswer, showAnswersAfter, onNext, 
                     <input
                         type="text"
                         className={`w-full p-3 bg-gray-50 text-gray-900 rounded-lg border border-gray-300 focus:border-blue-600 focus:outline-none transition-colors duration-200 ${isUntilCorrect
-                                ? isCorrect
-                                    ? "bg-green-100 border-green-300 dark:bg-green-900/50 dark:border-green-700/50"
-                                    : lastIncorrect !== null && !selectedAnswer
-                                        ? "bg-red-100 border-red-300 dark:bg-red-900/50 dark:border-red-700/50"
-                                        : selectedAnswer && !isSubmitted
-                                            ? "bg-blue-100 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700/50"
-                                            : ""
-                                : selectedAnswer && !isSubmitted
-                                    ? "bg-blue-100 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700/50"
-                                    : ""
+                            ? isCorrect
+                                ? "bg-green-100 border-green-300 dark:bg-green-900/50 dark:border-green-700/50"
+                                : lastIncorrect !== null && !selectedAnswer
+                                    ? "bg-red-100 border-red-300 dark:bg-red-900/50 dark:border-red-700/50"
+                                    : selectedAnswer && !isSubmitted
+                                        ? "bg-blue-100 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700/50"
+                                        : ""
+                            : selectedAnswer && !isSubmitted
+                                ? "bg-blue-100 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700/50"
+                                : ""
                             }`}
                         placeholder="Digite sua resposta"
                         required

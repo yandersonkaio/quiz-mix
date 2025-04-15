@@ -1,4 +1,4 @@
-import { Quiz } from "../../hooks/useQuizData";
+import { Quiz } from "../../types/quiz";
 
 interface QuizHeaderProps {
     quiz: Quiz;

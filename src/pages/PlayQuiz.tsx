@@ -1,18 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuizData, Question } from "../hooks/useQuizData";
+import { useQuizData } from "../hooks/useQuizData";
 import { QuizHeader } from "../components/quiz/QuizHeader";
 import { QuestionDisplay } from "../components/quiz/QuestionDisplay";
 import { ResultsDisplay } from "../components/quiz/ResultsDisplay";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
 import Loading from "../components/Loading";
 import { useTimer } from "../hooks/useTimer";
-
-export interface UserAnswer {
-    questionId: string;
-    selectedAnswer: number | string;
-    isCorrect: boolean;
-}
+import { Question, UserAnswer } from "../types/quiz";
 
 function PlayQuiz() {
     const { quiz, questions, allUserAttempts, ranking, loading, fetchRanking, saveAttempt } = useQuizData();

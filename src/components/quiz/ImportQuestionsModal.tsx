@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Question } from '../../hooks/useQuizData';
 import { validateQuestionData } from '../../utils/validation';
+import { Question } from '../../types/quiz';
 
 type QuestionData = Omit<Question, 'id'>;
 

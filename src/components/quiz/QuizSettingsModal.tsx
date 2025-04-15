@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Quiz, useQuizData } from "../../hooks/useQuizData";
+import { useQuizData } from "../../hooks/useQuizData";
+import { Quiz } from "../../types/quiz";
 
 interface QuizSettingsModalProps {
     isOpen: boolean;

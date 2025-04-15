@@ -1,4 +1,4 @@
-import { Question, Attempt } from "../../hooks/useQuizData";
+import { Question, Attempt } from "../../types/quiz";
 import { IoMdClose } from "react-icons/io";
 
 interface AnswersModalProps {

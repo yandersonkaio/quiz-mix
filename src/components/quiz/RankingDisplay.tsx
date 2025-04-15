@@ -1,7 +1,7 @@
-import { Attempt, Question } from "../../hooks/useQuizData";
 import { useState } from "react";
 import { IoMdArrowDropdown, IoMdArrowDropup, IoMdEye } from "react-icons/io";
 import AnswersModal from "./AnswersModal";
+import { Attempt, Question } from "../../types/quiz";
 
 interface RankingDisplayProps {
     ranking: Attempt[];

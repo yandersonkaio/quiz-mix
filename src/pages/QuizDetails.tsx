@@ -3,12 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash, FaPlay, FaFileUpload, FaTrophy, FaInfoCircle, FaListUl } from "react-icons/fa";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
-import { Quiz, Question, useQuizData, QuestionData } from "../hooks/useQuizData";
+import { useQuizData, QuestionData } from "../hooks/useQuizData";
 import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
 import QuestionModal from "../components/quiz/QuestionModal";
 import ImportQuestionsModal from "../components/quiz/ImportQuestionsModal";
 import { IoMdAdd } from "react-icons/io";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+import { Quiz, Question } from "../types/quiz";
 
 function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>();

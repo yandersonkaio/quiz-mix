@@ -1,8 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import domToImage from "dom-to-image";
-import { Question, Quiz } from "../../hooks/useQuizData";
-import { UserAnswer } from "../../pages/PlayQuiz";
 import { useAuth } from '../../contexts/AuthContext';
+import { Question, Quiz, UserAnswer } from "../../types/quiz";
 
 interface ResultsDisplayProps {
     quiz: Quiz;

@@ -18,40 +18,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
-import { UserAnswer } from "../pages/PlayQuiz";
-
-export interface Question {
-    id: string;
-    type: "multiple-choice" | "true-false" | "fill-in-the-blank";
-    question: string;
-    options?: string[];
-    correctAnswer?: number;
-    blankAnswer?: string;
-}
-
-export interface Quiz {
-    id: string;
-    name: string;
-    description?: string;
-    userId: string;
-    createdAt: any;
-    settings: {
-        showAnswersAfter: "immediately" | "end" | "untilCorrect";
-        timeLimitPerQuestion?: number;
-    };
-}
-
-export interface Attempt {
-    userId: string;
-    quizId: string;
-    completedAt: any;
-    correctAnswers: number;
-    totalQuestions: number;
-    percentage: number;
-    displayName: string;
-    photoURL?: string;
-    answers: UserAnswer[];
-}
+import { Quiz, Question, UserAnswer, Attempt } from "../types/quiz";
 
 export interface QuestionData extends Omit<Question, "id"> { }
 
@@ -210,7 +177,7 @@ export const useQuizData = () => {
             const settings: Quiz["settings"] = {
                 showAnswersAfter: quizData.settings.showAnswersAfter,
             };
-            if (quizData.settings.timeLimitPerQuestion !== undefined) {
+            if (quizData.settings?.timeLimitPerQuestion !== undefined) {
                 settings.timeLimitPerQuestion = quizData.settings.timeLimitPerQuestion;
             }
 
@@ -441,6 +408,7 @@ export const useQuizData = () => {
         statistics,
         loading,
         operationLoading,
+        user,
         fetchRanking,
         saveAttempt,
         updateQuizDetails,
@@ -449,7 +417,6 @@ export const useQuizData = () => {
         addMultipleQuestions,
         updateQuestion,
         deleteQuestion,
-        user,
         createQuiz,
     };
 };

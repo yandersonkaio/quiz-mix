@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Question } from "../../hooks/useQuizData";
+import { Question } from "../../types/quiz";
 
 interface QuestionModalProps {
     isOpen: boolean;
