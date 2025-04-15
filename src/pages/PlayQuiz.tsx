@@ -85,7 +85,7 @@ function PlayQuiz() {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
             setCurrentAttempt([]);
             if (!isUntilCorrectMode) resetTimer();
-        } else if (!isUntilCorrectMode && quiz?.settings.showAnswersAfter === "end") {
+        } else {
             const correctCount = userAnswers.filter((ans) => ans.isCorrect).length;
             saveAttempt(correctCount, questions.length, userAnswers).then(() => setShowResult(true));
         }
