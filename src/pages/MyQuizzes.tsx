@@ -15,7 +15,7 @@ function MyQuizzes() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white flex items-center justify-center">
                 <p className="text-red-600 dark:text-red-500">Erro ao carregar seus quizzes: {error.message}</p>
             </div>
         );
@@ -23,7 +23,7 @@ function MyQuizzes() {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-lg mb-4">Faça login para visualizar seus quizzes.</p>
                     <Link
@@ -38,7 +38,7 @@ function MyQuizzes() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white">
             <div className="max-w-5xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold ml-12 md:ml-0 text-gray-900 dark:text-white">

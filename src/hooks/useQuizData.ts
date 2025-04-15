@@ -55,6 +55,13 @@ export interface Attempt {
 
 export interface QuestionData extends Omit<Question, "id"> { }
 
+export interface QuizStatistics {
+    totalAttempts: number;
+    totalUniqueUsers: number;
+    bestPercentage: number;
+    averagePercentage: number;
+}
+
 export const useQuizData = () => {
     const { quizId } = useParams<{ quizId: string }>();
     const navigate = useNavigate();
@@ -63,6 +70,7 @@ export const useQuizData = () => {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [ranking, setRanking] = useState<Attempt[]>([]);
     const [allUserAttempts, setAllUserAttempts] = useState<{ [userId: string]: Attempt[] }>({});
+    const [statistics, setStatistics] = useState<QuizStatistics | null>(null);
     const [loading, setLoading] = useState(!!quizId);
     const [operationLoading, setOperationLoading] = useState(false);
 
@@ -129,6 +137,68 @@ export const useQuizData = () => {
         fetchQuizAndCheckAttempts();
     }, [quizId, navigate, user]);
 
+    const calculateQuizStatistics = (allAttempts: Attempt[], userAttemptsMap: { [userId: string]: Attempt[] }): QuizStatistics => {
+
+        const totalAttempts = allAttempts.length;
+
+        const firstAttempts = Object.values(userAttemptsMap)
+            .map(attempts => {
+                const sorted = attempts.sort((a, b) => a.completedAt.toMillis() - b.completedAt.toMillis());
+                return sorted[0];
+            });
+
+        const totalUniqueUsers = firstAttempts.length;
+
+        const bestPercentage = firstAttempts.reduce((max, attempt) =>
+            Math.max(max, attempt.percentage), 0);
+
+        const averagePercentage = firstAttempts.length > 0
+            ? firstAttempts.reduce((sum, attempt) => sum + attempt.percentage, 0) / firstAttempts.length
+            : 0;
+
+        return {
+            totalAttempts,
+            totalUniqueUsers,
+            bestPercentage: Number(bestPercentage.toFixed(2)),
+            averagePercentage: Number(averagePercentage.toFixed(2)),
+        };
+    };
+
+    const fetchRanking = async () => {
+        if (!quizId) return;
+        const rankingQuery = query(
+            collection(db, "attempts"),
+            where("quizId", "==", quizId),
+            orderBy("completedAt", "asc")
+        );
+        const rankingSnapshot = await getDocs(rankingQuery);
+        const allAttempts = rankingSnapshot.docs.map((doc) => doc.data() as Attempt);
+
+        const userAttemptsMap: { [userId: string]: Attempt[] } = {};
+        allAttempts.forEach((attempt) => {
+            if (!userAttemptsMap[attempt.userId]) {
+                userAttemptsMap[attempt.userId] = [];
+            }
+            userAttemptsMap[attempt.userId].push(attempt);
+        });
+
+        const filteredRanking = Object.values(userAttemptsMap)
+            .map((attempts) => {
+                attempts.sort((a, b) => a.completedAt.toMillis() - b.completedAt.toMillis());
+                return attempts[0];
+            })
+            .sort(
+                (a, b) =>
+                    b.correctAnswers - a.correctAnswers || a.completedAt.toMillis() - b.completedAt.toMillis()
+            );
+
+        const stats = calculateQuizStatistics(allAttempts, userAttemptsMap);
+        setStatistics(stats);
+
+        setRanking(filteredRanking);
+        setAllUserAttempts(userAttemptsMap);
+    };
+
     const createQuiz = async (quizData: Omit<Quiz, "id" | "createdAt">) => {
         if (!user) {
             alert("Faça login para criar um quiz.");
@@ -161,38 +231,6 @@ export const useQuizData = () => {
         } finally {
             setOperationLoading(false);
         }
-    };
-
-    const fetchRanking = async () => {
-        if (!quizId) return;
-        const rankingQuery = query(
-            collection(db, "attempts"),
-            where("quizId", "==", quizId),
-            orderBy("completedAt", "asc")
-        );
-        const rankingSnapshot = await getDocs(rankingQuery);
-        const allAttempts = rankingSnapshot.docs.map((doc) => doc.data() as Attempt);
-
-        const userAttemptsMap: { [userId: string]: Attempt[] } = {};
-        allAttempts.forEach((attempt) => {
-            if (!userAttemptsMap[attempt.userId]) {
-                userAttemptsMap[attempt.userId] = [];
-            }
-            userAttemptsMap[attempt.userId].push(attempt);
-        });
-
-        const filteredRanking = Object.values(userAttemptsMap)
-            .map((attempts) => {
-                attempts.sort((a, b) => a.completedAt.toMillis() - b.completedAt.toMillis());
-                return attempts[0];
-            })
-            .sort(
-                (a, b) =>
-                    b.correctAnswers - a.correctAnswers || a.completedAt.toMillis() - b.completedAt.toMillis()
-            );
-
-        setRanking(filteredRanking);
-        setAllUserAttempts(userAttemptsMap);
     };
 
     const saveAttempt = async (correctAnswers: number, totalQuestions: number, answers: UserAnswer[]) => {
@@ -400,6 +438,7 @@ export const useQuizData = () => {
         questions,
         ranking,
         allUserAttempts,
+        statistics,
         loading,
         operationLoading,
         fetchRanking,

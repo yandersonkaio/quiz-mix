@@ -32,7 +32,7 @@ function Explore() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white">
             <div className="max-w-5xl mx-auto">
                 <h1 className="text-3xl font-bold mb-6 ml-12 md:ml-0 text-gray-900 dark:text-white">
                     Explorar Quizzes

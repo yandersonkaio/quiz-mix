@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
-import { FaEdit, FaTrash, FaPlay, FaFileUpload } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlay, FaFileUpload, FaTrophy, FaInfoCircle, FaListUl } from "react-icons/fa";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
 import { Quiz, Question, useQuizData, QuestionData } from "../hooks/useQuizData";
 import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
@@ -46,6 +46,7 @@ function QuizDetails() {
         operationLoading,
         updateQuestion,
         deleteQuestion,
+        statistics
     } = useQuizData();
 
     const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
@@ -212,156 +213,236 @@ function QuizDetails() {
     const isCreator = quiz.userId === user?.uid;
 
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white">
-            <div className="max-w-4xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold ml-12 md:ml-0 text-gray-900 dark:text-white">
-                        {quiz.name}
-                    </h1>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6 text-gray-900 dark:text-white">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
+                            {quiz.name}
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">
+                            {quiz.description || "Sem descrição"}
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={handlePlayQuiz}
+                        disabled={questions.length === 0 || operationLoading}
+                        className={`flex items-center cursor-pointer px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105
+                            ${questions.length === 0 ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' :
+                                'bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 hover:shadow-emerald-200/50 dark:hover:shadow-emerald-800/50'}
+                            text-white font-semibold text-lg`}
+                        title={questions.length === 0 ? "Adicione perguntas para jogar" : "Jogar o Quiz"}
+                    >
+                        <FaPlay className="mr-3" /> Responder Quiz
+                        {questions.length > 0 && (
+                            <span className="ml-3 px-2 py-1 bg-white/20 rounded-full text-sm">
+                                {questions.length} {questions.length === 1 ? 'pergunta' : 'perguntas'}
+                            </span>
+                        )}
+                    </button>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md dark:shadow-lg border border-gray-200 dark:border-none mb-8">
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                                    Descrição
-                                </h2>
-                                <p className="text-gray-600 dark:text-gray-400">
-                                    {quiz.description || "Sem descrição"}
-                                </p>
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center mb-4">
+                            <FaInfoCircle className="text-blue-500 dark:text-blue-400 mr-3 text-xl" />
+                            <h2 className="text-xl font-semibold">Detalhes</h2>
                         </div>
-                        <div>
-                            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-                                Detalhes
-                            </h2>
-                            <ul className="text-gray-600 dark:text-gray-400 space-y-1">
-                                <li>
-                                    Criado em:{" "}
+                        <ul className="space-y-3">
+                            <li className="flex justify-between">
+                                <span className="text-gray-500 dark:text-gray-400">Criado em:</span>
+                                <span className="font-medium">
                                     {quiz.createdAt
                                         ? new Date(quiz.createdAt.toDate()).toLocaleDateString()
                                         : "N/A"}
-                                </li>
-                                <li>Número de perguntas: {questions.length}</li>
-                                {quiz.settings?.timeLimitPerQuestion ? (
-                                    <li>Tempo por pergunta: {quiz.settings.timeLimitPerQuestion}s</li>
-                                ) : (
-                                    <li>Tempo por pergunta: Sem limite</li>
-                                )}
-                                <li>
-                                    Respostas exibidas:{" "}
+                                </span>
+                            </li>
+                            <li className="flex justify-between">
+                                <span className="text-gray-500 dark:text-gray-400">Modo:</span>
+                                <span className="font-medium">
                                     {quiz.settings?.showAnswersAfter === "immediately"
-                                        ? "Imediato"
+                                        ? "Respostas Imediatas"
                                         : quiz.settings?.showAnswersAfter === "untilCorrect"
-                                            ? "Após acertar"
-                                            : "No final"}
-                                </li>
-                            </ul>
-                        </div>
+                                            ? "Até Acertar"
+                                            : "Mostrar no Final"}
+                                </span>
+                            </li>
+                            <li className="flex justify-between">
+                                <span className="text-gray-500 dark:text-gray-400">Tempo por pergunta:</span>
+                                <span className="font-medium">
+                                    {quiz.settings?.timeLimitPerQuestion
+                                        ? `${quiz.settings.timeLimitPerQuestion}s`
+                                        : "Sem limite"}
+                                </span>
+                            </li>
+                        </ul>
                     </div>
 
-                    <div className="mt-8 flex flex-wrap gap-4">
-                        <button
-                            onClick={handlePlayQuiz}
-                            disabled={questions.length === 0 || operationLoading}
-                            className="flex items-center px-4 py-2 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                            title={questions.length === 0 ? "Adicione perguntas para jogar" : "Jogar o Quiz"}
-                        >
-                            <FaPlay className="mr-2" /> Jogar
-                        </button>
-                        {isCreator && (
-                            <>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center mb-4">
+                            <FaTrophy className="text-yellow-500 dark:text-yellow-400 mr-3 text-xl" />
+                            <h2 className="text-xl font-semibold">Estatísticas</h2>
+                        </div>
+                        <ul className="space-y-3">
+                            <li className="flex justify-between">
+                                <span className="text-gray-500 dark:text-gray-400">Total de tentativas:</span>
+                                <span className="font-medium">{statistics?.totalUniqueUsers}</span>
+                            </li>
+                            <li className="flex justify-between">
+                                <span className="text-gray-500 dark:text-gray-400">Melhor pontuação:</span>
+                                <span className="font-medium">
+                                    {ranking.length > 0 ? `${statistics?.bestPercentage}%` : "N/A"}
+                                </span>
+                            </li>
+                            <li className="flex justify-between">
+                                <span className="text-gray-500 dark:text-gray-400">Média geral:</span>
+                                <span className="font-medium">
+                                    {ranking.length > 0
+                                        ? `${statistics?.averagePercentage}%`
+                                        : "N/A"}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {isCreator && (
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center mb-4">
+                                <FaEdit className="text-purple-500 dark:text-purple-400 mr-3 text-xl" />
+                                <h2 className="text-xl font-semibold">Gerenciar Quiz</h2>
+                            </div>
+                            <div className="space-y-3">
                                 <button
                                     onClick={() => setIsSettingsModalOpen(true)}
                                     disabled={operationLoading}
-                                    className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 disabled:opacity-50 transition-colors duration-200"
-                                    title="Editar configurações do Quiz"
+                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-lg transition-colors duration-200"
                                 >
-                                    <FaEdit className="mr-2" /> Editar
-                                </button>
-                                <button
-                                    onClick={handleDeleteQuiz}
-                                    disabled={operationLoading}
-                                    className="flex items-center px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 disabled:opacity-50 transition-colors duration-200"
-                                    title="Excluir Quiz"
-                                >
-                                    <FaTrash className="mr-2" /> Excluir
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {isCreator && (
-                    <div className="mt-8">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                Perguntas ({questions.length})
-                            </h2>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setIsImportModalOpen(true)}
-                                    disabled={operationLoading}
-                                    title="Importar Perguntas de JSON"
-                                    className="flex items-center p-3 cursor-pointer bg-purple-600 text-white rounded-lg hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 disabled:opacity-50 transition-colors duration-200"
-                                >
-                                    <FaFileUpload className="w-5 h-5" />
+                                    <span>Editar Configurações</span>
+                                    <FaEdit className="ml-2" />
                                 </button>
                                 <button
                                     onClick={openModalForAdd}
                                     disabled={operationLoading}
-                                    title="Adicionar Pergunta Manualmente"
-                                    className="flex items-center p-3 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 disabled:opacity-50 transition-colors duration-200"
+                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-600 dark:text-green-300 rounded-lg transition-colors duration-200"
                                 >
-                                    <IoMdAdd className="w-5 h-5" />
+                                    <span>Adicionar Pergunta</span>
+                                    <IoMdAdd className="ml-2" />
+                                </button>
+                                <button
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    disabled={operationLoading}
+                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-300 rounded-lg transition-colors duration-200"
+                                >
+                                    <span>Importar Perguntas</span>
+                                    <FaFileUpload className="ml-2" />
+                                </button>
+                                <button
+                                    onClick={handleDeleteQuiz}
+                                    disabled={operationLoading}
+                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-colors duration-200"
+                                >
+                                    <span>Excluir Quiz</span>
+                                    <FaTrash className="ml-2" />
                                 </button>
                             </div>
                         </div>
+                    )}
+                </div>
+
+                {isCreator && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center">
+                                <FaListUl className="text-indigo-500 dark:text-indigo-400 mr-3 text-xl" />
+                                <h2 className="text-xl font-semibold">Perguntas ({questions.length})</h2>
+                            </div>
+                            {questions.length > 0 && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setIsImportModalOpen(true)}
+                                        disabled={operationLoading}
+                                        title="Importar Perguntas de JSON"
+                                        className="flex items-center p-3 cursor-pointer bg-purple-600 text-white rounded-lg hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 disabled:opacity-50 transition-colors duration-200"
+                                    >
+                                        <FaFileUpload className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={openModalForAdd}
+                                        disabled={operationLoading}
+                                        title="Adicionar Pergunta Manualmente"
+                                        className="flex items-center p-3 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 disabled:opacity-50 transition-colors duration-200"
+                                    >
+                                        <IoMdAdd className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
                         {questions.length === 0 ? (
-                            <p className="text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                                Nenhuma pergunta adicionada ainda.
-                            </p>
+                            <div className="text-center py-12">
+                                <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                    <IoMdAdd className="text-4xl text-gray-400 dark:text-gray-500" />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Nenhuma pergunta ainda</h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6">Adicione perguntas para começar seu quiz</p>
+                                <button
+                                    onClick={openModalForAdd}
+                                    className="px-6 py-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
+                                >
+                                    Adicionar Primeira Pergunta
+                                </button>
+                            </div>
                         ) : (
-                            <div className="flex-grow overflow-y-auto mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4 dark:bg-gray-900/50 space-y-4">
+                            <div className="space-y-4">
                                 {questions.map((question, index) => (
                                     <div
                                         key={question.id}
-                                        className="bg-white dark:bg-gray-800 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center rounded-lg border border-gray-200 dark:border-none"
+                                        className="group bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200"
                                     >
-                                        <div className="mb-3 sm:mb-0 mr-4 flex-grow">
-                                            <p className="text-gray-800 dark:text-gray-300">
-                                                <span className="font-bold mr-2 text-gray-500 dark:text-gray-500">
-                                                    {index + 1}.
-                                                </span>
-                                                {question.question}
-                                            </p>
-                                            <p className="text-gray-500 dark:text-gray-500 text-sm mt-1">
-                                                Tipo:{" "}
-                                                {question.type === "multiple-choice"
-                                                    ? "Múltipla Escolha"
-                                                    : question.type === "true-false"
-                                                        ? "Verdadeiro/Falso"
-                                                        : "Preenchimento"}
-                                            </p>
-                                        </div>
-                                        <div className="space-x-2 flex flex-shrink-0">
-                                            <button
-                                                onClick={() => openModalForEdit(question)}
-                                                className="flex items-center h-10 w-10 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 justify-center disabled:opacity-50 transition-colors duration-200"
-                                                disabled={operationLoading}
-                                                title="Editar Pergunta"
-                                            >
-                                                <FaEdit />
-                                            </button>
-                                            <button
-                                                onClick={() => question.id && handleRemoveQuestion(question.id)}
-                                                className="flex items-center h-10 w-10 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 justify-center disabled:opacity-50 transition-colors duration-200"
-                                                disabled={operationLoading}
-                                                title="Excluir Pergunta"
-                                            >
-                                                {operationLoading ? "..." : <FaTrash />}
-                                            </button>
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-grow">
+                                                <div className="flex items-start">
+                                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-medium mr-3 mt-0.5 flex-shrink-0">
+                                                        {index + 1}
+                                                    </span>
+                                                    <div>
+                                                        <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                                                            {question.question}
+                                                        </h3>
+                                                        <div className="flex flex-wrap gap-2 mt-2">
+                                                            <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300">
+                                                                {question.type === "multiple-choice"
+                                                                    ? "Múltipla Escolha"
+                                                                    : question.type === "true-false"
+                                                                        ? "Verdadeiro/Falso"
+                                                                        : "Preenchimento"}
+                                                            </span>
+                                                            {question.type === "multiple-choice" && (
+                                                                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300">
+                                                                    4 opções
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex space-x-2 group-hover:opacity-100 transition-opacity duration-200">
+                                                <button
+                                                    onClick={() => openModalForEdit(question)}
+                                                    className="p-2 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors duration-200"
+                                                    title="Editar Pergunta"
+                                                >
+                                                    <FaEdit />
+                                                </button>
+                                                <button
+                                                    onClick={() => question.id && handleRemoveQuestion(question.id)}
+                                                    className="p-2 cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-200"
+                                                    title="Excluir Pergunta"
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -370,12 +451,14 @@ function QuizDetails() {
                     </div>
                 )}
 
-                {!isUntilCorrectMode && (
-                    <RankingDisplay
-                        ranking={ranking}
-                        allUserAttempts={allUserAttempts}
-                        questions={questions}
-                    />
+                {!isUntilCorrectMode && isCreator && (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                        <RankingDisplay
+                            ranking={ranking}
+                            allUserAttempts={allUserAttempts}
+                            questions={questions}
+                        />
+                    </div>
                 )}
 
                 {isCreator && (
@@ -399,7 +482,6 @@ function QuizDetails() {
                             onSaveImportedQuestions={handleSaveImportedQuestions}
                             quizId={quizId || ""}
                         />
-
                         <ConfirmDeleteModal
                             isOpen={isDeleteModalOpen}
                             onClose={() => setIsDeleteModalOpen(false)}

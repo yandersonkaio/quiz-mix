@@ -35,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     return (
         <>
             <button
-                className="md:hidden fixed cursor-pointer top-5 left-5 z-50 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 p-2"
+                className="md:hidden fixed cursor-pointer top-3 left-3 z-50 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 p-2"
                 onClick={toggleSidebar}
             >
                 {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
