@@ -262,7 +262,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-none shadow-md dark:shadow-lg transition-colors duration-200">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-md dark:shadow-lg transition-colors duration-200">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{question.question}</h2>
             {(question.type === 'multiple-choice' || question.type === 'true-false') && (
                 <div className="space-y-2">{renderOptions()}</div>
