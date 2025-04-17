@@ -9,5 +9,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     svgr()
-  ]
+  ],
+  server: {
+    open: true,
+  }
 })
