@@ -9,6 +9,7 @@ interface QuestionDisplayProps {
     showAnswersAfter: 'immediately' | 'end' | 'untilCorrect';
     onNext: () => void;
     currentAttempt?: (number | string)[];
+    isLastQuestion?: boolean;
 }
 
 interface OptionButtonProps {
@@ -59,7 +60,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({
         'opacity-70 cursor-not-allowed bg-gray-100 dark:bg-gray-700 dark:text-white':
             isUntilCorrect && isCorrect && !isCorrectAnswer,
         // Estilo para opções não selecionadas no modo immediately após submissão
-        'opacity-70 bg-gray-100 dark:bg-gray-700 dark:text-white':
+        'opacity-75 cursor-not-allowed bg-gray-100 dark:bg-gray-700 dark:text-white':
             showAnswersAfter === 'immediately' && isSubmitted && !isSelected && !isCorrectAnswer,
         // Estilo para opções desabilitadas no modo end após submissão
         'opacity-50 bg-gray-100 dark:bg-gray-700 dark:text-white':
@@ -111,6 +112,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     showAnswersAfter,
     onNext,
     currentAttempt,
+    isLastQuestion = false,
 }) => {
     const [selectedAnswer, setSelectedAnswer] = useState<number | string | null>(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -143,11 +145,15 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             setIsSubmitted(true);
             onAnswer(answer);
             if (showAnswersAfter === 'immediately') {
-                setTimeout(() => {
-                    setSelectedAnswer(null);
-                    setIsSubmitted(false);
+                if (isLastQuestion) {
                     onNext();
-                }, 2000);
+                } else {
+                    setTimeout(() => {
+                        setSelectedAnswer(null);
+                        setIsSubmitted(false);
+                        onNext();
+                    }, 2000);
+                }
             }
         }
     };

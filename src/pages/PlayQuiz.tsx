@@ -1,4 +1,3 @@
-// src/pages/PlayQuiz.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuizData } from '../hooks/useQuizData';
@@ -51,8 +50,12 @@ const goToNextQuestion = (
         setAttempt([]);
         if (!isUntilCorrectMode) resetTimer();
     } else {
-        const correctCount = userAnswers.filter((ans) => ans.isCorrect).length;
-        saveAttempt(correctCount, questionsLength, userAnswers).then(() => setShowResult(true));
+        if (!isUntilCorrectMode) {
+            const correctCount = userAnswers.filter((ans) => ans.isCorrect).length;
+            saveAttempt(correctCount, questionsLength, userAnswers).then(() => setShowResult(true));
+        } else {
+            setShowResult(true);
+        }
     }
 };
 
@@ -134,11 +137,6 @@ function PlayQuiz() {
                         isUntilCorrectMode,
                         resetTimer
                     );
-                } else if (currentQuestionIndex + 1 === questions.length) {
-                    const correctCount = [...userAnswers, newAnswer].filter((ans) => ans.isCorrect).length;
-                    saveAttempt(correctCount, questions.length, [...userAnswers, newAnswer]).then(() =>
-                        setShowResult(true)
-                    );
                 }
             }
         },
@@ -194,6 +192,7 @@ function PlayQuiz() {
                             )
                         }
                         currentAttempt={isUntilCorrectMode ? currentAttempt : undefined}
+                        isLastQuestion={currentQuestionIndex === questions.length - 1}
                     />
                 </>
             ) : (
