@@ -85,14 +85,6 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
         }
     };
 
-    const wrongAnswers = questions.filter((q) => {
-        const userAnswer = userAnswers.find((ans) => ans.questionId === q.id);
-        return userAnswer && !userAnswer.isCorrect;
-    });
-
-    const shouldShowReview = questions.length <= 10 || wrongAnswers.length > 0;
-    const reviewQuestions = questions.length > 10 ? wrongAnswers : questions;
-
     return (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg text-center border border-gray-200 dark:border-none shadow-md dark:shadow-lg transition-colors duration-200">
             <div ref={resultRef} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
@@ -109,40 +101,35 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                     Teste realizado em: {testDateTime}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Compartilhe seu resultado!</p>
-
-                {shouldShowReview && (
-                    <div className="mt-6 space-y-4">
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            {questions.length > 10 && wrongAnswers.length > 0
-                                ? "Perguntas que Você Errou"
-                                : "Revisão das Respostas"}
-                        </h3>
-                        {reviewQuestions.map((q) => {
-                            const userAnswer = userAnswers.find((ans) => ans.questionId === q.id);
-                            return (
-                                <div
-                                    key={q.id}
-                                    className="text-left bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-none transition-colors duration-200"
-                                >
-                                    <p className="font-medium text-gray-900 dark:text-white">{q.question}</p>
-                                    <p className="text-gray-600 dark:text-gray-400">
-                                        Sua resposta: {userAnswer ? getAnswerText(q, userAnswer.selectedAnswer) : "Não respondida"}
-                                        {userAnswer?.isCorrect ? (
-                                            <span className="text-green-600 dark:text-green-400"> (Correto)</span>
-                                        ) : (
-                                            <span className="text-red-600 dark:text-red-400"> (Errado)</span>
-                                        )}
-                                    </p>
-                                    {!userAnswer?.isCorrect && (
-                                        <p className="text-gray-700 dark:text-gray-300">
-                                            Resposta correta: {getCorrectAnswerText(q)}
-                                        </p>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+            </div>
+            <div className="mt-6 space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Revisão das Respostas
+                </h3>
+                {questions.map((q) => {
+                    const userAnswer = userAnswers.find((ans) => ans.questionId === q.id);
+                    return (
+                        <div
+                            key={q.id}
+                            className="text-left bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-none transition-colors duration-200"
+                        >
+                            <p className="font-medium text-gray-900 dark:text-white">{q.question}</p>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Sua resposta: {userAnswer ? getAnswerText(q, userAnswer.selectedAnswer) : "Não respondida"}
+                                {userAnswer?.isCorrect ? (
+                                    <span className="text-green-600 dark:text-green-400"> (Correto)</span>
+                                ) : (
+                                    <span className="text-red-600 dark:text-red-400"> (Errado)</span>
+                                )}
+                            </p>
+                            {!userAnswer?.isCorrect && (
+                                <p className="text-gray-700 dark:text-gray-300">
+                                    Resposta correta: {getCorrectAnswerText(q)}
+                                </p>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
                 <button
