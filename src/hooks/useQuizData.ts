@@ -139,7 +139,10 @@ export const useQuizData = () => {
             orderBy("completedAt", "asc")
         );
         const rankingSnapshot = await getDocs(rankingQuery);
-        const allAttempts = rankingSnapshot.docs.map((doc) => doc.data() as Attempt);
+        const allAttempts = rankingSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+        }) as Attempt);
 
         const userAttemptsMap: { [userId: string]: Attempt[] } = {};
         allAttempts.forEach((attempt) => {
@@ -400,6 +403,46 @@ export const useQuizData = () => {
         }
     };
 
+    const deleteAllAttempts = async () => {
+        if (!quizId) return;
+        setOperationLoading(true);
+        try {
+            const attemptsQuery = query(collection(db, "attempts"), where("quizId", "==", quizId));
+            const attemptsSnapshot = await getDocs(attemptsQuery);
+            const batch = writeBatch(db);
+
+            attemptsSnapshot.docs.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+
+            await batch.commit();
+            await fetchRanking();
+            alert("Todas as tentativas foram excluídas com sucesso!");
+        } catch (error) {
+            console.error("Erro ao excluir todas as tentativas:", error);
+            alert("Erro ao excluir todas as tentativas.");
+            throw error;
+        } finally {
+            setOperationLoading(false);
+        }
+    };
+
+    const deleteAttempt = async (attemptId: string) => {
+        if (!quizId || !attemptId) return;
+        setOperationLoading(true);
+        try {
+            await deleteDoc(doc(db, "attempts", attemptId));
+            await fetchRanking();
+            alert("Tentativa excluída com sucesso!");
+        } catch (error) {
+            console.error("Erro ao excluir tentativa:", error);
+            alert("Erro ao excluir tentativa.");
+            throw error;
+        } finally {
+            setOperationLoading(false);
+        }
+    };
+
     return {
         quiz,
         questions,
@@ -418,5 +461,7 @@ export const useQuizData = () => {
         updateQuestion,
         deleteQuestion,
         createQuiz,
+        deleteAllAttempts,
+        deleteAttempt
     };
 };

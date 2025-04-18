@@ -5,7 +5,6 @@ import { useTimer } from '../hooks/useTimer';
 import { QuizHeader } from '../components/quiz/QuizHeader';
 import { QuestionDisplay } from '../components/quiz/QuestionDisplay';
 import { ResultsDisplay } from '../components/quiz/ResultsDisplay';
-import { RankingDisplay } from '../components/quiz/RankingDisplay';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
 import { Question, UserAnswer } from '../types/quiz';
@@ -60,7 +59,7 @@ const goToNextQuestion = (
 };
 
 function PlayQuiz() {
-    const { quiz, questions, allUserAttempts, ranking, loading, fetchRanking, saveAttempt } = useQuizData();
+    const { quiz, questions, loading, fetchRanking, saveAttempt } = useQuizData();
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
     const [showResult, setShowResult] = useState<boolean>(false);
@@ -196,22 +195,13 @@ function PlayQuiz() {
                     />
                 </>
             ) : (
-                <>
-                    <ResultsDisplay
-                        quiz={quiz}
-                        questions={questions}
-                        userAnswers={userAnswers}
-                        onRestart={handleRestart}
-                        onBack={() => navigate('/my-quizzes')}
-                    />
-                    {!isUntilCorrectMode && (
-                        <RankingDisplay
-                            ranking={ranking}
-                            allUserAttempts={allUserAttempts}
-                            questions={questions}
-                        />
-                    )}
-                </>
+                <ResultsDisplay
+                    quiz={quiz}
+                    questions={questions}
+                    userAnswers={userAnswers}
+                    onRestart={handleRestart}
+                    onBack={() => navigate('/my-quizzes')}
+                />
             )}
         </div>
     );

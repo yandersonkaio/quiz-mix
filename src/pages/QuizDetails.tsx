@@ -47,7 +47,9 @@ function QuizDetails() {
         operationLoading,
         updateQuestion,
         deleteQuestion,
-        statistics
+        statistics,
+        deleteAttempt,
+        deleteAllAttempts
     } = useQuizData();
 
     const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
@@ -458,6 +460,9 @@ function QuizDetails() {
                             ranking={ranking}
                             allUserAttempts={allUserAttempts}
                             questions={questions}
+                            operationLoading={operationLoading}
+                            onDeleteAllAttempts={deleteAllAttempts}
+                            onDeleteAttempt={deleteAttempt}
                         />
                     </div>
                 )}

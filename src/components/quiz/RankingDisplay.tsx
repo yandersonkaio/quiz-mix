@@ -1,17 +1,32 @@
 import { useState } from "react";
-import { IoMdArrowDropdown, IoMdArrowDropup, IoMdEye } from "react-icons/io";
+import { IoMdArrowDropdown, IoMdArrowDropup, IoMdEye, IoMdTrash } from "react-icons/io";
+import { FaTrashAlt } from "react-icons/fa";
 import AnswersModal from "./AnswersModal";
 import { Attempt, Question } from "../../types/quiz";
+import { ConfirmDeleteModal } from "../ConfirmDeleteModal";
 
 interface RankingDisplayProps {
     ranking: Attempt[];
     allUserAttempts: { [userId: string]: Attempt[] };
     questions: Question[];
+    operationLoading: boolean;
+    onDeleteAllAttempts: () => Promise<void>;
+    onDeleteAttempt: (attemptId: string) => Promise<void>;
 }
 
-export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingDisplayProps) => {
+export const RankingDisplay = ({
+    ranking,
+    allUserAttempts,
+    questions,
+    operationLoading,
+    onDeleteAllAttempts,
+    onDeleteAttempt
+}: RankingDisplayProps) => {
     const [expandedUser, setExpandedUser] = useState<string | null>(null);
     const [selectedAttempt, setSelectedAttempt] = useState<Attempt | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<"all" | "single" | null>(null);
+    const [attemptIdToDelete, setAttemptIdToDelete] = useState<string | null>(null);
 
     const toggleExpand = (userId: string) => {
         setExpandedUser(expandedUser === userId ? null : userId);
@@ -25,9 +40,49 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
         setSelectedAttempt(null);
     };
 
+    const handleDeleteAllAttempts = () => {
+        setDeleteTarget("all");
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDeleteAttempt = (attemptId: string) => {
+        setDeleteTarget("single");
+        setAttemptIdToDelete(attemptId);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            if (deleteTarget === "all") {
+                await onDeleteAllAttempts();
+            } else if (deleteTarget === "single" && attemptIdToDelete) {
+                await onDeleteAttempt(attemptIdToDelete);
+            }
+            setIsDeleteModalOpen(false);
+            setDeleteTarget(null);
+            setAttemptIdToDelete(null);
+        } catch (error) {
+            console.error("Erro ao excluir:", error);
+            alert("Erro ao realizar a exclusão.");
+        }
+    };
+
     return (
         <div className="mt-8 bg-transparent dark:bg-transparent p-6 rounded-lg transition-colors duration-200">
-            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Ranking</h3>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Ranking</h3>
+                {ranking.length > 0 && (
+                    <button
+                        onClick={handleDeleteAllAttempts}
+                        className="flex items-center gap-2 px-4 py-2 cursor-pointer bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-colors duration-200"
+                        title="Excluir todas as tentativas"
+                    >
+                        <FaTrashAlt className="w-4 h-4" />
+                        <span>Limpar Ranking</span>
+                    </button>
+                )}
+            </div>
+
             {ranking.length > 0 ? (
                 <div className="space-y-4">
                     {ranking.map((attempt, index) => {
@@ -72,6 +127,13 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                                         >
                                             <IoMdEye className="w-6 h-6 cursor-pointer" />
                                         </button>
+                                        <button
+                                            onClick={() => handleDeleteAttempt(attempt.id)}
+                                            className="text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors duration-200"
+                                            aria-label={`Excluir tentativa de ${attempt.displayName}`}
+                                        >
+                                            <IoMdTrash className="w-5 h-5 cursor-pointer" />
+                                        </button>
                                         {hasMultipleAttempts && (
                                             <button
                                                 onClick={() => toggleExpand(attempt.userId)}
@@ -107,13 +169,22 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                                                         Concluída em:{" "}
                                                         {extraAttempt.completedAt.toDate().toLocaleString()})
                                                     </span>
-                                                    <button
-                                                        onClick={() => openAnswersModal(extraAttempt)}
-                                                        className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200"
-                                                        aria-label={`Ver respostas da tentativa ${idx + 1}`}
-                                                    >
-                                                        <IoMdEye className="w-6 h-6 cursor-pointer" />
-                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => openAnswersModal(extraAttempt)}
+                                                            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200"
+                                                            aria-label={`Ver respostas da tentativa ${idx + 1}`}
+                                                        >
+                                                            <IoMdEye className="w-5 h-5 cursor-pointer" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteAttempt(extraAttempt.id)}
+                                                            className="text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors duration-200"
+                                                            aria-label={`Excluir tentativa ${idx + 1}`}
+                                                        >
+                                                            <IoMdTrash className="w-5 h-5 cursor-pointer" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
                                     </div>
@@ -134,6 +205,19 @@ export const RankingDisplay = ({ ranking, allUserAttempts, questions }: RankingD
                     questions={questions}
                 />
             )}
+
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title={deleteTarget === "all" ? "Excluir Todas as Tentativas" : "Excluir Tentativa"}
+                message={
+                    deleteTarget === "all"
+                        ? "Tem certeza que deseja excluir TODAS as tentativas deste quiz? Esta ação não pode ser desfeita."
+                        : "Tem certeza que deseja excluir esta tentativa? Esta ação não pode ser desfeita."
+                }
+                isLoading={operationLoading}
+            />
         </div>
     );
 };

@@ -30,6 +30,7 @@ export interface Question {
 }
 
 export interface Attempt {
+    id: string;
     userId: string;
     quizId: string;
     completedAt: any;
