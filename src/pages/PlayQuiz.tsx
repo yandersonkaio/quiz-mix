@@ -8,6 +8,7 @@ import { ResultsDisplay } from '../components/quiz/ResultsDisplay';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
 import { Question, UserAnswer } from '../types/quiz';
+import { toast } from 'sonner';
 
 const DEFAULT_TIME_LIMIT = 0;
 
@@ -77,7 +78,7 @@ function PlayQuiz() {
                     ...prev,
                     { questionId: currentQuestion.id, selectedAnswer: -1, isCorrect: false },
                 ]);
-                alert('Tempo esgotado!');
+                toast.info('Tempo esgotado!');
                 goToNextQuestion(
                     currentQuestionIndex,
                     questions.length,

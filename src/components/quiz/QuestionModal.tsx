@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Question } from "../../types/quiz";
+import { toast } from "sonner";
 
 interface QuestionModalProps {
     isOpen: boolean;
@@ -19,23 +20,23 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
 
     const validateQuestion = (q: Question): boolean => {
         if (!q.question.trim()) {
-            alert("A pergunta não pode estar vazia.");
+            toast.error("A pergunta não pode estar vazia.");
             return false;
         }
         if (q.type === "multiple-choice") {
             if (!q.options || q.options.length < 2 || q.correctAnswer === undefined) {
-                alert("Perguntas de múltipla escolha devem ter pelo menos 2 opções e uma resposta correta definida.");
+                toast.error("Perguntas de múltipla escolha devem ter pelo menos 2 opções e uma resposta correta definida.");
                 return false;
             }
             if (q.options.some((opt) => !opt.trim())) {
-                alert("Todas as opções devem ser preenchidas.");
+                toast.error("Todas as opções devem ser preenchidas.");
                 return false;
             }
         } else if (q.type === "true-false" && q.correctAnswer === undefined) {
-            alert("Perguntas verdadeiro/falso devem ter uma resposta correta definida.");
+            toast.error("Perguntas verdadeiro/falso devem ter uma resposta correta definida.");
             return false;
         } else if (q.type === "fill-in-the-blank" && !q.blankAnswer?.trim()) {
-            alert("Perguntas de preenchimento devem ter uma resposta definida.");
+            toast.error("Perguntas de preenchimento devem ter uma resposta definida.");
             return false;
         }
         return true;
@@ -51,7 +52,7 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
             onClose();
         } catch (error) {
             console.error("Erro ao salvar pergunta:", error);
-            alert("Erro ao salvar a pergunta.");
+            toast.error("Erro ao salvar a pergunta.");
         } finally {
             setIsSaving(false);
         }

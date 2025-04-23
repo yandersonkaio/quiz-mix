@@ -10,6 +10,7 @@ import ImportQuestionsModal from "../components/quiz/ImportQuestionsModal";
 import { IoMdAdd } from "react-icons/io";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Quiz, Question } from "../types/quiz";
+import { toast } from "sonner"
 
 function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>();
@@ -110,7 +111,7 @@ function QuizDetails() {
             setQuestionIdToDelete(null);
         } catch (error) {
             console.error("Erro ao excluir:", error);
-            alert("Erro ao realizar a exclusão.");
+            toast.error("Erro ao realizar a exclusão.");
         }
     };
 
@@ -127,7 +128,7 @@ function QuizDetails() {
         };
 
         if (!questionData.question.trim()) {
-            alert("A pergunta não pode estar vazia.");
+            toast("A pergunta não pode estar vazia.");
             return;
         }
 
@@ -182,7 +183,7 @@ function QuizDetails() {
     const handlePlayQuiz = () => {
         if (!quizId) return;
         if (questions.length === 0) {
-            alert("Adicione perguntas ao quiz antes de jogar!");
+            toast.info("Adicione perguntas ao quiz antes de jogar!");
             return;
         }
         navigate(`/play-quiz/${quizId}`);
@@ -202,11 +203,11 @@ function QuizDetails() {
                     settings: newSettings,
                 };
             });
-            alert("Detalhes do quiz atualizados com sucesso!");
+            toast.success("Detalhes do quiz atualizados com sucesso!");
             setIsSettingsModalOpen(false);
         } catch (error) {
             console.error("Erro ao salvar detalhes do quiz:", error);
-            alert("Erro ao salvar detalhes do quiz.");
+            toast.error("Erro ao salvar detalhes do quiz.");
         }
     };
 

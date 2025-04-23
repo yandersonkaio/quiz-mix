@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import domToImage from "dom-to-image";
 import { useAuth } from '../../contexts/AuthContext';
 import { Question, Quiz, UserAnswer } from "../../types/quiz";
+import { toast } from "sonner";
 
 interface ResultsDisplayProps {
     quiz: Quiz;
@@ -75,11 +76,11 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                 link.href = image;
                 link.download = "resultado-quiz.png";
                 link.click();
-                alert("Compartilhamento não suportado neste navegador. A imagem foi baixada para você compartilhar manualmente!");
+                toast.error("Compartilhamento não suportado neste navegador. A imagem foi baixada para você compartilhar manualmente!");
             }
         } catch (error) {
             console.error("Erro ao gerar ou compartilhar a imagem:", error);
-            alert("Houve um erro ao gerar a imagem para compartilhamento.");
+            toast.error("Houve um erro ao gerar a imagem para compartilhamento.");
         } finally {
             setIsSharing(false);
         }

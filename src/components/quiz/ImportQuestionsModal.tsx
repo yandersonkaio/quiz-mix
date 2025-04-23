@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { validateQuestionData } from '../../utils/validation';
 import { Question } from '../../types/quiz';
+import { toast } from 'sonner';
+import { CodeBlock } from '../CodeBlock';
 
 type QuestionData = Omit<Question, 'id'>;
 
@@ -27,6 +29,7 @@ export default function ImportQuestionsModal({
     const [fileError, setFileError] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [showFormatExample, setShowFormatExample] = useState(false);
 
     const resetState = () => {
         setSelectedFile(null);
@@ -111,7 +114,7 @@ export default function ImportQuestionsModal({
             .map(pq => pq.data as QuestionData);
 
         if (validQuestionsToSave.length === 0) {
-            alert("Nenhuma pergunta válida encontrada no arquivo para importar.");
+            toast.error("Nenhuma pergunta válida encontrada no arquivo para importar.");
             return;
         }
 
@@ -120,7 +123,7 @@ export default function ImportQuestionsModal({
 
         try {
             await onSaveImportedQuestions(validQuestionsToSave);
-            alert(`Sucesso! ${validQuestionsToSave.length} perguntas importadas.`);
+            toast.success(`Sucesso! ${validQuestionsToSave.length} perguntas importadas.`);
             handleClose();
         } catch (error: any) {
             console.error("Erro ao salvar perguntas importadas:", error);
@@ -174,13 +177,32 @@ export default function ImportQuestionsModal({
                             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline ml-1 transition-colors duration-200"
                             onClick={(e) => {
                                 e.preventDefault();
-                                alert(
-                                    'Exemplo de formato JSON:\n[\n  {\n    "type": "multiple-choice",\n    "question": "Sua pergunta?",\n    "options": ["Opção A", "Opção B"],\n    "correctAnswer": 0\n  },\n  ...\n]'
-                                );
+                                setShowFormatExample((prev) => !prev);
                             }}
                         >
-                            Ver formato exemplo
+                            {showFormatExample ? 'Ocultar formato de exemplo' : 'Mostrar formato de exemplo'}
                         </a>
+                        {showFormatExample && (
+                            <div className="mt-2">
+                                <CodeBlock
+                                    language='json'
+                                    code={`[
+    {
+        "type": "multiple-choice",
+        "question": "Sua pergunta?",
+        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
+        "correctAnswer": 0
+    },
+    {
+        "type": "multiple-choice",
+        "question": "Sua pergunta 2?",
+        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
+        "correctAnswer": 2                                
+    }
+]`}
+                                />
+                            </div>
+                        )}
                     </p>
                     {isProcessing && <p className="text-yellow-600 dark:text-yellow-400 mt-2">Processando arquivo...</p>}
                     {fileError && <p className="text-red-600 dark:text-red-500 text-sm mt-2">{fileError}</p>}

@@ -4,6 +4,7 @@ import { FaTrashAlt } from "react-icons/fa";
 import AnswersModal from "./AnswersModal";
 import { Attempt, Question } from "../../types/quiz";
 import { ConfirmDeleteModal } from "../ConfirmDeleteModal";
+import { toast } from "sonner";
 
 interface RankingDisplayProps {
     ranking: Attempt[];
@@ -63,7 +64,7 @@ export const RankingDisplay = ({
             setAttemptIdToDelete(null);
         } catch (error) {
             console.error("Erro ao excluir:", error);
-            alert("Erro ao realizar a exclusão.");
+            toast.error("Erro ao realizar a exclusão.");
         }
     };
 

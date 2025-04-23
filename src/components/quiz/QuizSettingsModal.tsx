@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuizData } from "../../hooks/useQuizData";
 import { Quiz } from "../../types/quiz";
+import { toast } from "sonner";
 
 interface QuizSettingsModalProps {
     isOpen: boolean;
@@ -42,7 +43,7 @@ export function QuizSettingsModal({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name?.trim()) {
-            alert("O nome do quiz é obrigatório.");
+            toast.error("O nome do quiz é obrigatório.");
             return;
         }
 
@@ -50,7 +51,7 @@ export function QuizSettingsModal({
         try {
             if (isCreating) {
                 if (!user?.uid) {
-                    alert("Você precisa estar logado para criar um quiz.");
+                    toast.error("Você precisa estar logado para criar um quiz.");
                     return;
                 }
 
@@ -74,7 +75,7 @@ export function QuizSettingsModal({
             }
         } catch (error) {
             console.error("Erro ao salvar configurações:", error);
-            alert(`Erro ao ${isCreating ? "criar" : "salvar"} o quiz.`);
+            toast.error(`Erro ao ${isCreating ? "criar" : "salvar"} o quiz.`);
         } finally {
             setIsSaving(false);
         }

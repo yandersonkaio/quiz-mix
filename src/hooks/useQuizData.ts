@@ -19,6 +19,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
 import { Quiz, Question, UserAnswer, Attempt } from "../types/quiz";
+import { toast } from "sonner";
 
 export interface QuestionData extends Omit<Question, "id"> { }
 
@@ -58,7 +59,7 @@ export const useQuizData = () => {
                 const quizDoc = await getDoc(doc(db, "quizzes", quizId));
 
                 if (!quizDoc.exists()) {
-                    alert("Quiz não encontrado.");
+                    toast.error("Quiz não encontrado.");
                     navigate("/my-quizzes");
                     return;
                 }
@@ -96,7 +97,7 @@ export const useQuizData = () => {
                 return () => unsubscribe();
             } catch (error) {
                 console.error("useQuizData: Erro ao carregar quiz:", error);
-                alert("Erro ao carregar quiz.");
+                toast.error("Erro ao carregar quiz.");
                 setLoading(false);
             }
         };
@@ -171,7 +172,7 @@ export const useQuizData = () => {
 
     const createQuiz = async (quizData: Omit<Quiz, "id" | "createdAt">) => {
         if (!user) {
-            alert("Faça login para criar um quiz.");
+            toast.error("Faça login para criar um quiz.");
             return null;
         }
 
@@ -192,11 +193,11 @@ export const useQuizData = () => {
                 settings,
             });
 
-            alert("Quiz criado com sucesso!");
+            toast.success("Quiz criado com sucesso!");
             return quizRef.id;
         } catch (error) {
             console.error("Erro ao criar quiz:", error);
-            alert("Erro ao criar quiz.");
+            toast.error("Erro ao criar quiz.");
             return null;
         } finally {
             setOperationLoading(false);
@@ -267,12 +268,12 @@ export const useQuizData = () => {
 
             await batch.commit();
 
-            alert("Quiz excluído com sucesso!");
+            toast.success("Quiz excluído com sucesso!");
             navigate("/my-quizzes");
             return true;
         } catch (error) {
             console.error("Erro ao excluir quiz:", error);
-            alert("Erro ao excluir quiz.");
+            toast.error("Erro ao excluir quiz.");
             throw error;
         }
     };
@@ -297,10 +298,10 @@ export const useQuizData = () => {
             };
 
             await addDoc(collection(db, "quizzes", quizId, "questions"), cleanedQuestion);
-            alert("Questão adicionada com sucesso!");
+            toast.success("Questão adicionada com sucesso!");
         } catch (error) {
             console.error("Erro ao adicionar questão:", error);
-            alert("Erro ao adicionar questão.");
+            toast.error("Erro ao adicionar questão.");
             throw error;
         } finally {
             setOperationLoading(false);
@@ -335,11 +336,11 @@ export const useQuizData = () => {
             });
 
             await batch.commit();
-            alert(`${questionsData.length} questões adicionadas com sucesso!`);
+            toast.success(`${questionsData.length} questões adicionadas com sucesso!`);
             return true;
         } catch (error) {
             console.error("Erro ao adicionar múltiplas questões:", error);
-            alert("Erro ao adicionar questões.");
+            toast.error("Erro ao adicionar questões.");
             throw error;
         } finally {
             setOperationLoading(false);
@@ -378,10 +379,10 @@ export const useQuizData = () => {
             await setDoc(doc(db, "quizzes", quizId, "questions", questionId), cleanedQuestion, {
                 merge: true,
             });
-            alert("Questão atualizada com sucesso!");
+            toast.success("Questão atualizada com sucesso!");
         } catch (error) {
             console.error("Erro ao atualizar questão:", error);
-            alert("Erro ao atualizar questão.");
+            toast.error("Erro ao atualizar questão.");
             throw error;
         } finally {
             setOperationLoading(false);
@@ -393,10 +394,10 @@ export const useQuizData = () => {
         setOperationLoading(true);
         try {
             await deleteDoc(doc(db, "quizzes", quizId, "questions", questionId));
-            alert("Questão removida com sucesso!");
+            toast.success("Questão removida com sucesso!");
         } catch (error) {
             console.error("Erro ao remover questão:", error);
-            alert("Erro ao remover questão.");
+            toast.error("Erro ao remover questão.");
             throw error;
         } finally {
             setOperationLoading(false);
@@ -417,10 +418,10 @@ export const useQuizData = () => {
 
             await batch.commit();
             await fetchRanking();
-            alert("Todas as tentativas foram excluídas com sucesso!");
+            toast.success("Todas as tentativas foram excluídas com sucesso!");
         } catch (error) {
             console.error("Erro ao excluir todas as tentativas:", error);
-            alert("Erro ao excluir todas as tentativas.");
+            toast.error("Erro ao excluir todas as tentativas.");
             throw error;
         } finally {
             setOperationLoading(false);
@@ -433,10 +434,10 @@ export const useQuizData = () => {
         try {
             await deleteDoc(doc(db, "attempts", attemptId));
             await fetchRanking();
-            alert("Tentativa excluída com sucesso!");
+            toast.success("Tentativa excluída com sucesso!");
         } catch (error) {
             console.error("Erro ao excluir tentativa:", error);
-            alert("Erro ao excluir tentativa.");
+            toast.error("Erro ao excluir tentativa.");
             throw error;
         } finally {
             setOperationLoading(false);
