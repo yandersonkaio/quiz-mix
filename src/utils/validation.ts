@@ -1,4 +1,4 @@
-import { Question } from "../hooks/useQuizData";
+import { Question } from "@/types/quiz";
 
 export const validateQuestionData = (q: Partial<Question>): string[] => {
     const errors: string[] = [];
