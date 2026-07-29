@@ -24,6 +24,7 @@ interface OptionButtonProps {
     label: string;
     icon?: React.ReactNode;
     isCorrectAnswer?: boolean;
+    feedback?: string | null;
 }
 
 const OptionButton: React.FC<OptionButtonProps> = ({
@@ -38,6 +39,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({
     label,
     icon,
     isCorrectAnswer,
+    feedback,
 }) => {
     const isUntilCorrect = showAnswersAfter === 'untilCorrect';
     const baseClass = 'flex items-center w-full p-3 rounded-lg text-left transition-colors duration-200';
@@ -75,33 +77,44 @@ const OptionButton: React.FC<OptionButtonProps> = ({
             aria-label={`Opção ${label}`}
             aria-disabled={disabled || (isUntilCorrect && isCorrect && !isCorrectAnswer)}
         >
-            <span
-                className={clsx(
-                    'flex items-center justify-center w-8 h-8 mr-3 rounded-full transition-colors duration-200',
-                    isUntilCorrect
-                        ? isCorrect && isCorrectAnswer
-                            ? 'bg-green-600 text-white dark:bg-green-500'
-                            : isIncorrect
-                                ? 'bg-red-600 text-white dark:bg-red-500'
-                                : isCorrect && !isCorrectAnswer
-                                    ? 'bg-gray-300 text-gray-600 dark:bg-gray-600 dark:text-gray-400'
+            <div className="flex flex-col w-full">
+                <div className="flex items-center">
+                    <span
+                        className={clsx(
+                            'flex items-center justify-center w-8 h-8 mr-3 rounded-full transition-colors duration-200',
+                            isUntilCorrect
+                                ? isCorrect && isCorrectAnswer
+                                    ? 'bg-green-600 text-white dark:bg-green-500'
+                                    : isIncorrect
+                                        ? 'bg-red-600 text-white dark:bg-red-500'
+                                        : isCorrect && !isCorrectAnswer
+                                            ? 'bg-gray-300 text-gray-600 dark:bg-gray-600 dark:text-gray-400'
+                                            : isSelected && !isSubmitted
+                                                ? 'bg-blue-600 text-white dark:bg-blue-500'
+                                                : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white'
+                                : showAnswersAfter === 'immediately' && isSubmitted
+                                    ? isCorrectAnswer
+                                        ? 'bg-green-600 text-white dark:bg-green-500'
+                                        : isSelected && !isCorrectAnswer
+                                            ? 'bg-red-600 text-white dark:bg-red-500'
+                                            : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white opacity-70'
                                     : isSelected && !isSubmitted
                                         ? 'bg-blue-600 text-white dark:bg-blue-500'
                                         : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white'
-                        : showAnswersAfter === 'immediately' && isSubmitted
-                            ? isCorrectAnswer
-                                ? 'bg-green-600 text-white dark:bg-green-500'
-                                : isSelected && !isCorrectAnswer
-                                    ? 'bg-red-600 text-white dark:bg-red-500'
-                                    : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white opacity-70'
-                            : isSelected && !isSubmitted
-                                ? 'bg-blue-600 text-white dark:bg-blue-500'
-                                : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white'
+                        )}
+                    >
+                        {icon || label}
+                    </span>
+
+                    <span>{option}</span>
+                </div>
+
+                {feedback && (
+                    <div className="mt-3 ml-11 border-t border-current/20 pt-3 text-sm whitespace-pre-line">
+                        {feedback}
+                    </div>
                 )}
-            >
-                {icon || label}
-            </span>
-            {option}
+            </div>
         </button>
     );
 };
@@ -200,6 +213,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     const renderOptions = () => {
         if (question.type === 'multiple-choice') {
             return question.options?.map((option, index) => (
+
                 <OptionButton
                     key={index}
                     option={option}
@@ -227,6 +241,11 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                                 : undefined
                     }
                     isCorrectAnswer={Number(index) === question.correctAnswer}
+                    feedback={
+                        isUntilCorrect && (lastIncorrect === index || latestAttempt === index)
+                            ? question.optionFeedback?.[index] ?? null
+                            : null
+                    }
                 />
             ));
         }

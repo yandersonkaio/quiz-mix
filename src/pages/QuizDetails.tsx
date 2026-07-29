@@ -122,13 +122,18 @@ function QuizDetails() {
             ...(question.type === "multiple-choice" && {
                 options: question.options,
                 correctAnswer: question.correctAnswer,
+                optionFeedback: question.optionFeedback, // ✅ ADICIONE ESTA LINHA
             }),
-            ...(question.type === "true-false" && { correctAnswer: question.correctAnswer }),
-            ...(question.type === "fill-in-the-blank" && { blankAnswer: question.blankAnswer }),
+            ...(question.type === "true-false" && {
+                correctAnswer: question.correctAnswer
+            }),
+            ...(question.type === "fill-in-the-blank" && {
+                blankAnswer: question.blankAnswer
+            }),
         };
 
         if (!questionData.question.trim()) {
-            toast("A pergunta não pode estar vazia.");
+            toast.error("A pergunta não pode estar vazia.");
             return;
         }
 

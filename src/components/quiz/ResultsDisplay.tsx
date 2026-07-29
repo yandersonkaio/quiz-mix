@@ -101,7 +101,7 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                     Teste realizado em: {testDateTime}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Compartilhe seu resultado!</p>
+                {quiz.settings?.showAnswersAfter !== "untilCorrect" && <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Compartilhe seu resultado!</p>}
             </div>
             <div className="mt-6 space-y-4">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -133,15 +133,19 @@ export const ResultsDisplay = ({ quiz, questions, userAnswers, onRestart, onBack
                 })}
             </div>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
-                <button
-                    onClick={handleShare}
-                    disabled={isSharing}
-                    className={`px-6 py-3 rounded-lg cursor-pointer text-white transition-colors duration-200 ${isSharing ? "bg-purple-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500"
-                        }`}
-                    aria-label="Compartilhar resultado como imagem"
-                >
-                    {isSharing ? "Gerando..." : "Compartilhar Resultado"}
-                </button>
+                {quiz.settings?.showAnswersAfter !== "untilCorrect" && (
+                    <button
+                        onClick={handleShare}
+                        disabled={isSharing}
+                        className={`px-6 py-3 rounded-lg cursor-pointer text-white transition-colors duration-200 ${isSharing
+                            ? "bg-purple-400 cursor-not-allowed"
+                            : "bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500"
+                            }`}
+                        aria-label="Compartilhar resultado como imagem"
+                    >
+                        {isSharing ? "Gerando..." : "Compartilhar Resultado"}
+                    </button>
+                )}
                 <button
                     onClick={onRestart}
                     className="px-6 py-3 cursor-pointer bg-blue-600 rounded-lg text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors duration-200"
