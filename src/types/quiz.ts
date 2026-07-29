@@ -49,3 +49,26 @@ export interface UserAnswer {
     selectedAnswer: number | string;
     isCorrect: boolean;
 }
+
+export interface QuizCollection {
+    id: string;
+    name: string;
+    description?: string;
+
+    userId: string;
+    createdAt: Timestamp | any;
+
+    quizCount?: number;
+    sectionCount?: number;
+}
+
+export interface QuizCollectionItem {
+    id: string;
+
+    collectionId: string;
+    quizId: string;
+
+    sectionId?: string | null;
+
+    order?: number;
+}
