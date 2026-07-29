@@ -9,6 +9,7 @@ import PrivateLayout from "../layouts/PrivateLayout";
 const Login = lazy(() => import("../pages/Login"));
 const Explore = lazy(() => import("../pages/Explore"));
 const MyQuizzes = lazy(() => import("../pages/MyQuizzes"));
+const MyCollections = lazy(() => import("../pages/MyCollections"));
 const PlayQuiz = lazy(() => import("../pages/PlayQuiz"));
 const QuizDetails = lazy(() => import("../pages/QuizDetails"));
 const Settings = lazy(() => import("../pages/Settings"));
@@ -32,6 +33,7 @@ export default function AppRoutes() {
                 >
                     <Route path="/" element={<Explore />} />
                     <Route path="/my-quizzes" element={<MyQuizzes />} />
+                    <Route path="/my-collections" element={<MyCollections />} />
                     <Route path="/play-quiz/:quizId" element={<PlayQuiz />} />
                     <Route path="/quiz/details/:quizId" element={<QuizDetails />} />
                     <Route path="/settings" element={<Settings />} />
