@@ -12,7 +12,6 @@ import {
     orderBy,
     updateDoc,
     deleteDoc,
-    setDoc,
     writeBatch,
 } from "firebase/firestore";
 import { useParams, useNavigate } from "react-router-dom";
@@ -21,7 +20,7 @@ import { Timestamp } from "firebase/firestore";
 import { Quiz, Question, UserAnswer, Attempt } from "../types/quiz";
 import { toast } from "sonner";
 
-export interface QuestionData extends Omit<Question, "id"> { }
+export type QuestionData = Omit<Question, "id">;
 
 export interface QuizStatistics {
     totalAttempts: number;
@@ -282,22 +281,39 @@ export const useQuizData = () => {
         if (!quizId) return;
         setOperationLoading(true);
         try {
-            const cleanedQuestion = {
+            const cleanedQuestion: any = {
                 type: questionData.type,
                 question: questionData.question,
-                ...(questionData.type === "multiple-choice" && {
-                    options: questionData.options,
-                    correctAnswer: questionData.correctAnswer,
-                }),
-                ...(questionData.type === "true-false" && {
-                    correctAnswer: questionData.correctAnswer,
-                }),
-                ...(questionData.type === "fill-in-the-blank" && {
-                    blankAnswer: questionData.blankAnswer || "",
-                }),
             };
 
+            if (questionData.type === "multiple-choice") {
+                cleanedQuestion.options = questionData.options || [];
+                cleanedQuestion.correctAnswer = questionData.correctAnswer;
+
+                if (questionData.optionFeedback && Array.isArray(questionData.optionFeedback)) {
+
+                    const feedback = questionData.optionFeedback.map(f => {
+                        if (f === null || f === undefined) return null;
+                        const trimmed = f.trim();
+                        return trimmed === "" ? null : trimmed;
+                    });
+
+                    if (feedback.some(f => f !== null)) {
+                        cleanedQuestion.optionFeedback = feedback;
+                    }
+                }
+            }
+
+            if (questionData.type === "true-false") {
+                cleanedQuestion.correctAnswer = questionData.correctAnswer;
+            }
+
+            if (questionData.type === "fill-in-the-blank") {
+                cleanedQuestion.blankAnswer = questionData.blankAnswer || "";
+            }
+
             await addDoc(collection(db, "quizzes", quizId, "questions"), cleanedQuestion);
+
             toast.success("Questão adicionada com sucesso!");
         } catch (error) {
             console.error("Erro ao adicionar questão:", error);
@@ -315,21 +331,40 @@ export const useQuizData = () => {
             const batch = writeBatch(db);
             const questionsRef = collection(db, "quizzes", quizId, "questions");
 
-            questionsData.forEach((question) => {
-                const cleanedQuestion = {
-                    type: question.type,
-                    question: question.question,
-                    ...(question.type === "multiple-choice" && {
-                        options: question.options,
-                        correctAnswer: question.correctAnswer,
-                    }),
-                    ...(question.type === "true-false" && {
-                        correctAnswer: question.correctAnswer,
-                    }),
-                    ...(question.type === "fill-in-the-blank" && {
-                        blankAnswer: question.blankAnswer || "",
-                    }),
+            questionsData.forEach((questionData) => {
+                const cleanedQuestion: any = {
+                    type: questionData.type,
+                    question: questionData.question,
                 };
+
+                // Adds specific fields based on the type
+                if (questionData.type === "multiple-choice") {
+                    cleanedQuestion.options = questionData.options || [];
+                    cleanedQuestion.correctAnswer = questionData.correctAnswer;
+
+                    // Process optionFeedback
+                    if (questionData.optionFeedback && Array.isArray(questionData.optionFeedback)) {
+                        // Converte strings vazias para null
+                        const feedback = questionData.optionFeedback.map(f => {
+                            if (f === null || f === undefined) return null;
+                            const trimmed = f.trim();
+                            return trimmed === "" ? null : trimmed;
+                        });
+
+                        // Only include it if there is at least one piece of feedback containing content
+                        if (feedback.some(f => f !== null)) {
+                            cleanedQuestion.optionFeedback = feedback;
+                        }
+                    }
+                }
+
+                if (questionData.type === "true-false") {
+                    cleanedQuestion.correctAnswer = questionData.correctAnswer;
+                }
+
+                if (questionData.type === "fill-in-the-blank") {
+                    cleanedQuestion.blankAnswer = questionData.blankAnswer || "";
+                }
 
                 const docRef = doc(questionsRef);
                 batch.set(docRef, cleanedQuestion);
@@ -351,34 +386,55 @@ export const useQuizData = () => {
         if (!quizId || !questionId) return;
         setOperationLoading(true);
         try {
-            const cleanedQuestion: Partial<Question> = {
+            const cleanedQuestion: any = {
                 ...questionData,
-                ...(questionData.type === "multiple-choice" && {
-                    options: questionData.options,
-                    correctAnswer: questionData.correctAnswer,
-                    blankAnswer: undefined,
-                }),
-                ...(questionData.type === "true-false" && {
-                    correctAnswer: questionData.correctAnswer,
-                    options: undefined,
-                    blankAnswer: undefined,
-                }),
-                ...(questionData.type === "fill-in-the-blank" && {
-                    blankAnswer: questionData.blankAnswer || "",
-                    options: undefined,
-                    correctAnswer: undefined,
-                }),
             };
 
+            // Clears fields based on type
+            if (questionData.type === "multiple-choice") {
+                cleanedQuestion.options = questionData.options;
+                cleanedQuestion.correctAnswer = questionData.correctAnswer;
+                cleanedQuestion.blankAnswer = undefined;
+
+                // Process optionFeedback
+                if (questionData.optionFeedback !== undefined) {
+                    const feedback = questionData.optionFeedback.map(f => {
+                        if (f === null || f === undefined) return null;
+                        const trimmed = f.trim();
+                        return trimmed === "" ? null : trimmed;
+                    });
+
+                    // If all are null, remove the field
+                    if (feedback.every(f => f === null)) {
+                        cleanedQuestion.optionFeedback = undefined;
+                    } else {
+                        cleanedQuestion.optionFeedback = feedback;
+                    }
+                }
+            }
+
+            if (questionData.type === "true-false") {
+                cleanedQuestion.correctAnswer = questionData.correctAnswer;
+                cleanedQuestion.options = undefined;
+                cleanedQuestion.blankAnswer = undefined;
+                cleanedQuestion.optionFeedback = undefined;
+            }
+
+            if (questionData.type === "fill-in-the-blank") {
+                cleanedQuestion.blankAnswer = questionData.blankAnswer || "";
+                cleanedQuestion.options = undefined;
+                cleanedQuestion.correctAnswer = undefined;
+                cleanedQuestion.optionFeedback = undefined;
+            }
+
+            // Remove undefined fields
             Object.keys(cleanedQuestion).forEach((key) => {
-                if (cleanedQuestion[key as keyof Question] === undefined) {
-                    delete cleanedQuestion[key as keyof Question];
+                if (cleanedQuestion[key] === undefined) {
+                    delete cleanedQuestion[key];
                 }
             });
 
-            await setDoc(doc(db, "quizzes", quizId, "questions", questionId), cleanedQuestion, {
-                merge: true,
-            });
+            await updateDoc(doc(db, "quizzes", quizId, "questions", questionId), cleanedQuestion);
             toast.success("Questão atualizada com sucesso!");
         } catch (error) {
             console.error("Erro ao atualizar questão:", error);

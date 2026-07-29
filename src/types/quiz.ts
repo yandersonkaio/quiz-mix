@@ -27,6 +27,8 @@ export interface Question {
     options?: string[];
     correctAnswer?: number;
     blankAnswer?: string;
+
+    optionFeedback?: (string | null)[];
 }
 
 export interface Attempt {
