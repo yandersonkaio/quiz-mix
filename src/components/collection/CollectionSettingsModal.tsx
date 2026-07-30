@@ -31,18 +31,16 @@ export function CollectionSettingsModal({
         operationLoading,
     } = useCollectionData();
 
-    const [formData, setFormData] = useState<Partial<QuizCollection>>({
-        name: collection.name ?? "",
-        description: collection.description ?? "",
+    const getInitialData = (collection?: Partial<QuizCollection>) => ({
+        name: collection?.name ?? "",
+        description: collection?.description ?? "",
     });
 
+    const [formData, setFormData] = useState(getInitialData(collection));
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        setFormData({
-            name: collection.name ?? "",
-            description: collection.description ?? "",
-        });
+        setFormData(getInitialData(collection));
     }, [collection]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -68,13 +66,16 @@ export function CollectionSettingsModal({
                     userId: user.uid,
                 });
 
-                if (createdCollectionId) {
-                    navigate(`/collections/${createdCollectionId}`);
-                    onClose();
+                if (!createdCollectionId) {
+                    throw new Error("Falha ao criar coleção.");
                 }
+
+                toast.success("Coleção criada com sucesso.");
+
+                onClose();
+                navigate(`/collections/${createdCollectionId}`);
             } else if (onSave) {
                 await onSave(formData);
-                onClose();
             }
         } catch (error) {
             console.error(error);
@@ -126,12 +127,12 @@ export function CollectionSettingsModal({
                         <input
                             type="text"
                             required
-                            value={formData.name ?? ""}
+                            value={formData.name}
                             onChange={(e) =>
-                                setFormData({
-                                    ...formData,
+                                setFormData((prev) => ({
+                                    ...prev,
                                     name: e.target.value,
-                                })
+                                }))
                             }
                             disabled={isSaving || operationLoading}
                             placeholder="Ex.: Anatomia Humana"
@@ -146,12 +147,12 @@ export function CollectionSettingsModal({
 
                         <textarea
                             rows={4}
-                            value={formData.description ?? ""}
+                            value={formData.description}
                             onChange={(e) =>
-                                setFormData({
-                                    ...formData,
+                                setFormData((prev) => ({
+                                    ...prev,
                                     description: e.target.value,
-                                })
+                                }))
                             }
                             disabled={isSaving || operationLoading}
                             placeholder="Descreva o objetivo desta coleção..."
@@ -207,11 +208,9 @@ export function CollectionSettingsModal({
                                         : "Salvando..."}
                                 </>
                             ) : (
-                                <>
-                                    {isCreating
-                                        ? "Criar Coleção"
-                                        : "Salvar"}
-                                </>
+                                isCreating
+                                    ? "Criar Coleção"
+                                    : "Salvar"
                             )}
                         </button>
                     </div>

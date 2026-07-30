@@ -44,7 +44,15 @@ function CollectionDetails() {
     ) => {
         if (!collection) return;
 
-        await updateCollection(collection.id, updatedCollection);
+        try {
+            await updateCollection(collection.id, updatedCollection);
+
+            toast.success("Coleção atualizada com sucesso.");
+            setIsSettingsModalOpen(false);
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao atualizar coleção.");
+        }
     };
 
     if (loading) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 
 import { db } from "../db/firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -19,15 +19,15 @@ export function useCollection(collectionId?: string) {
             return;
         }
 
-        const fetchCollection = async () => {
-            try {
-                setLoading(true);
+        setLoading(true);
+        setError(null);
 
-                const docRef = doc(db, "collections", collectionId);
-                const docSnap = await getDoc(docRef);
-
+        const unsubscribe = onSnapshot(
+            doc(db, "collections", collectionId),
+            (docSnap) => {
                 if (!docSnap.exists()) {
                     setCollection(null);
+                    setLoading(false);
                     return;
                 }
 
@@ -35,15 +35,17 @@ export function useCollection(collectionId?: string) {
                     id: docSnap.id,
                     ...docSnap.data(),
                 } as QuizCollection);
-            } catch (err) {
+
+                setLoading(false);
+            },
+            (err) => {
                 console.error("Erro ao carregar coleção:", err);
-                setError(err as Error);
-            } finally {
+                setError(err);
                 setLoading(false);
             }
-        };
+        );
 
-        fetchCollection();
+        return () => unsubscribe();
     }, [collectionId]);
 
     return {
