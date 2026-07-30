@@ -20,6 +20,12 @@ export interface Quiz {
     };
 }
 
+export interface CollectionQuiz extends Quiz {
+    collectionItemId: string;
+    order: number;
+    sectionId?: string;
+}
+
 export interface Question {
     id: string;
     type: "multiple-choice" | "true-false" | "fill-in-the-blank";
@@ -63,12 +69,10 @@ export interface QuizCollection {
 }
 
 export interface QuizCollectionItem {
-    id: string;
-
     collectionId: string;
-    quizId: string;
-
-    sectionId?: string | null;
-
-    order?: number;
+    name: string;
+    description?: string;
+    userId: string;
+    createdAt?: Timestamp;
+    quizIds?: string[];
 }
