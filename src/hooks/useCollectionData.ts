@@ -7,7 +7,6 @@ import {
     serverTimestamp,
     updateDoc,
 } from "firebase/firestore";
-import { toast } from "sonner";
 
 import { db } from "../db/firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -29,13 +28,7 @@ export function useCollectionData() {
                 createdAt: serverTimestamp(),
             });
 
-            toast.success("Coleção criada com sucesso.");
-
             return docRef.id;
-        } catch (error) {
-            console.error(error);
-            toast.error("Erro ao criar coleção.");
-            return null;
         } finally {
             setOperationLoading(false);
         }
@@ -49,11 +42,6 @@ export function useCollectionData() {
 
         try {
             await updateDoc(doc(db, "collections", id), data);
-
-            toast.success("Coleção atualizada.");
-        } catch (error) {
-            console.error(error);
-            toast.error("Erro ao atualizar coleção.");
         } finally {
             setOperationLoading(false);
         }
@@ -64,11 +52,6 @@ export function useCollectionData() {
 
         try {
             await deleteDoc(doc(db, "collections", id));
-
-            toast.success("Coleção removida.");
-        } catch (error) {
-            console.error(error);
-            toast.error("Erro ao remover coleção.");
         } finally {
             setOperationLoading(false);
         }
