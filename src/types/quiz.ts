@@ -22,8 +22,8 @@ export interface Quiz {
 
 export interface CollectionQuiz extends Quiz {
     collectionItemId: string;
+    sectionId?: string | null;
     order: number;
-    sectionId?: string;
 }
 
 export interface Question {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
     collection,
+    getDocs,
     onSnapshot,
     orderBy,
     query,
@@ -41,17 +42,29 @@ export const useUserCollections = () => {
                 try {
                     const data = await Promise.all(
                         snapshot.docs.map(async (doc) => {
-                            // TODO:
-                            // Implement the retrieval of the number of quizzes and sections
+                            const quizzesSnap = await getDocs(
+                                collection(
+                                    db,
+                                    "collections",
+                                    doc.id,
+                                    "quizItems"
+                                )
+                            );
 
-                            const quizCount = 0;
-                            const sectionCount = 0;
+                            const sectionsSnap = await getDocs(
+                                collection(
+                                    db,
+                                    "collections",
+                                    doc.id,
+                                    "sections"
+                                )
+                            );
 
                             return {
                                 id: doc.id,
                                 ...doc.data(),
-                                quizCount,
-                                sectionCount,
+                                quizCount: quizzesSnap.size,
+                                sectionCount: sectionsSnap.size,
                             } as QuizCollection;
                         })
                     );
