@@ -9,6 +9,7 @@ import {
     setDoc,
     deleteDoc,
     serverTimestamp,
+    updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../db/firebase";
@@ -23,7 +24,6 @@ export function useCollectionQuizzes(collectionId?: string) {
         if (!collectionId) {
             setQuizzes([]);
             setLoading(false);
-
             return;
         }
 
@@ -59,7 +59,7 @@ export function useCollectionQuizzes(collectionId?: string) {
                             collectionItemId: item.id,
                             sectionId: data.sectionId ?? null,
                             order: data.order ?? 0,
-                            ...quizSnap.data()
+                            ...quizSnap.data(),
                         } as CollectionQuiz);
                     }
                 }
@@ -79,11 +79,42 @@ export function useCollectionQuizzes(collectionId?: string) {
         return unsubscribe;
     }, [collectionId]);
 
+    async function updateQuizSection(
+        itemId: string,
+        sectionId: string | null
+    ) {
+        if (!collectionId) return;
+
+        setOperationLoading(true);
+
+        try {
+            await updateDoc(
+                doc(
+                    db,
+                    "collections",
+                    collectionId,
+                    "quizItems",
+                    itemId
+                ),
+                {
+                    sectionId
+                }
+            );
+        } finally {
+            setOperationLoading(false);
+        }
+    }
+
     async function addQuizToCollection(
         quizId: string,
         sectionId: string | null = null
     ) {
         if (!collectionId) return;
+
+        console.log("Adicionando no hook:", {
+            quizId,
+            sectionId
+        });
 
         setOperationLoading(true);
 
@@ -116,7 +147,6 @@ export function useCollectionQuizzes(collectionId?: string) {
         setOperationLoading(true);
 
         try {
-
             await deleteDoc(
                 doc(
                     db,
@@ -126,8 +156,6 @@ export function useCollectionQuizzes(collectionId?: string) {
                     itemId
                 )
             );
-
-
         } finally {
             setOperationLoading(false);
         }
@@ -137,6 +165,7 @@ export function useCollectionQuizzes(collectionId?: string) {
         quizzes,
         loading,
         operationLoading,
+        updateQuizSection,
         addQuizToCollection,
         removeQuizFromCollection
     };

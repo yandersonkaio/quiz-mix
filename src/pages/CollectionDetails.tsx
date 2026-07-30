@@ -4,18 +4,23 @@ import {
     FaEdit,
     FaTrash,
     FaInfoCircle,
-    FaListUl
+    FaListUl,
+    FaQuestionCircle,
+    FaClock,
+    FaUser
 } from "react-icons/fa";
-import { IoMdAdd } from "react-icons/io";
+import { GrConfigure } from "react-icons/gr";
 
 import Loading from "../components/Loading";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { CollectionSettingsModal } from "@/components/collection/CollectionSettingsModal";
 import AddQuizToCollectionModal from "@/components/collection/AddQuizToCollectionModal";
+import ManageSectionsModal from "@/components/collection/ManageSectionsModal";
 
 import { useCollection } from "@/hooks/useCollection";
 import { useCollectionData } from "../hooks/useCollectionData";
 import { useCollectionQuizzes } from "@/hooks/useCollectionQuizzes";
+import { useCollectionSections } from "@/hooks/useCollectionSections";
 
 import { toast } from "sonner";
 import { QuizCollection } from "@/types/quiz";
@@ -31,6 +36,11 @@ function CollectionDetails() {
     } = useCollection(collectionId);
 
     const {
+        sections,
+        loading: sectionsLoading
+    } = useCollectionSections(collectionId);
+
+    const {
         quizzes,
         loading: quizzesLoading
     } = useCollectionQuizzes(collectionId);
@@ -42,9 +52,11 @@ function CollectionDetails() {
 
     const { updateCollection } = useCollectionData();
 
+
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isAddQuizModalOpen, setIsAddQuizModalOpen] = useState(false);
+    const [isSectionsModalOpen, setIsSectionsModalOpen] = useState(false);
 
     const handleSaveCollection = async (
         updatedCollection: Partial<QuizCollection>
@@ -82,6 +94,29 @@ function CollectionDetails() {
         }
     };
 
+    const getQuizzesBySection = (sectionId: string | null) => {
+        return quizzes.filter(quiz => quiz.sectionId === sectionId);
+    };
+
+    const quizzesSemSecao = getQuizzesBySection(null);
+
+    const formatTimeLimit = (seconds?: number) => {
+        if (!seconds) return null;
+        if (seconds < 60) return `${seconds}s`;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return remainingSeconds > 0 ? `${minutes}min ${remainingSeconds}s` : `${minutes}min`;
+    };
+
+    const translateShowAnswers = (setting: string) => {
+        const translations: Record<string, string> = {
+            'immediately': 'Imediatamente',
+            'end': 'Ao final',
+            'untilCorrect': 'Até acertar'
+        };
+        return translations[setting] || setting;
+    };
+
     if (loading) {
         return <Loading />;
     }
@@ -99,7 +134,7 @@ function CollectionDetails() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6 text-gray-900 dark:text-white">
             <div className="max-w-6xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between gap-4 mb-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-3xl md:text-4xl font-bold">
                             {collection.name}
@@ -110,13 +145,13 @@ function CollectionDetails() {
                         </p>
                     </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                         <div className="flex items-center mb-4">
                             <FaInfoCircle className="text-blue-500 mr-3" />
-
                             <h2 className="text-xl font-semibold">
-                                Detalhes
+                                Informações
                             </h2>
                         </div>
 
@@ -125,7 +160,6 @@ function CollectionDetails() {
                                 <span className="text-gray-500">
                                     Criada em:
                                 </span>
-
                                 <span>
                                     {collection.createdAt
                                         ? collection.createdAt
@@ -138,41 +172,47 @@ function CollectionDetails() {
 
                             <div className="flex justify-between">
                                 <span className="text-gray-500">
-                                    Quizzes:
+                                    Total de Quizzes:
                                 </span>
-
-                                <span>
+                                <span className="font-semibold">
                                     {quizzes.length}
+                                </span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">
+                                    Seções:
+                                </span>
+                                <span className="font-semibold">
+                                    {sections.length}
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     {isCreator && (
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2">
                             <div className="flex items-center mb-4">
                                 <FaEdit className="text-purple-500 mr-3" />
                                 <h2 className="text-xl font-semibold">
-                                    Gerenciar Coleção
+                                    Configurações da Coleção
                                 </h2>
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <button
                                     onClick={() => setIsSettingsModalOpen(true)}
-                                    className="w-full flex justify-between items-center px-4 py-2 cursor-pointer rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+                                    className="flex items-center justify-between cursor-pointer px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                 >
-                                    Editar coleção
+                                    <span>Editar informações</span>
                                     <FaEdit />
                                 </button>
 
                                 <button
                                     onClick={() => setIsDeleteModalOpen(true)}
-                                    className="w-full flex justify-between items-center px-4 py-2 cursor-pointer rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                                    className="flex items-center cursor-pointer justify-between px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                                 >
-
-                                    Excluir coleção
-
+                                    <span>Excluir coleção</span>
                                     <FaTrash />
                                 </button>
                             </div>
@@ -181,68 +221,282 @@ function CollectionDetails() {
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                    <div className="flex items-center mb-6">
-                        <FaListUl className="text-indigo-500 mr-3" />
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center">
+                            <FaListUl className="text-indigo-500 mr-3" />
+                            <h2 className="text-xl font-semibold">
+                                Quizzes
+                            </h2>
+                        </div>
 
-                        <h2 className="text-xl font-semibold">
-                            Quizzes ({quizzes.length})
-                        </h2>
+                        {isCreator && (
+                            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                                <button
+                                    onClick={() => setIsAddQuizModalOpen(true)}
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none"
+                                >
+                                    <GrConfigure className="text-xl" />
+                                    Gerenciar Quizzes
+                                </button>
+
+                                <button
+                                    onClick={() => setIsSectionsModalOpen(true)}
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none"
+                                >
+                                    <FaListUl />
+                                    Gerenciar Seções
+                                </button>
+                            </div>
+                        )}
+
+                        <span className="text-sm bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full whitespace-nowrap">
+                            {sections.length} seções • {quizzes.length} quizzes
+                        </span>
                     </div>
 
-                    {isCreator && (
-                        <button
-                            onClick={() => setIsAddQuizModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer"
-                        >
-                            <IoMdAdd className="text-xl" />
-                            Adicionar Quiz
-                        </button>
-                    )}
-
-                    {quizzesLoading ? (
+                    {sectionsLoading || quizzesLoading ? (
                         <div className="text-center py-12">
-                            Carregando quizzes...
-                        </div>
-                    ) : quizzes.length === 0 ? (
-                        <div className="text-center py-12">
-                            <h3 className="text-lg font-medium">
-                                Nenhum quiz adicionado
-                            </h3>
-
-                            <p className="text-gray-500 mt-2">
-                                Adicione quizzes para organizar sua coleção.
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
+                            <p className="text-gray-500 mt-4">
+                                Carregando estrutura...
                             </p>
                         </div>
-                    ) : (
-                        <div className="mt-6 space-y-3">
-                            {quizzes.map((quiz) => (
-                                <div
-                                    key={quiz.id}
-                                    onClick={() =>
-                                        navigate(`/quiz/details/${quiz.id}`)
-                                    }
-                                    className="
-                                        p-4
-                                        rounded-lg
-                                        border
-                                        border-gray-200
-                                        dark:border-gray-700
-                                        cursor-pointer
-                                        hover:bg-gray-50
-                                        dark:hover:bg-gray-700
-                                        transition-colors
-                                    "
-                                >
-                                    <h3 className="font-semibold">
-                                        {quiz.name}
-                                    </h3>
-                                    {quiz.description && (
-                                        <p className="text-gray-500 mt-1">
-                                            {quiz.description}
-                                        </p>
-                                    )}
+                    ) : sections.length === 0 && quizzes.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="text-6xl mb-4">📚</div>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                Coleção vazia
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                Comece adicionando seções e quizzes para organizar sua coleção.
+                            </p>
+                            {isCreator && (
+                                <div className="flex justify-center gap-3">
+                                    <button
+                                        onClick={() => setIsSectionsModalOpen(true)}
+                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg cursor-pointer transition-colors"
+                                    >
+                                        Criar Seção
+                                    </button>
+                                    <button
+                                        onClick={() => setIsAddQuizModalOpen(true)}
+                                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg cursor-pointer transition-colors"
+                                    >
+                                        Adicionar Quiz
+                                    </button>
                                 </div>
-                            ))}
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {sections.map((section) => {
+                                const sectionQuizzes = getQuizzesBySection(section.id);
+                                return (
+                                    <div
+                                        key={section.id}
+                                        className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700"
+                                    >
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <span className="text-2xl">📁</span>
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                                                    {section.name}
+                                                </h3>
+                                            </div>
+                                            <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                                                {sectionQuizzes.length} {sectionQuizzes.length === 1 ? 'quiz' : 'quizzes'}
+                                            </span>
+                                        </div>
+
+                                        {sectionQuizzes.length > 0 ? (
+                                            <div className="ml-6 space-y-2 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
+                                                {sectionQuizzes.map((quiz) => (
+                                                    <div
+                                                        key={quiz.id}
+                                                        onClick={() =>
+                                                            navigate(`/quiz/details/${quiz.id}`)
+                                                        }
+                                                        className="
+                                                            p-4
+                                                            rounded-lg
+                                                            bg-white dark:bg-gray-800
+                                                            border border-gray-100 dark:border-gray-700
+                                                            cursor-pointer
+                                                            hover:shadow-md
+                                                            hover:border-indigo-300 dark:hover:border-indigo-500
+                                                            transition-all
+                                                            group
+                                                        "
+                                                    >
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xl group-hover:scale-110 transition-transform">
+                                                                    📝
+                                                                </span>
+                                                                <h4 className="font-semibold text-gray-900 dark:text-white">
+                                                                    {quiz.name}
+                                                                </h4>
+                                                            </div>
+                                                            <span className="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm">
+                                                                Ver detalhes →
+                                                            </span>
+                                                        </div>
+
+                                                        {quiz.description && (
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                                                                {quiz.description}
+                                                            </p>
+                                                        )}
+
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                            {quiz.questionCount !== undefined && (
+                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                    <FaQuestionCircle className="text-blue-500 dark:text-blue-400" />
+                                                                    <span>
+                                                                        {quiz.questionCount} {quiz.questionCount === 1 ? 'questão' : 'questões'}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {quiz.settings?.timeLimitPerQuestion && (
+                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                    <FaClock className="text-orange-500 dark:text-orange-400" />
+                                                                    <span>
+                                                                        {formatTimeLimit(quiz.settings.timeLimitPerQuestion)}/questão
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {quiz.settings?.showAnswersAfter && (
+                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                    <FaInfoCircle className="text-green-500 dark:text-green-400" />
+                                                                    <span>
+                                                                        {translateShowAnswers(quiz.settings.showAnswersAfter)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {quiz.creator && (
+                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                    <FaUser className="text-purple-500 dark:text-purple-400" />
+                                                                    <span className="truncate">
+                                                                        {quiz.creator.name || 'Criador'}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="ml-6 border-l-2 border-gray-200 dark:border-gray-600 pl-4 py-2">
+                                                <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                    Nenhum quiz nesta seção
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {quizzesSemSecao.length > 0 && (
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <span className="text-2xl">📂</span>
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                                                Sem seção
+                                            </h3>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                Quizzes não organizados em seções
+                                            </p>
+                                        </div>
+                                        <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                                            {quizzesSemSecao.length} {quizzesSemSecao.length === 1 ? 'quiz' : 'quizzes'}
+                                        </span>
+                                    </div>
+
+                                    <div className="ml-6 space-y-2 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
+                                        {quizzesSemSecao.map((quiz) => (
+                                            <div
+                                                key={quiz.id}
+                                                onClick={() =>
+                                                    navigate(`/quiz/details/${quiz.id}`)
+                                                }
+                                                className="
+                                                    p-4
+                                                    rounded-lg
+                                                    bg-white dark:bg-gray-800
+                                                    border border-gray-100 dark:border-gray-700
+                                                    cursor-pointer
+                                                    hover:shadow-md
+                                                    hover:border-indigo-300 dark:hover:border-indigo-500
+                                                    transition-all
+                                                    group
+                                                "
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xl group-hover:scale-110 transition-transform">
+                                                            📝
+                                                        </span>
+                                                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                                                            {quiz.name}
+                                                        </h4>
+                                                    </div>
+                                                    <span className="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm">
+                                                        Ver detalhes →
+                                                    </span>
+                                                </div>
+
+                                                {quiz.description && (
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                                                        {quiz.description}
+                                                    </p>
+                                                )}
+
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    {quiz.questionCount !== undefined && (
+                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                            <FaQuestionCircle className="text-blue-500 dark:text-blue-400" />
+                                                            <span>
+                                                                {quiz.questionCount} {quiz.questionCount === 1 ? 'questão' : 'questões'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {quiz.settings?.timeLimitPerQuestion && (
+                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                            <FaClock className="text-orange-500 dark:text-orange-400" />
+                                                            <span>
+                                                                {formatTimeLimit(quiz.settings.timeLimitPerQuestion)}/questão
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {quiz.settings?.showAnswersAfter && (
+                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                            <FaInfoCircle className="text-green-500 dark:text-green-400" />
+                                                            <span>
+                                                                {translateShowAnswers(quiz.settings.showAnswersAfter)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {quiz.creator && (
+                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                            <FaUser className="text-purple-500 dark:text-purple-400" />
+                                                            <span className="truncate">
+                                                                {quiz.creator.name || 'Criador'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -269,6 +523,12 @@ function CollectionDetails() {
                     <AddQuizToCollectionModal
                         isOpen={isAddQuizModalOpen}
                         onClose={() => setIsAddQuizModalOpen(false)}
+                        collectionId={collection.id}
+                    />
+
+                    <ManageSectionsModal
+                        isOpen={isSectionsModalOpen}
+                        onClose={() => setIsSectionsModalOpen(false)}
                         collectionId={collection.id}
                     />
                 </>
