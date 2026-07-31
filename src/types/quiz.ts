@@ -66,6 +66,12 @@ export interface QuizCollection {
 
     quizCount?: number;
     sectionCount?: number;
+    isFavorite?: boolean;
+    isOwner?: boolean;
+    creator?: {
+        name: string;
+        photoURL?: string;
+    };
 }
 
 export interface QuizCollectionItem {

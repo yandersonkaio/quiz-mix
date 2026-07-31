@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import {
     collection,
+    collectionGroup,
+    doc,
+    getDoc,
     getDocs,
     onSnapshot,
     orderBy,
@@ -30,23 +33,25 @@ export const useUserCollections = () => {
         setLoading(true);
         setError(null);
 
-        const collectionsQuery = query(
+        const createdQuery = query(
             collection(db, "collections"),
             where("userId", "==", user.uid),
             orderBy("createdAt", "desc")
         );
 
         const unsubscribe = onSnapshot(
-            collectionsQuery,
+            createdQuery,
             async (snapshot) => {
                 try {
-                    const data = await Promise.all(
-                        snapshot.docs.map(async (doc) => {
+                    const created = await Promise.all(
+                        snapshot.docs.map(async (collectionDoc) => {
+                            const collectionData = collectionDoc.data();
+
                             const quizzesSnap = await getDocs(
                                 collection(
                                     db,
                                     "collections",
-                                    doc.id,
+                                    collectionDoc.id,
                                     "quizItems"
                                 )
                             );
@@ -55,30 +60,155 @@ export const useUserCollections = () => {
                                 collection(
                                     db,
                                     "collections",
-                                    doc.id,
+                                    collectionDoc.id,
                                     "sections"
                                 )
                             );
 
+                            let creator = null;
+
+                            if (collectionData.userId) {
+                                const userSnap = await getDoc(
+                                    doc(
+                                        db,
+                                        "users",
+                                        collectionData.userId
+                                    )
+                                );
+
+                                if (userSnap.exists()) {
+                                    const userData = userSnap.data();
+
+                                    creator = {
+                                        name: userData.displayName,
+                                        photoURL: userData.photoURL,
+                                    };
+                                }
+                            }
+
                             return {
-                                id: doc.id,
-                                ...doc.data(),
+                                id: collectionDoc.id,
+                                ...collectionData,
+                                creator,
                                 quizCount: quizzesSnap.size,
                                 sectionCount: sectionsSnap.size,
+                                isOwner: true,
+                                isFavorite: false,
                             } as QuizCollection;
                         })
                     );
 
-                    setCollections(data);
+                    const favoritesQuery = query(
+                        collectionGroup(db, "favorites"),
+                        where("userId", "==", user.uid)
+                    );
+
+                    const favoritesSnap = await getDocs(favoritesQuery);
+
+                    const favorites = await Promise.all(
+                        favoritesSnap.docs.map(async (favoriteDoc) => {
+                            const collectionId =
+                                favoriteDoc.ref.parent.parent?.id;
+
+                            if (!collectionId) {
+                                return null;
+                            }
+
+                            const collectionRef = doc(
+                                db,
+                                "collections",
+                                collectionId
+                            );
+
+                            const collectionSnap =
+                                await getDoc(collectionRef);
+
+                            if (!collectionSnap.exists()) {
+                                return null;
+                            }
+
+                            const collectionData =
+                                collectionSnap.data();
+
+                            const quizzesSnap = await getDocs(
+                                collection(
+                                    db,
+                                    "collections",
+                                    collectionId,
+                                    "quizItems"
+                                )
+                            );
+
+                            const sectionsSnap = await getDocs(
+                                collection(
+                                    db,
+                                    "collections",
+                                    collectionId,
+                                    "sections"
+                                )
+                            );
+
+                            let creator = null;
+
+                            if (collectionData.userId) {
+                                const userSnap = await getDoc(
+                                    doc(
+                                        db,
+                                        "users",
+                                        collectionData.userId
+                                    )
+                                );
+
+                                if (userSnap.exists()) {
+                                    const userData = userSnap.data();
+
+                                    creator = {
+                                        name: userData.displayName,
+                                        photoURL: userData.photoURL,
+                                    };
+                                }
+                            }
+
+                            return {
+                                id: collectionSnap.id,
+                                ...collectionData,
+                                creator,
+                                quizCount: quizzesSnap.size,
+                                sectionCount: sectionsSnap.size,
+                                isOwner:
+                                    user.uid === collectionData.userId,
+                                isFavorite: true,
+                            } as QuizCollection;
+                        })
+                    );
+
+                    const favoriteList = favorites.filter(
+                        (item): item is QuizCollection =>
+                            item !== null
+                    );
+
+                    const map = new Map<string, QuizCollection>();
+
+                    created.forEach((collection) => {
+                        map.set(collection.id, collection);
+                    });
+
+                    favoriteList.forEach((collection) => {
+                        if (!map.has(collection.id)) {
+                            map.set(collection.id, collection);
+                        }
+                    });
+
+                    setCollections(Array.from(map.values()));
                     setLoading(false);
                 } catch (err) {
-                    console.error("Erro ao buscar coleções:", err);
+                    console.error(err);
                     setError(err as Error);
                     setLoading(false);
                 }
             },
             (err) => {
-                console.error("Erro ao buscar coleções:", err);
+                console.error(err);
                 setError(err);
                 setLoading(false);
             }

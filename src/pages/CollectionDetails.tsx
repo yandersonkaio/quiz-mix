@@ -10,6 +10,7 @@ import {
     FaUser
 } from "react-icons/fa";
 import { GrConfigure } from "react-icons/gr";
+import { MdFavoriteBorder, MdFavorite } from "react-icons/md";
 
 import Loading from "../components/Loading";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
@@ -21,6 +22,7 @@ import { useCollection } from "@/hooks/useCollection";
 import { useCollectionData } from "../hooks/useCollectionData";
 import { useCollectionQuizzes } from "@/hooks/useCollectionQuizzes";
 import { useCollectionSections } from "@/hooks/useCollectionSections";
+import { useCollectionFavorite } from "@/hooks/useCollectionFavorite";
 
 import { toast } from "sonner";
 import { QuizCollection } from "@/types/quiz";
@@ -52,6 +54,12 @@ function CollectionDetails() {
 
     const { updateCollection } = useCollectionData();
 
+    const {
+        isFavorite,
+        loading: favoriteLoading,
+        toggleFavorite,
+        operationLoading: favoriteOperationLoading
+    } = useCollectionFavorite(collectionId);
 
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -91,6 +99,20 @@ function CollectionDetails() {
         } catch (error) {
             console.error(error);
             toast.error("Erro ao excluir coleção.");
+        }
+    };
+
+    const handleToggleFavorite = async () => {
+        try {
+            await toggleFavorite();
+            toast.success(
+                isFavorite
+                    ? "Coleção removida dos favoritos."
+                    : "Coleção adicionada aos favoritos!"
+            );
+        } catch (error) {
+            console.error(error);
+            toast.error("Erro ao atualizar favorito.");
         }
     };
 
@@ -135,17 +157,45 @@ function CollectionDetails() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6 text-gray-900 dark:text-white">
             <div className="max-w-6xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold">
-                            {collection.name}
-                        </h1>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-4">
+                            <h1 className="text-3xl md:text-4xl font-bold break-words">
+                                {collection.name}
+                            </h1>
+
+                            <button
+                                onClick={handleToggleFavorite}
+                                disabled={favoriteLoading || favoriteOperationLoading}
+                                className={`
+                                    p-3 rounded-full 
+                                    transition-all duration-200 
+                                    hover:scale-110 active:scale-95
+                                    ${isFavorite
+                                        ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                        : 'text-gray-400 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }
+                                    ${(favoriteLoading || favoriteOperationLoading) && 'opacity-50 cursor-not-allowed'}
+                                `}
+                                aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                                title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                            >
+                                {favoriteLoading || favoriteOperationLoading ? (
+                                    <div className="animate-spin h-6 w-6 border-2 border-current border-t-transparent rounded-full" />
+                                ) : (
+                                    isFavorite ? (
+                                        <MdFavorite className="text-3xl cursor-pointer" />
+                                    ) : (
+                                        <MdFavoriteBorder className="text-3xl cursor-pointer" />
+                                    )
+                                )}
+                            </button>
+                        </div>
 
                         <p className="text-gray-600 dark:text-gray-400 mt-2">
                             {collection.description || "Sem descrição"}
                         </p>
                     </div>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
                         <div className="flex items-center mb-4">
