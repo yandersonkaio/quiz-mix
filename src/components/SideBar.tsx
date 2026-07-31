@@ -9,6 +9,7 @@ import {
     FaSignOutAlt,
     FaRegCompass,
 } from 'react-icons/fa';
+import { FaFolderTree } from "react-icons/fa6";
 import { IoIosSettings } from 'react-icons/io';
 import Logo from '../assets/logo.svg';
 import LogoSmall from '../assets/logo-small.svg';
@@ -112,6 +113,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 <FaRegListAlt className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
                                 <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">
                                     Meus quizzes
+                                </span>
+                            </NavLink>
+                        </li>
+
+                        <li>
+                            <NavLink
+                                to="/my-collections"
+                                onClick={handleNavigation}
+                                className={({ isActive }) =>
+                                    `flex items-center py-3 px-5 md:px-0 md:justify-center lg:px-5 lg:justify-start rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out ${isActive
+                                        ? 'text-purple-600 dark:text-purple-400 font-bold'
+                                        : 'text-gray-800 dark:text-gray-300'
+                                    }`
+                                }
+                            >
+                                <FaFolderTree className="mr-3 md:mr-0 lg:mr-3 w-6 h-6 transition-all duration-300 ease-in-out" />
+                                <span className="md:hidden lg:inline transition-opacity duration-300 ease-in-out">
+                                    Minhas coleções
                                 </span>
                             </NavLink>
                         </li>

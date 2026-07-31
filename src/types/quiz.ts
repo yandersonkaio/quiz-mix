@@ -20,6 +20,12 @@ export interface Quiz {
     };
 }
 
+export interface CollectionQuiz extends Quiz {
+    collectionItemId: string;
+    sectionId?: string | null;
+    order: number;
+}
+
 export interface Question {
     id: string;
     type: "multiple-choice" | "true-false" | "fill-in-the-blank";
@@ -48,4 +54,31 @@ export interface UserAnswer {
     questionId: string;
     selectedAnswer: number | string;
     isCorrect: boolean;
+}
+
+export interface QuizCollection {
+    id: string;
+    name: string;
+    description?: string;
+
+    userId: string;
+    createdAt: Timestamp | any;
+
+    quizCount?: number;
+    sectionCount?: number;
+    isFavorite?: boolean;
+    isOwner?: boolean;
+    creator?: {
+        name: string;
+        photoURL?: string;
+    };
+}
+
+export interface QuizCollectionItem {
+    collectionId: string;
+    name: string;
+    description?: string;
+    userId: string;
+    createdAt?: Timestamp;
+    quizIds?: string[];
 }
