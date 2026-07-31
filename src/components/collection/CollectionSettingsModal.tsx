@@ -127,6 +127,7 @@ export function CollectionSettingsModal({
                         <input
                             type="text"
                             required
+                            maxLength={50}
                             value={formData.name}
                             onChange={(e) =>
                                 setFormData((prev) => ({

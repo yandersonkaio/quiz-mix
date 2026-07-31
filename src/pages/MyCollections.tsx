@@ -62,8 +62,8 @@ function MyCollections() {
                         <p className="text-gray-600 dark:text-gray-400 mt-1">
                             {collections.length}{" "}
                             {collections.length === 1
-                                ? "coleção criada"
-                                : "coleções criadas"}
+                                ? "coleção"
+                                : "coleções"}
                         </p>
                     </div>
 

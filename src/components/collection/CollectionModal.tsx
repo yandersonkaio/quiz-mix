@@ -65,10 +65,6 @@ export function CollectionModal({
                 const createdCollectionId =
                     await createCollection(newCollection);
 
-
-                console.log("Depois do createCollection", createdCollectionId);
-
-
                 if (createdCollectionId) {
                     navigate(`/collections/${createdCollectionId}`);
                     onClose();
@@ -108,7 +104,7 @@ export function CollectionModal({
 
                     <button
                         onClick={onClose}
-                        className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                        className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white cursor-pointer"
                         disabled={isSaving || operationLoading}
                     >
                         ✕
@@ -126,6 +122,7 @@ export function CollectionModal({
 
                         <input
                             type="text"
+                            maxLength={50}
                             value={formData.name ?? ""}
                             onChange={(e) =>
                                 setFormData({
@@ -165,7 +162,7 @@ export function CollectionModal({
                             type="button"
                             onClick={onClose}
                             disabled={isSaving || operationLoading}
-                            className="flex-1 py-3 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                            className="flex-1 py-3 cursor-pointer rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
                         >
                             Cancelar
                         </button>
@@ -173,7 +170,7 @@ export function CollectionModal({
                         <button
                             type="submit"
                             disabled={isSaving || operationLoading}
-                            className={`flex-1 py-3 rounded-lg text-white transition-colors ${isSaving || operationLoading
+                            className={`flex-1 py-3 cursor-pointer rounded-lg text-white transition-colors ${isSaving || operationLoading
                                 ? "bg-blue-300 cursor-not-allowed"
                                 : "bg-blue-600 hover:bg-blue-700"
                                 }`}
