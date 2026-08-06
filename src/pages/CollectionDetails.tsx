@@ -7,10 +7,14 @@ import {
     FaListUl,
     FaQuestionCircle,
     FaClock,
-    FaUser
+    FaUser,
+    FaFolder
 } from "react-icons/fa";
 import { GrConfigure } from "react-icons/gr";
 import { MdFavoriteBorder, MdFavorite } from "react-icons/md";
+import { IoIosArrowDown } from "react-icons/io";
+import { IoIosArrowUp } from "react-icons/io";
+import { LuNotebookPen } from "react-icons/lu";
 
 import Loading from "../components/Loading";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
@@ -65,6 +69,14 @@ function CollectionDetails() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isAddQuizModalOpen, setIsAddQuizModalOpen] = useState(false);
     const [isSectionsModalOpen, setIsSectionsModalOpen] = useState(false);
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+    const toggleSection = (sectionId: string) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [sectionId]: !prev[sectionId]
+        }));
+    };
 
     const handleSaveCollection = async (
         updatedCollection: Partial<QuizCollection>
@@ -341,109 +353,128 @@ function CollectionDetails() {
                         <div className="space-y-4">
                             {sections.map((section) => {
                                 const sectionQuizzes = getQuizzesBySection(section.id);
+                                const isExpanded = expandedSections[section.id] === true;
+
                                 return (
                                     <div
                                         key={section.id}
                                         className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700"
                                     >
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <span className="text-2xl">📁</span>
+                                        <div
+                                            className="flex items-center gap-3 mb-3 cursor-pointer"
+                                            onClick={() => toggleSection(section.id)}
+                                        >
+                                            <FaFolder className="text-yellow-500 text-2xl" />
                                             <div className="flex-1">
                                                 <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
                                                     {section.name}
                                                 </h3>
                                             </div>
-                                            <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
-                                                {sectionQuizzes.length} {sectionQuizzes.length === 1 ? 'quiz' : 'quizzes'}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                                                    {sectionQuizzes.length} {sectionQuizzes.length === 1 ? 'quiz' : 'quizzes'}
+                                                </span>
+                                                <button
+                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors"
+                                                    aria-label={isExpanded ? "Recolher seção" : "Expandir seção"}
+                                                >
+                                                    {isExpanded ? (
+                                                        <IoIosArrowUp className="text-lg" />
+                                                    ) : (
+                                                        <IoIosArrowDown className="text-lg" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        {sectionQuizzes.length > 0 ? (
-                                            <div className="ml-6 space-y-2 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
-                                                {sectionQuizzes.map((quiz) => (
-                                                    <div
-                                                        key={quiz.id}
-                                                        onClick={() =>
-                                                            navigate(`/quiz/details/${quiz.id}`)
-                                                        }
-                                                        className="
-                                                            p-4
-                                                            rounded-lg
-                                                            bg-white dark:bg-gray-800
-                                                            border border-gray-100 dark:border-gray-700
-                                                            cursor-pointer
-                                                            hover:shadow-md
-                                                            hover:border-indigo-300 dark:hover:border-indigo-500
-                                                            transition-all
-                                                            group
-                                                        "
-                                                    >
-                                                        <div className="flex items-start justify-between mb-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xl group-hover:scale-110 transition-transform">
-                                                                    📝
-                                                                </span>
-                                                                <h4 className="font-semibold text-gray-900 dark:text-white">
-                                                                    {quiz.name}
-                                                                </h4>
+                                        {isExpanded && (
+                                            <>
+                                                {sectionQuizzes.length > 0 ? (
+                                                    <div className="ml-6 space-y-2 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
+                                                        {sectionQuizzes.map((quiz) => (
+                                                            <div
+                                                                key={quiz.id}
+                                                                onClick={() =>
+                                                                    navigate(`/quiz/details/${quiz.id}`)
+                                                                }
+                                                                className="
+                                                                    p-4
+                                                                    rounded-lg
+                                                                    bg-white dark:bg-gray-800
+                                                                    border border-gray-100 dark:border-gray-700
+                                                                    cursor-pointer
+                                                                    hover:shadow-md
+                                                                    hover:border-indigo-300 dark:hover:border-indigo-500
+                                                                    transition-all
+                                                                    group
+                                                                "
+                                                            >
+                                                                <div className="flex items-start justify-between mb-3">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <LuNotebookPen className="text-purple-500 text-xl group-hover:scale-110 transition-transform" />
+                                                                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                                                                            {quiz.name}
+                                                                        </h4>
+                                                                    </div>
+                                                                    <span className="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm">
+                                                                        Ver detalhes →
+                                                                    </span>
+                                                                </div>
+
+                                                                {quiz.description && (
+                                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                                                                        {quiz.description}
+                                                                    </p>
+                                                                )}
+
+                                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                                    {quiz.questionCount !== undefined && (
+                                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                            <FaQuestionCircle className="text-blue-500 dark:text-blue-400" />
+                                                                            <span>
+                                                                                {quiz.questionCount} {quiz.questionCount === 1 ? 'questão' : 'questões'}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {quiz.settings?.timeLimitPerQuestion && (
+                                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                            <FaClock className="text-orange-500 dark:text-orange-400" />
+                                                                            <span>
+                                                                                {formatTimeLimit(quiz.settings.timeLimitPerQuestion)}/questão
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {quiz.settings?.showAnswersAfter && (
+                                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                            <FaInfoCircle className="text-green-500 dark:text-green-400" />
+                                                                            <span>
+                                                                                {translateShowAnswers(quiz.settings.showAnswersAfter)}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {quiz.creator && (
+                                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                            <FaUser className="text-purple-500 dark:text-purple-400" />
+                                                                            <span className="truncate">
+                                                                                {quiz.creator.name || 'Criador'}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                            <span className="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm">
-                                                                Ver detalhes →
-                                                            </span>
-                                                        </div>
-
-                                                        {quiz.description && (
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                                                                {quiz.description}
-                                                            </p>
-                                                        )}
-
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                            {quiz.questionCount !== undefined && (
-                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                                    <FaQuestionCircle className="text-blue-500 dark:text-blue-400" />
-                                                                    <span>
-                                                                        {quiz.questionCount} {quiz.questionCount === 1 ? 'questão' : 'questões'}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-
-                                                            {quiz.settings?.timeLimitPerQuestion && (
-                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                                    <FaClock className="text-orange-500 dark:text-orange-400" />
-                                                                    <span>
-                                                                        {formatTimeLimit(quiz.settings.timeLimitPerQuestion)}/questão
-                                                                    </span>
-                                                                </div>
-                                                            )}
-
-                                                            {quiz.settings?.showAnswersAfter && (
-                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                                    <FaInfoCircle className="text-green-500 dark:text-green-400" />
-                                                                    <span>
-                                                                        {translateShowAnswers(quiz.settings.showAnswersAfter)}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-
-                                                            {quiz.creator && (
-                                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                                    <FaUser className="text-purple-500 dark:text-purple-400" />
-                                                                    <span className="truncate">
-                                                                        {quiz.creator.name || 'Criador'}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                        ))}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="ml-6 border-l-2 border-gray-200 dark:border-gray-600 pl-4 py-2">
-                                                <p className="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                    Nenhum quiz nesta seção
-                                                </p>
-                                            </div>
+                                                ) : (
+                                                    <div className="ml-6 border-l-2 border-gray-200 dark:border-gray-600 pl-4 py-2">
+                                                        <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                            Nenhum quiz nesta seção
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 );
@@ -451,8 +482,11 @@ function CollectionDetails() {
 
                             {quizzesSemSecao.length > 0 && (
                                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <span className="text-2xl">📂</span>
+                                    <div
+                                        className="flex items-center gap-3 mb-3 cursor-pointer"
+                                        onClick={() => toggleSection('sem-secao')}
+                                    >
+                                        <FaFolder className="text-2xl" />
                                         <div className="flex-1">
                                             <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
                                                 Sem seção
@@ -461,90 +495,102 @@ function CollectionDetails() {
                                                 Quizzes não organizados em seções
                                             </p>
                                         </div>
-                                        <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
-                                            {quizzesSemSecao.length} {quizzesSemSecao.length === 1 ? 'quiz' : 'quizzes'}
-                                        </span>
-                                    </div>
-
-                                    <div className="ml-6 space-y-2 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
-                                        {quizzesSemSecao.map((quiz) => (
-                                            <div
-                                                key={quiz.id}
-                                                onClick={() =>
-                                                    navigate(`/quiz/details/${quiz.id}`)
-                                                }
-                                                className="
-                                                    p-4
-                                                    rounded-lg
-                                                    bg-white dark:bg-gray-800
-                                                    border border-gray-100 dark:border-gray-700
-                                                    cursor-pointer
-                                                    hover:shadow-md
-                                                    hover:border-indigo-300 dark:hover:border-indigo-500
-                                                    transition-all
-                                                    group
-                                                "
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                                                {quizzesSemSecao.length} {quizzesSemSecao.length === 1 ? 'quiz' : 'quizzes'}
+                                            </span>
+                                            <button
+                                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors"
+                                                aria-label={expandedSections['sem-secao'] === true ? "Recolher seção" : "Expandir seção"}
                                             >
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xl group-hover:scale-110 transition-transform">
-                                                            📝
-                                                        </span>
-                                                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                                                            {quiz.name}
-                                                        </h4>
-                                                    </div>
-                                                    <span className="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm">
-                                                        Ver detalhes →
-                                                    </span>
-                                                </div>
-
-                                                {quiz.description && (
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                                                        {quiz.description}
-                                                    </p>
+                                                {expandedSections['sem-secao'] === true ? (
+                                                    <IoIosArrowUp className="text-lg" />
+                                                ) : (
+                                                    <IoIosArrowDown className="text-lg" />
                                                 )}
-
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                    {quiz.questionCount !== undefined && (
-                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                            <FaQuestionCircle className="text-blue-500 dark:text-blue-400" />
-                                                            <span>
-                                                                {quiz.questionCount} {quiz.questionCount === 1 ? 'questão' : 'questões'}
-                                                            </span>
-                                                        </div>
-                                                    )}
-
-                                                    {quiz.settings?.timeLimitPerQuestion && (
-                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                            <FaClock className="text-orange-500 dark:text-orange-400" />
-                                                            <span>
-                                                                {formatTimeLimit(quiz.settings.timeLimitPerQuestion)}/questão
-                                                            </span>
-                                                        </div>
-                                                    )}
-
-                                                    {quiz.settings?.showAnswersAfter && (
-                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                            <FaInfoCircle className="text-green-500 dark:text-green-400" />
-                                                            <span>
-                                                                {translateShowAnswers(quiz.settings.showAnswersAfter)}
-                                                            </span>
-                                                        </div>
-                                                    )}
-
-                                                    {quiz.creator && (
-                                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                            <FaUser className="text-purple-500 dark:text-purple-400" />
-                                                            <span className="truncate">
-                                                                {quiz.creator.name || 'Criador'}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    {expandedSections['sem-secao'] === true && (
+                                        <div className="ml-6 space-y-2 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
+                                            {quizzesSemSecao.map((quiz) => (
+                                                <div
+                                                    key={quiz.id}
+                                                    onClick={() =>
+                                                        navigate(`/quiz/details/${quiz.id}`)
+                                                    }
+                                                    className="
+                                                        p-4
+                                                        rounded-lg
+                                                        bg-white dark:bg-gray-800
+                                                        border border-gray-100 dark:border-gray-700
+                                                        cursor-pointer
+                                                        hover:shadow-md
+                                                        hover:border-indigo-300 dark:hover:border-indigo-500
+                                                        transition-all
+                                                        group
+                                                    "
+                                                >
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <LuNotebookPen className="text-purple-500 text-xl group-hover:scale-110 transition-transform" />
+                                                            <h4 className="font-semibold text-gray-900 dark:text-white">
+                                                                {quiz.name}
+                                                            </h4>
+                                                        </div>
+                                                        <span className="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm">
+                                                            Ver detalhes →
+                                                        </span>
+                                                    </div>
+
+                                                    {quiz.description && (
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                                                            {quiz.description}
+                                                        </p>
+                                                    )}
+
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        {quiz.questionCount !== undefined && (
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                <FaQuestionCircle className="text-blue-500 dark:text-blue-400" />
+                                                                <span>
+                                                                    {quiz.questionCount} {quiz.questionCount === 1 ? 'questão' : 'questões'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {quiz.settings?.timeLimitPerQuestion && (
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                <FaClock className="text-orange-500 dark:text-orange-400" />
+                                                                <span>
+                                                                    {formatTimeLimit(quiz.settings.timeLimitPerQuestion)}/questão
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {quiz.settings?.showAnswersAfter && (
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                <FaInfoCircle className="text-green-500 dark:text-green-400" />
+                                                                <span>
+                                                                    {translateShowAnswers(quiz.settings.showAnswersAfter)}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {quiz.creator && (
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                                <FaUser className="text-purple-500 dark:text-purple-400" />
+                                                                <span className="truncate">
+                                                                    {quiz.creator.name || 'Criador'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
