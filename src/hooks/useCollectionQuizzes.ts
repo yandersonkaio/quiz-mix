@@ -3,6 +3,7 @@ import {
     collection,
     doc,
     getDoc,
+    getDocs,
     onSnapshot,
     orderBy,
     query,
@@ -20,12 +21,49 @@ export function useCollectionQuizzes(collectionId?: string) {
     const [loading, setLoading] = useState(true);
     const [operationLoading, setOperationLoading] = useState(false);
 
+    const fetchUserData = async (userId: string) => {
+        try {
+            const userRef = doc(db, "users", userId);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                return {
+                    id: userSnap.id,
+                    name:
+                        userSnap.data().displayName ||
+                        "Usuário desconhecido",
+                    photoUrl:
+                        userSnap.data().photoURL || null,
+                };
+            }
+
+            return {
+                id: userId,
+                name: "Usuário desconhecido",
+                photoUrl: null,
+            };
+        } catch (error) {
+            console.error(
+                "Error fetching user data:",
+                error
+            );
+
+            return {
+                id: userId,
+                name: "Usuário",
+                photoUrl: null,
+            };
+        }
+    };
+
     useEffect(() => {
         if (!collectionId) {
             setQuizzes([]);
             setLoading(false);
             return;
         }
+
+        setLoading(true);
 
         const q = query(
             collection(
@@ -40,55 +78,82 @@ export function useCollectionQuizzes(collectionId?: string) {
         const unsubscribe = onSnapshot(
             q,
             async (snapshot) => {
-                const quizList: CollectionQuiz[] = [];
+                try {
+                    const quizList = await Promise.all(
+                        snapshot.docs.map(async (item) => {
+                            const data = item.data();
 
-                for (const item of snapshot.docs) {
-                    const data = item.data();
+                            const quizSnap = await getDoc(
+                                doc(
+                                    db,
+                                    "quizzes",
+                                    data.quizId
+                                )
+                            );
 
-                    const quizRef = doc(
-                        db,
-                        "quizzes",
-                        data.quizId
+                            if (!quizSnap.exists()) {
+                                return null;
+                            }
+
+                            const quizData =
+                                quizSnap.data();
+
+                            const questionsSnapshot =
+                                await getDocs(
+                                    collection(
+                                        db,
+                                        "quizzes",
+                                        data.quizId,
+                                        "questions"
+                                    )
+                                );
+
+                            const questionCount =
+                                questionsSnapshot.size;
+
+                            let creator =
+                                quizData.creator || null;
+
+                            if (
+                                !creator &&
+                                quizData.userId
+                            ) {
+                                creator =
+                                    await fetchUserData(
+                                        quizData.userId
+                                    );
+                            }
+
+                            return {
+                                id: quizSnap.id,
+                                collectionItemId: item.id,
+                                sectionId:
+                                    data.sectionId ?? null,
+                                order: data.order ?? 0,
+                                ...quizData,
+                                questionCount,
+                                creator,
+                            } as CollectionQuiz;
+                        })
                     );
 
-                    const quizSnap = await getDoc(quizRef);
+                    setQuizzes(
+                        quizList.filter(
+                            (
+                                quiz
+                            ): quiz is CollectionQuiz =>
+                                quiz !== null
+                        )
+                    );
 
-                    if (quizSnap.exists()) {
-                        const quizData = quizSnap.data();
-
-                        let creator = quizData.creator || null;
-
-                        if (!creator && quizData.userId) {
-                            try {
-                                const userRef = doc(db, "users", quizData.userId);
-                                const userSnap = await getDoc(userRef);
-
-                                if (userSnap.exists()) {
-                                    const userData = userSnap.data();
-                                    creator = {
-                                        id: quizData.userId,
-                                        name: userData.name || userData.displayName || "Usuário",
-                                        photoUrl: userData.photoUrl || userData.photoURL || undefined,
-                                    };
-                                }
-                            } catch (error) {
-                                console.error("Erro ao buscar dados do usuário:", error);
-                            }
-                        }
-
-                        quizList.push({
-                            id: quizSnap.id,
-                            collectionItemId: item.id,
-                            sectionId: data.sectionId ?? null,
-                            order: data.order ?? 0,
-                            ...quizData,
-                            creator: creator,
-                        } as CollectionQuiz);
-                    }
+                    setLoading(false);
+                } catch (error) {
+                    console.error(
+                        "Erro ao carregar quizzes da coleção:",
+                        error
+                    );
+                    setLoading(false);
                 }
-
-                setQuizzes(quizList);
-                setLoading(false);
             },
             (error) => {
                 console.error(
@@ -120,7 +185,7 @@ export function useCollectionQuizzes(collectionId?: string) {
                     itemId
                 ),
                 {
-                    sectionId
+                    sectionId,
                 }
             );
         } finally {
@@ -150,7 +215,7 @@ export function useCollectionQuizzes(collectionId?: string) {
                 quizId,
                 sectionId,
                 order: quizzes.length,
-                addedAt: serverTimestamp()
+                addedAt: serverTimestamp(),
             });
         } finally {
             setOperationLoading(false);
@@ -185,6 +250,6 @@ export function useCollectionQuizzes(collectionId?: string) {
         operationLoading,
         updateQuizSection,
         addQuizToCollection,
-        removeQuizFromCollection
+        removeQuizFromCollection,
     };
 }
