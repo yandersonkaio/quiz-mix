@@ -10,59 +10,67 @@ export function QuizListItem({ quiz }: QuizListItemProps) {
     const difficultyConfig = getDifficultyConfig(quiz.difficulty);
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
             <Link to={`/quiz/details/${quiz.id}`} className="block">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                {quiz.name}
-                            </h2>
+                <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white line-clamp-2 flex-1 min-w-0">
+                            {quiz.name}
+                        </h2>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${difficultyConfig.colors} whitespace-nowrap flex-shrink-0`}>
+                            {difficultyConfig.icon}
+                            {difficultyConfig.label}
+                        </span>
+                    </div>
 
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${difficultyConfig.colors} whitespace-nowrap flex-shrink-0`}>
-                                {difficultyConfig.icon}
-                                {difficultyConfig.label}
-                            </span>
-                        </div>
-
-                        <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">
-                            {quiz.description || "Sem descrição"}
+                    {quiz.description && (
+                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">
+                            {quiz.description}
                         </p>
+                    )}
 
-                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            <span>Criado em {new Date(quiz.createdAt?.toDate()).toLocaleDateString('pt-BR')}</span>
-                            <span>•</span>
-                            <div className="flex items-center gap-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
                                 {quiz.creator?.photoUrl ? (
                                     <img
                                         src={quiz.creator.photoUrl}
                                         alt={quiz.creator.name}
-                                        className="w-4 h-4 rounded-full object-cover"
+                                        className="w-8 h-8 rounded-full object-cover"
                                     />
                                 ) : (
-                                    <div className="w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                        <span className="text-[0.6rem] text-gray-500 dark:text-gray-300">
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                        <span className="text-xs text-gray-500 dark:text-gray-300">
                                             {quiz.creator?.name?.charAt(0)?.toUpperCase() || 'U'}
                                         </span>
                                     </div>
                                 )}
-                                <span className="font-medium">
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Criado por</div>
+                                <div className="text-sm font-medium truncate">
                                     {quiz.creator?.name || 'Usuário'}
-                                </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="flex gap-4 text-sm">
-                        <div className="text-center min-w-[70px]">
-                            <div className="text-gray-500 dark:text-gray-400">Perguntas</div>
-                            <div className="font-semibold text-blue-600 dark:text-blue-400">
+                        <div className="flex flex-col justify-center">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Criado em</div>
+                            <div className="text-sm font-medium">
+                                {new Date(quiz.createdAt?.toDate()).toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Perguntas</div>
+                            <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                                 {quiz.questionCount || 0}
                             </div>
                         </div>
-                        <div className="text-center min-w-[70px]">
-                            <div className="text-gray-500 dark:text-gray-400">Tempo</div>
-                            <div className="font-semibold">
+
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">Tempo</div>
+                            <div className="text-sm font-semibold">
                                 {quiz.settings?.timeLimitPerQuestion
                                     ? `${quiz.settings.timeLimitPerQuestion}s`
                                     : 'Sem limite'}
