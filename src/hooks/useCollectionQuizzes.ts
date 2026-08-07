@@ -54,12 +54,35 @@ export function useCollectionQuizzes(collectionId?: string) {
                     const quizSnap = await getDoc(quizRef);
 
                     if (quizSnap.exists()) {
+                        const quizData = quizSnap.data();
+
+                        let creator = quizData.creator || null;
+
+                        if (!creator && quizData.userId) {
+                            try {
+                                const userRef = doc(db, "users", quizData.userId);
+                                const userSnap = await getDoc(userRef);
+
+                                if (userSnap.exists()) {
+                                    const userData = userSnap.data();
+                                    creator = {
+                                        id: quizData.userId,
+                                        name: userData.name || userData.displayName || "Usuário",
+                                        photoUrl: userData.photoUrl || userData.photoURL || undefined,
+                                    };
+                                }
+                            } catch (error) {
+                                console.error("Erro ao buscar dados do usuário:", error);
+                            }
+                        }
+
                         quizList.push({
                             id: quizSnap.id,
                             collectionItemId: item.id,
                             sectionId: data.sectionId ?? null,
                             order: data.order ?? 0,
-                            ...quizSnap.data(),
+                            ...quizData,
+                            creator: creator,
                         } as CollectionQuiz);
                     }
                 }
@@ -110,11 +133,6 @@ export function useCollectionQuizzes(collectionId?: string) {
         sectionId: string | null = null
     ) {
         if (!collectionId) return;
-
-        console.log("Adicionando no hook:", {
-            quizId,
-            sectionId
-        });
 
         setOperationLoading(true);
 
