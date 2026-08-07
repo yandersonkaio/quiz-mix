@@ -14,11 +14,14 @@ export interface Quiz {
     description?: string;
     questionCount?: number;
     creator?: QuizUser;
+    difficulty?: QuizDifficulty;
     settings: {
         timeLimitPerQuestion?: number;
         showAnswersAfter: "immediately" | "end" | "untilCorrect";
     };
 }
+
+export type QuizDifficulty = "easy" | "medium" | "hard";
 
 export interface CollectionQuiz extends Quiz {
     collectionItemId: string;

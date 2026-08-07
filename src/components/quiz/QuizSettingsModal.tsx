@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuizData } from "../../hooks/useQuizData";
-import { Quiz } from "../../types/quiz";
+import { useQuizData } from "@/hooks/useQuizData";
+import { Quiz, QuizDifficulty } from "@/types/quiz";
+import { getDifficultyConfig } from "@/utils/quis";
 import { toast } from "sonner";
+
 
 interface QuizSettingsModalProps {
     isOpen: boolean;
@@ -19,6 +21,7 @@ export function QuizSettingsModal({
     quizDetails = {
         name: "",
         description: "",
+        difficulty: undefined,
         settings: {
             showAnswersAfter: "end",
             timeLimitPerQuestion: undefined,
@@ -39,6 +42,7 @@ export function QuizSettingsModal({
     const navigate = useNavigate();
 
     const isStudyMode = formData.settings?.showAnswersAfter === "untilCorrect";
+    const difficultyConfig = getDifficultyConfig(formData.difficulty);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,6 +62,7 @@ export function QuizSettingsModal({
                 const newQuiz: Omit<Quiz, "id" | "createdAt"> = {
                     name: formData.name,
                     description: formData.description,
+                    difficulty: formData.difficulty,
                     userId: user.uid,
                     settings: {
                         showAnswersAfter: formData.settings?.showAnswersAfter ?? "end",
@@ -134,6 +139,41 @@ export function QuizSettingsModal({
                             placeholder="Digite a descrição do quiz"
                             disabled={isSaving || operationLoading}
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-gray-700 dark:text-gray-300 mb-1">
+                            Dificuldade
+                        </label>
+
+                        <select
+                            value={formData.difficulty ?? ""}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    difficulty: e.target.value
+                                        ? (e.target.value as QuizDifficulty)
+                                        : undefined,
+                                })
+                            }
+                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none"
+                            disabled={isSaving || operationLoading}
+                        >
+                            <option value="">Sem classificação</option>
+                            <option value="easy">Fácil</option>
+                            <option value="medium">Médio</option>
+                            <option value="hard">Difícil</option>
+                        </select>
+
+                        {/* Preview da dificuldade selecionada */}
+                        {formData.difficulty && (
+                            <div className="mt-2">
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${difficultyConfig.colors}`}>
+                                    {difficultyConfig.icon}
+                                    {difficultyConfig.label}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     <div>

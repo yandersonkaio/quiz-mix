@@ -11,6 +11,7 @@ import { IoMdAdd } from "react-icons/io";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { Quiz, Question } from "../types/quiz";
 import { toast } from "sonner"
+import { getDifficultyConfig } from "@/utils/quis";
 
 function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>();
@@ -58,6 +59,7 @@ function QuizDetails() {
     const [quizDetails, setQuizDetails] = useState<Partial<Quiz>>({
         name: "",
         description: "",
+        difficulty: undefined,
         settings: {
             showAnswersAfter: "end",
             timeLimitPerQuestion: undefined,
@@ -74,9 +76,11 @@ function QuizDetails() {
 
     useEffect(() => {
         if (quiz) {
+            console.log(quiz)
             setQuizDetails({
                 name: quiz.name,
                 description: quiz.description || "",
+                difficulty: quiz.difficulty,
                 settings: {
                     showAnswersAfter: quiz.settings.showAnswersAfter,
                     timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
@@ -221,6 +225,8 @@ function QuizDetails() {
 
     const isCreator = quiz.userId === user?.uid;
 
+    const difficultyConfig = getDifficultyConfig(quiz.difficulty);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6 text-gray-900 dark:text-white">
             <div className="max-w-6xl mx-auto">
@@ -265,6 +271,13 @@ function QuizDetails() {
                                     {quiz.createdAt
                                         ? new Date(quiz.createdAt.toDate()).toLocaleDateString()
                                         : "N/A"}
+                                </span>
+                            </li>
+                            <li className="flex justify-between">
+                                <span className="text-gray-500 dark:text-gray-400">Dificuldade:</span>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${difficultyConfig.colors}`}>
+                                    {difficultyConfig.icon}
+                                    {difficultyConfig.label}
                                 </span>
                             </li>
                             <li className="flex justify-between">
