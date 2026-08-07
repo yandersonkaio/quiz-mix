@@ -199,6 +199,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                             </button>
                         </div>
                     )}
+
+                    <div className="px-4 pb-4 md:px-2 md:pb-2 lg:px-4 lg:pb-4 text-center">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 md:hidden lg:inline transition-opacity duration-300 ease-in-out">
+                            Desenvolvido por Yanderson Kaio
+                        </span>
+                    </div>
                 </div>
             </div>
 
