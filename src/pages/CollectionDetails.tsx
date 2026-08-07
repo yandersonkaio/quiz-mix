@@ -235,8 +235,8 @@ function CollectionDetails() {
                     {isCreator && (
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2">
                             <div className="flex items-center mb-4">
-                                <FaEdit className="text-purple-500 mr-3" />
-                                <h2 className="text-xl font-semibold">
+                                <FaEdit className="text-purple-500 mr-3 flex-shrink-0" />
+                                <h2 className="text-lg sm:text-xl font-semibold whitespace-nowrap">
                                     Configurações da Coleção
                                 </h2>
                             </div>
@@ -244,18 +244,18 @@ function CollectionDetails() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <button
                                     onClick={() => setIsSettingsModalOpen(true)}
-                                    className="flex items-center justify-between cursor-pointer px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                    className="flex items-center justify-between cursor-pointer px-3 sm:px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                 >
-                                    <span>Editar informações</span>
-                                    <FaEdit />
+                                    <span className="text-sm sm:text-base mr-2">Editar informações</span>
+                                    <FaEdit className="flex-shrink-0" />
                                 </button>
 
                                 <button
                                     onClick={() => setIsDeleteModalOpen(true)}
-                                    className="flex items-center cursor-pointer justify-between px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                                    className="flex items-center cursor-pointer justify-between px-3 sm:px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                                 >
-                                    <span>Excluir coleção</span>
-                                    <FaTrash />
+                                    <span className="text-sm sm:text-base mr-2">Excluir coleção</span>
+                                    <FaTrash className="flex-shrink-0" />
                                 </button>
                             </div>
                         </div>
@@ -275,17 +275,17 @@ function CollectionDetails() {
                             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                 <button
                                     onClick={() => setIsAddQuizModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none"
+                                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none text-sm sm:text-base whitespace-nowrap"
                                 >
-                                    <GrConfigure className="text-xl" />
+                                    <GrConfigure className="text-lg sm:text-xl flex-shrink-0" />
                                     Gerenciar Quizzes
                                 </button>
 
                                 <button
                                     onClick={() => setIsSectionsModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none"
+                                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none text-sm sm:text-base whitespace-nowrap"
                                 >
-                                    <FaListUl />
+                                    <FaListUl className="flex-shrink-0" />
                                     Gerenciar Seções
                                 </button>
                             </div>
@@ -344,18 +344,18 @@ function CollectionDetails() {
                                             className="flex items-center gap-3 mb-3 cursor-pointer"
                                             onClick={() => toggleSection(section.id)}
                                         >
-                                            <FaFolder className="text-yellow-500 text-2xl" />
-                                            <div className="flex-1">
-                                                <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                                            <FaFolder className="text-yellow-500 text-2xl flex-shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white truncate">
                                                     {section.name}
                                                 </h3>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded whitespace-nowrap">
                                                     {sectionQuizzes.length} {sectionQuizzes.length === 1 ? 'quiz' : 'quizzes'}
                                                 </span>
                                                 <button
-                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors"
+                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors flex-shrink-0"
                                                     aria-label={isExpanded ? "Recolher seção" : "Expandir seção"}
                                                 >
                                                     {isExpanded ? (
@@ -366,7 +366,6 @@ function CollectionDetails() {
                                                 </button>
                                             </div>
                                         </div>
-
                                         {isExpanded && (
                                             <>
                                                 {sectionQuizzes.length > 0 ? (
@@ -394,21 +393,21 @@ function CollectionDetails() {
                                         className="flex items-center gap-3 mb-3 cursor-pointer"
                                         onClick={() => toggleSection('sem-secao')}
                                     >
-                                        <FaFolder className="text-2xl" />
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                                        <FaFolder className="text-2xl flex-shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white truncate">
                                                 Sem seção
                                             </h3>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                                 Quizzes não organizados em seções
                                             </p>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded whitespace-nowrap">
                                                 {quizzesSemSecao.length} {quizzesSemSecao.length === 1 ? 'quiz' : 'quizzes'}
                                             </span>
                                             <button
-                                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors"
+                                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors flex-shrink-0"
                                                 aria-label={expandedSections['sem-secao'] === true ? "Recolher seção" : "Expandir seção"}
                                             >
                                                 {expandedSections['sem-secao'] === true ? (
