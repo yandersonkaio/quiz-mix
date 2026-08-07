@@ -1,19 +1,29 @@
 import { Link } from "react-router-dom";
-import { Quiz } from "../../types/quiz";
+import { Quiz } from "@/types/quiz";
+import { getDifficultyConfig } from "@/utils/quis";
 
 interface QuizListItemProps {
     quiz: Quiz;
 }
 
 export function QuizListItem({ quiz }: QuizListItemProps) {
+    const difficultyConfig = getDifficultyConfig(quiz.difficulty);
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
             <Link to={`/quiz/details/${quiz.id}`} className="block">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex-1">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            {quiz.name}
-                        </h2>
+                        <div className="flex items-start justify-between gap-2">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                {quiz.name}
+                            </h2>
+
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${difficultyConfig.colors} whitespace-nowrap flex-shrink-0`}>
+                                {difficultyConfig.icon}
+                                {difficultyConfig.label}
+                            </span>
+                        </div>
 
                         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">
                             {quiz.description || "Sem descrição"}

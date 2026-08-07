@@ -73,6 +73,7 @@ export const useQuizData = () => {
                     name: quizData.name,
                     description: quizData.description,
                     userId: quizData.userId,
+                    difficulty: quizData.difficulty,
                     createdAt: quizData.createdAt,
                     settings: quizSettings,
                 });
@@ -184,13 +185,16 @@ export const useQuizData = () => {
                 settings.timeLimitPerQuestion = quizData.settings.timeLimitPerQuestion;
             }
 
-            const quizRef = await addDoc(collection(db, "quizzes"), {
+            const quiz = {
                 name: quizData.name,
                 description: quizData.description || "",
                 userId: user.uid,
                 createdAt: Timestamp.now(),
                 settings,
-            });
+                ...(quizData.difficulty && { difficulty: quizData.difficulty }),
+            };
+
+            const quizRef = await addDoc(collection(db, "quizzes"), quiz);
 
             toast.success("Quiz criado com sucesso!");
             return quizRef.id;
@@ -236,15 +240,28 @@ export const useQuizData = () => {
                 delete cleanedSettings.timeLimitPerQuestion;
             }
 
-            const updatedData = {
+            const updatedData: any = {
                 name: updatedQuiz.name ?? quiz.name,
                 description: updatedQuiz.description ?? quiz.description,
                 settings: cleanedSettings,
             };
 
+            if (updatedQuiz.difficulty !== undefined) {
+                updatedData.difficulty = updatedQuiz.difficulty;
+            }
+
             await updateDoc(doc(db, "quizzes", quizId), updatedData);
 
-            setQuiz((prev) => (prev ? { ...prev, ...updatedQuiz, settings: cleanedSettings } : prev));
+            setQuiz((prev) =>
+                prev
+                    ? {
+                        ...prev,
+                        ...updatedQuiz,
+                        settings: cleanedSettings,
+                    }
+                    : prev
+            );
+
             return true;
         } catch (error) {
             console.error("Erro ao atualizar detalhes do quiz:", error);
