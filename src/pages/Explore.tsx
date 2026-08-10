@@ -73,7 +73,7 @@ function Explore() {
             <div className="max-w-6xl mx-auto">
 
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold">
+                    <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
                         Explorar
                     </h1>
 
@@ -86,8 +86,8 @@ function Explore() {
                     <button
                         onClick={() => setActiveTab("quizzes")}
                         className={`px-5 py-2 rounded-lg cursor-pointer ${showQuizzes
-                                ? "bg-blue-600 text-white"
-                                : "bg-white dark:bg-gray-800"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white dark:bg-gray-800"
                             }`}
                     >
                         Quizzes
@@ -96,8 +96,8 @@ function Explore() {
                     <button
                         onClick={() => setActiveTab("collections")}
                         className={`px-5 py-2 rounded-lg cursor-pointer ${!showQuizzes
-                                ? "bg-blue-600 text-white"
-                                : "bg-white dark:bg-gray-800"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white dark:bg-gray-800"
                             }`}
                     >
                         Coleções

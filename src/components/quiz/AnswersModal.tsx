@@ -1,5 +1,6 @@
 import { Question, Attempt } from "../../types/quiz";
 import { IoMdClose } from "react-icons/io";
+import { BookOpen, Target } from "lucide-react";
 
 interface AnswersModalProps {
     isOpen: boolean;
@@ -9,6 +10,8 @@ interface AnswersModalProps {
 }
 
 export default function AnswersModal({ isOpen, onClose, attempt, questions }: AnswersModalProps) {
+    const isStudyMode = attempt.mode === 'study';
+
     const getAnswerText = (question: Question, answer: number | string) => {
         if (answer === -1) return "Tempo esgotado";
         if (question.type === "multiple-choice" && question.options) return question.options[Number(answer)];
@@ -34,6 +37,10 @@ export default function AnswersModal({ isOpen, onClose, attempt, questions }: An
         })
         : "Data não disponível";
 
+    const totalAttempts = attempt.answers.reduce((sum, answer) => sum + (answer.attempts || 1), 0);
+    const efficiency = questions.length > 0 ? ((questions.length / totalAttempts) * 100).toFixed(1) : "0.0";
+    const avgAttemptsPerQuestion = questions.length > 0 ? (totalAttempts / questions.length).toFixed(1) : "0.0";
+
     if (!isOpen) return null;
 
     return (
@@ -46,8 +53,18 @@ export default function AnswersModal({ isOpen, onClose, attempt, questions }: An
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        Respostas de {attempt.displayName}
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        {isStudyMode ? (
+                            <>
+                                <BookOpen className="text-blue-500" size={24} />
+                                Resultado do Estudo
+                            </>
+                        ) : (
+                            <>
+                                <Target className="text-green-500" size={24} />
+                                Respostas de {attempt.displayName}
+                            </>
+                        )}
                     </h2>
                     <button
                         onClick={onClose}
@@ -59,17 +76,47 @@ export default function AnswersModal({ isOpen, onClose, attempt, questions }: An
                 </div>
 
                 <div className="mb-6 text-gray-700 dark:text-gray-300">
-                    <p>
-                        Acertos: <span className="font-semibold text-green-600 dark:text-green-400">{attempt.correctAnswers}</span> de{" "}
-                        <span className="font-semibold">{attempt.totalQuestions}</span> (
-                        <span className="font-semibold">{attempt.percentage}%</span>)
-                    </p>
-                    <p>
-                        Concluído em: <span className="font-semibold">{formattedDateTime}</span>
-                    </p>
+                    {isStudyMode ? (
+                        <>
+                            <p className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+                                {attempt.displayName}, você completou o quiz!
+                            </p>
+                            <div className="grid grid-cols-3 gap-3 mb-4">
+                                <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">Tentativas</p>
+                                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{totalAttempts}</p>
+                                </div>
+                                <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">Eficiência</p>
+                                    <p className="text-xl font-bold text-green-600 dark:text-green-400">{efficiency}%</p>
+                                </div>
+                                <div className="bg-purple-50 dark:bg-purple-900/30 p-3 rounded-lg text-center">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">Média/Questão</p>
+                                    <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{avgAttemptsPerQuestion}</p>
+                                </div>
+                            </div>
+                            <p className="text-sm">
+                                Concluído em: <span className="font-semibold">{formattedDateTime}</span>
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p>
+                                Acertos: <span className="font-semibold text-green-600 dark:text-green-400">{attempt.correctAnswers}</span> de{" "}
+                                <span className="font-semibold">{attempt.totalQuestions}</span> (
+                                <span className="font-semibold">{attempt.percentage}%</span>)
+                            </p>
+                            <p>
+                                Concluído em: <span className="font-semibold">{formattedDateTime}</span>
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Revisão das Respostas
+                    </h3>
                     {attempt.answers.map((answer, idx) => {
                         const question = questions.find((q) => q.id === answer.questionId);
                         if (!question) return null;
@@ -80,11 +127,16 @@ export default function AnswersModal({ isOpen, onClose, attempt, questions }: An
                             >
                                 <p className="font-medium text-gray-900 dark:text-white">{question.question}</p>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    Resposta: {getAnswerText(question, answer.selectedAnswer)}
+                                    Sua resposta: {getAnswerText(question, answer.selectedAnswer)}
                                     {answer.isCorrect ? (
                                         <span className="text-green-600 dark:text-green-400"> (Correto)</span>
                                     ) : (
                                         <span className="text-red-600 dark:text-red-400"> (Errado)</span>
+                                    )}
+                                    {isStudyMode && (
+                                        <span className="text-gray-500 dark:text-gray-400 ml-2">
+                                            - {answer.attempts || 1} tentativa(s)
+                                        </span>
                                     )}
                                 </p>
                                 {!answer.isCorrect && (

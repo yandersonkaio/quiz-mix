@@ -151,7 +151,7 @@ function CollectionDetails() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-4">
-                            <h1 className="text-3xl md:text-4xl font-bold break-words">
+                            <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
                                 {collection.name}
                             </h1>
 

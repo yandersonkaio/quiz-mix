@@ -40,6 +40,13 @@ export interface Question {
     optionFeedback?: (string | null)[];
 }
 
+export interface UserAnswer {
+    questionId: string;
+    selectedAnswer: number | string;
+    isCorrect: boolean;
+    attempts?: number;
+}
+
 export interface Attempt {
     id: string;
     userId: string;
@@ -51,12 +58,21 @@ export interface Attempt {
     displayName: string;
     photoURL?: string;
     answers: UserAnswer[];
+    totalAttempts?: number;
+    mode?: 'challenge' | 'study';
 }
 
-export interface UserAnswer {
-    questionId: string;
-    selectedAnswer: number | string;
-    isCorrect: boolean;
+export interface RankingEntry {
+    userId: string;
+    userName: string;
+    displayName?: string;
+    photoURL?: string;
+    score: number;
+    correctAnswers: number;
+    totalQuestions: number;
+    totalAttempts: number;
+    completedAt: any;
+    mode: 'challenge' | 'study';
 }
 
 export interface QuizCollection {
