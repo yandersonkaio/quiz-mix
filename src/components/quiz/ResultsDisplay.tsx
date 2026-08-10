@@ -132,7 +132,7 @@ export const ResultsDisplay = ({
                         </p>
                         <div className="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
                             <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg">
-                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Tentativas</p>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Respostas dadas</p>
                                 <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{totalAttempts}</p>
                             </div>
                             <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg">
