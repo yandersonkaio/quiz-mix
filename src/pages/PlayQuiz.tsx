@@ -22,28 +22,17 @@ const checkAnswer = (question: Question, answer: number | string): boolean => {
     return false;
 };
 
-/**
- * Avança para a próxima pergunta ou finaliza o quiz, salvando a tentativa.
- * @param currentIndex Índice da pergunta atual
- * @param questionsLength Total de perguntas
- * @param userAnswers Respostas do usuário
- * @param saveAttempt Função para salvar a tentativa
- * @param setIndex Atualiza o índice da pergunta
- * @param setAttempt Atualiza as tentativas atuais
- * @param setShowResult Mostra o resultado final
- * @param isUntilCorrectMode Modo "até acertar"
- * @param resetTimer Reseta o temporizador
- */
 const goToNextQuestion = (
     currentIndex: number,
     questionsLength: number,
     userAnswers: UserAnswer[],
-    saveAttempt: (correctCount: number, total: number, answers: UserAnswer[]) => Promise<void>,
+    saveAttempt: (correctCount: number, total: number, answers: UserAnswer[], totalAttempts?: number, mode?: 'challenge' | 'study') => Promise<void>,
     setIndex: (index: number) => void,
     setAttempt: (attempt: (number | string)[]) => void,
     setShowResult: (show: boolean) => void,
     isUntilCorrectMode: boolean,
-    resetTimer: () => void
+    resetTimer: () => void,
+    currentAttemptCount?: number
 ) => {
     if (currentIndex + 1 < questionsLength) {
         setIndex(currentIndex + 1);
@@ -52,9 +41,11 @@ const goToNextQuestion = (
     } else {
         if (!isUntilCorrectMode) {
             const correctCount = userAnswers.filter((ans) => ans.isCorrect).length;
-            saveAttempt(correctCount, questionsLength, userAnswers).then(() => setShowResult(true));
+            saveAttempt(correctCount, questionsLength, userAnswers, undefined, 'challenge').then(() => setShowResult(true));
         } else {
-            setShowResult(true);
+            // No modo untilCorrect, calcula o total de tentativas
+            const totalAttempts = userAnswers.reduce((sum, answer) => sum + (answer.attempts || 0), 0) + (currentAttemptCount || 0);
+            saveAttempt(questionsLength, questionsLength, userAnswers, totalAttempts, 'study').then(() => setShowResult(true));
         }
     }
 };
@@ -65,6 +56,7 @@ function PlayQuiz() {
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
     const [showResult, setShowResult] = useState<boolean>(false);
     const [currentAttempt, setCurrentAttempt] = useState<(number | string)[]>([]);
+    const [questionAttemptCount, setQuestionAttemptCount] = useState<number>(0);
     const navigate = useNavigate();
 
     const isUntilCorrectMode = quiz?.settings.showAnswersAfter === 'untilCorrect';
@@ -76,7 +68,7 @@ function PlayQuiz() {
                 const currentQuestion = questions[currentQuestionIndex];
                 setUserAnswers((prev) => [
                     ...prev,
-                    { questionId: currentQuestion.id, selectedAnswer: -1, isCorrect: false },
+                    { questionId: currentQuestion.id, selectedAnswer: -1, isCorrect: false, attempts: 1 },
                 ]);
                 toast.info('Tempo esgotado!');
                 goToNextQuestion(
@@ -88,7 +80,8 @@ function PlayQuiz() {
                     setCurrentAttempt,
                     setShowResult,
                     isUntilCorrectMode,
-                    resetTimer
+                    resetTimer,
+                    0
                 );
             }
         },
@@ -102,8 +95,11 @@ function PlayQuiz() {
     }, [quiz, showResult, currentQuestionIndex, resetTimer, isUntilCorrectMode]);
 
     useEffect(() => {
-        if (showResult) fetchRanking();
-    }, [showResult, fetchRanking]);
+        if (showResult) {
+            const mode = isUntilCorrectMode ? 'study' : 'challenge';
+            fetchRanking(mode);
+        }
+    }, [showResult, fetchRanking, isUntilCorrectMode]);
 
     const handleAnswer = useCallback(
         (answer: number | string) => {
@@ -114,15 +110,29 @@ function PlayQuiz() {
 
             if (isUntilCorrectMode) {
                 setCurrentAttempt((prev) => [...prev, answer]);
+                const newAttemptCount = questionAttemptCount + 1;
+                setQuestionAttemptCount(newAttemptCount);
+
                 if (isCorrect) {
                     setUserAnswers((prev) => [
                         ...prev,
-                        { questionId: currentQuestion.id, selectedAnswer: answer, isCorrect },
+                        {
+                            questionId: currentQuestion.id,
+                            selectedAnswer: answer,
+                            isCorrect: true,
+                            attempts: newAttemptCount
+                        },
                     ]);
+                    setQuestionAttemptCount(0);
                 }
             } else {
                 if (quiz.settings.timeLimitPerQuestion) pauseTimer();
-                const newAnswer: UserAnswer = { questionId: currentQuestion.id, selectedAnswer: answer, isCorrect };
+                const newAnswer: UserAnswer = {
+                    questionId: currentQuestion.id,
+                    selectedAnswer: answer,
+                    isCorrect,
+                    attempts: 1
+                };
                 setUserAnswers((prev) => [...prev, newAnswer]);
 
                 if (quiz.settings.showAnswersAfter === 'end') {
@@ -135,7 +145,8 @@ function PlayQuiz() {
                         setCurrentAttempt,
                         setShowResult,
                         isUntilCorrectMode,
-                        resetTimer
+                        resetTimer,
+                        0
                     );
                 }
             }
@@ -145,6 +156,7 @@ function PlayQuiz() {
             questions,
             currentQuestionIndex,
             isUntilCorrectMode,
+            questionAttemptCount,
             userAnswers,
             pauseTimer,
             resetTimer,
@@ -156,6 +168,7 @@ function PlayQuiz() {
         setCurrentQuestionIndex(0);
         setUserAnswers([]);
         setCurrentAttempt([]);
+        setQuestionAttemptCount(0);
         setShowResult(false);
         if (!isUntilCorrectMode && quiz?.settings.timeLimitPerQuestion) resetTimer();
     }, [isUntilCorrectMode, quiz, resetTimer]);
@@ -188,7 +201,8 @@ function PlayQuiz() {
                                 setCurrentAttempt,
                                 setShowResult,
                                 isUntilCorrectMode,
-                                resetTimer
+                                resetTimer,
+                                questionAttemptCount
                             )
                         }
                         currentAttempt={isUntilCorrectMode ? currentAttempt : undefined}
@@ -201,7 +215,8 @@ function PlayQuiz() {
                     questions={questions}
                     userAnswers={userAnswers}
                     onRestart={handleRestart}
-                    onBack={() => navigate('/my-quizzes')}
+                    onBack={() => navigate(`/quiz/details/${quiz.id}`)}
+                    mode={isUntilCorrectMode ? 'study' : 'challenge'}
                 />
             )}
         </div>
