@@ -54,7 +54,7 @@ const OptionButton: React.FC<OptionButtonProps> = ({
             (showAnswersAfter === 'immediately' && isSubmitted && isSelected && !isCorrectAnswer),
         // Estilo para resposta selecionada (antes de submeter)
         'text-blue-700 bg-blue-100 border border-blue-300 dark:text-blue-400 dark:bg-blue-900/50 dark:border-blue-700/50':
-            isSelected && !isSubmitted,
+            isSelected && !isSubmitted && !isCorrect && !isIncorrect,
         // Estilo para opções não selecionadas e interativas
         'cursor-pointer bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white':
             !isSubmitted && !isSelected && !isCorrect && !isIncorrect,
@@ -73,9 +73,9 @@ const OptionButton: React.FC<OptionButtonProps> = ({
         <button
             className={className}
             onClick={() => onClick(option)}
-            disabled={disabled || (isUntilCorrect && isCorrect && !isCorrectAnswer)}
+            disabled={disabled || isIncorrect || (isUntilCorrect && isCorrect && !isCorrectAnswer)}
             aria-label={`Opção ${label}`}
-            aria-disabled={disabled || (isUntilCorrect && isCorrect && !isCorrectAnswer)}
+            aria-disabled={disabled || isIncorrect || (isUntilCorrect && isCorrect && !isCorrectAnswer)}
         >
             <div className="flex flex-col w-full">
                 <div className="flex items-center">
@@ -129,7 +129,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
 }) => {
     const [selectedAnswer, setSelectedAnswer] = useState<number | string | null>(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const [lastIncorrect, setLastIncorrect] = useState<number | string | null>(null);
+    const [incorrectAnswers, setIncorrectAnswers] = useState<Set<number | string>>(new Set());
     const [inputValue, setInputValue] = useState<string>('');
 
     const isUntilCorrect = showAnswersAfter === 'untilCorrect';
@@ -143,7 +143,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     useEffect(() => {
         setSelectedAnswer(null);
         setIsSubmitted(false);
-        setLastIncorrect(null);
+        setIncorrectAnswers(new Set());
         setInputValue('');
     }, [question]);
 
@@ -151,8 +151,9 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
         if (isUntilCorrect && isCorrect) return;
         if (!isUntilCorrect && isSubmitted) return;
 
+        if (incorrectAnswers.has(answer)) return;
+
         setSelectedAnswer(answer);
-        setLastIncorrect(null);
 
         if (!isUntilCorrect) {
             setIsSubmitted(true);
@@ -179,8 +180,9 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                 question.type === 'multiple-choice' || question.type === 'true-false'
                     ? Number(selectedAnswer) === question.correctAnswer
                     : String(selectedAnswer).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
+
             if (!isAnswerCorrect) {
-                setLastIncorrect(selectedAnswer);
+                setIncorrectAnswers(prev => new Set([...prev, selectedAnswer]));
             }
             setSelectedAnswer(null);
             setIsSubmitted(false);
@@ -197,7 +199,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             const isAnswerCorrect =
                 String(inputValue).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
             if (!isAnswerCorrect) {
-                setLastIncorrect(inputValue);
+                setIncorrectAnswers(prev => new Set([...prev, inputValue.trim().toLowerCase()]));
             }
             setInputValue('');
             setIsSubmitted(false);
@@ -207,19 +209,18 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     };
 
     const getOptionLetter = (index: number): string => {
-        return String.fromCharCode(65 + index); // 65 é o código ASCII para 'A'
+        return String.fromCharCode(65 + index);
     };
 
     const renderOptions = () => {
         if (question.type === 'multiple-choice') {
             return question.options?.map((option, index) => (
-
                 <OptionButton
                     key={index}
                     option={option}
                     isSelected={selectedAnswer === index}
                     isCorrect={isCorrect && latestAttempt === index}
-                    isIncorrect={lastIncorrect === index}
+                    isIncorrect={incorrectAnswers.has(index)}
                     isSubmitted={isSubmitted}
                     showAnswersAfter={showAnswersAfter}
                     onClick={() => handleOptionClick(index)}
@@ -229,7 +230,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                         isUntilCorrect
                             ? isCorrect && latestAttempt === index
                                 ? <FaCheck />
-                                : lastIncorrect === index
+                                : incorrectAnswers.has(index)
                                     ? <FaTimes />
                                     : undefined
                             : showAnswersAfter === 'immediately' && isSubmitted
@@ -242,7 +243,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                     }
                     isCorrectAnswer={Number(index) === question.correctAnswer}
                     feedback={
-                        isUntilCorrect && (lastIncorrect === index || latestAttempt === index)
+                        isUntilCorrect && (incorrectAnswers.has(index) || latestAttempt === index)
                             ? question.optionFeedback?.[index] ?? null
                             : null
                     }
@@ -257,7 +258,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                     option={value === 1 ? 'Verdadeiro' : 'Falso'}
                     isSelected={selectedAnswer === value}
                     isCorrect={isCorrect && latestAttempt === value}
-                    isIncorrect={lastIncorrect === value}
+                    isIncorrect={incorrectAnswers.has(value)}
                     isSubmitted={isSubmitted}
                     showAnswersAfter={showAnswersAfter}
                     onClick={() => handleOptionClick(value)}
@@ -267,7 +268,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                         isUntilCorrect
                             ? isCorrect && latestAttempt === value
                                 ? <FaCheck />
-                                : lastIncorrect === value
+                                : incorrectAnswers.has(value)
                                     ? <FaTimes />
                                     : undefined
                             : showAnswersAfter === 'immediately' && isSubmitted
@@ -304,7 +305,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                                 'bg-green-100 border-green-300 dark:bg-green-900/50 dark:border-green-700/50':
                                     isUntilCorrect && isCorrect,
                                 'bg-red-100 border-red-300 dark:bg-red-900/50 dark:border-red-700/50':
-                                    isUntilCorrect && lastIncorrect !== null && !isCorrect,
+                                    isUntilCorrect && incorrectAnswers.size > 0 && !isCorrect,
                                 'bg-blue-100 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700/50':
                                     inputValue && !isSubmitted && !isCorrect,
                             }

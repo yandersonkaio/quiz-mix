@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash, FaPlay, FaFileUpload, FaTrophy, FaInfoCircle, FaListUl } from "react-icons/fa";
+import { FiBookOpen, FiEye, FiEyeOff } from "react-icons/fi";
 import { RankingDisplay } from "../components/quiz/RankingDisplay";
 import { useQuizData, QuestionData } from "../hooks/useQuizData";
 import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
@@ -38,6 +39,7 @@ function QuizDetails() {
         quiz,
         questions,
         ranking,
+        studyRanking,
         allUserAttempts,
         loading,
         fetchRanking,
@@ -55,6 +57,7 @@ function QuizDetails() {
     } = useQuizData();
 
     const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
+    const isImmediatelyMode = quiz?.settings.showAnswersAfter === "immediately";
 
     const [quizDetails, setQuizDetails] = useState<Partial<Quiz>>({
         name: "",
@@ -71,12 +74,12 @@ function QuizDetails() {
             navigate("/login");
             return;
         }
-        fetchRanking();
+        fetchRanking('challenge');
+        fetchRanking('study');
     }, [quizId, navigate, fetchRanking]);
 
     useEffect(() => {
         if (quiz) {
-            console.log(quiz)
             setQuizDetails({
                 name: quiz.name,
                 description: quiz.description || "",
@@ -126,7 +129,7 @@ function QuizDetails() {
             ...(question.type === "multiple-choice" && {
                 options: question.options,
                 correctAnswer: question.correctAnswer,
-                optionFeedback: question.optionFeedback, // ✅ ADICIONE ESTA LINHA
+                optionFeedback: question.optionFeedback,
             }),
             ...(question.type === "true-false" && {
                 correctAnswer: question.correctAnswer
@@ -220,22 +223,52 @@ function QuizDetails() {
         }
     };
 
+    const getModeConfig = () => {
+        if (isUntilCorrectMode) {
+            return {
+                icon: <FiBookOpen className="w-4 h-4" />,
+                label: "Modo Estudo",
+                description: "Responde até acertar cada questão",
+                badgeColor: "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700",
+                buttonColor: "from-blue-500 to-cyan-500",
+            };
+        } else if (isImmediatelyMode) {
+            return {
+                icon: <FiEye className="w-4 h-4" />,
+                label: "Respostas Imediatas",
+                description: "Feedback instantâneo após cada resposta",
+                badgeColor: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700",
+                buttonColor: "from-amber-500 to-orange-500",
+            };
+        } else {
+            return {
+                icon: <FiEyeOff className="w-4 h-4" />,
+                label: "Resultado no Final",
+                description: "Respostas reveladas apenas no final",
+                badgeColor: "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700",
+                buttonColor: "from-green-500 to-emerald-500",
+            };
+        }
+    };
+
     if (loading) return <Loading />;
     if (!quiz) return <div className="text-gray-900 dark:text-white p-6">Quiz não encontrado.</div>;
 
     const isCreator = quiz.userId === user?.uid;
-
     const difficultyConfig = getDifficultyConfig(quiz.difficulty);
+    const modeConfig = getModeConfig();
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6 text-gray-900 dark:text-white">
             <div className="max-w-6xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
-                        <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
-                            {quiz.name}
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
+                                {quiz.name}
+                            </h1>
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400">
                             {quiz.description || "Sem descrição"}
                         </p>
                     </div>
@@ -245,7 +278,7 @@ function QuizDetails() {
                         disabled={questions.length === 0 || operationLoading}
                         className={`flex items-center cursor-pointer px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105
                             ${questions.length === 0 ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' :
-                                'bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 hover:shadow-emerald-200/50 dark:hover:shadow-emerald-800/50'}
+                                `bg-gradient-to-r ${modeConfig.buttonColor} hover:shadow-xl`}
                             text-white font-semibold text-lg`}
                         title={questions.length === 0 ? "Adicione perguntas para jogar" : "Jogar o Quiz"}
                     >
@@ -264,7 +297,7 @@ function QuizDetails() {
                             <FaInfoCircle className="text-blue-500 dark:text-blue-400 mr-3 text-xl" />
                             <h2 className="text-xl font-semibold">Detalhes</h2>
                         </div>
-                        <ul className="space-y-3">
+                        <ul className="space-y-4">
                             <li className="flex justify-between">
                                 <span className="text-gray-500 dark:text-gray-400">Criado em:</span>
                                 <span className="font-medium">
@@ -280,15 +313,17 @@ function QuizDetails() {
                                     {difficultyConfig.label}
                                 </span>
                             </li>
-                            <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Modo:</span>
-                                <span className="font-medium">
-                                    {quiz.settings?.showAnswersAfter === "immediately"
-                                        ? "Respostas Imediatas"
-                                        : quiz.settings?.showAnswersAfter === "untilCorrect"
-                                            ? "Até Acertar"
-                                            : "Mostrar no Final"}
-                                </span>
+                            <li>
+                                <div className="flex justify-between mb-2">
+                                    <span className="text-gray-500 dark:text-gray-400">Modo de resposta:</span>
+                                </div>
+                                <div className={`p-3 rounded-lg border ${modeConfig.badgeColor}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        {modeConfig.icon}
+                                        <span className="font-semibold text-sm">{modeConfig.label}</span>
+                                    </div>
+                                    <p className="text-xs opacity-80">{modeConfig.description}</p>
+                                </div>
                             </li>
                             <li className="flex justify-between">
                                 <span className="text-gray-500 dark:text-gray-400">Tempo por pergunta:</span>
@@ -308,21 +343,59 @@ function QuizDetails() {
                         </div>
                         <ul className="space-y-3">
                             <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Total de tentativas:</span>
-                                <span className="font-medium">{statistics?.totalUniqueUsers}</span>
+                                <span className="text-gray-500 dark:text-gray-400">Total de participantes:</span>
+                                <span className="font-medium">{statistics?.totalUniqueUsers || 0}</span>
                             </li>
+                            {!isUntilCorrectMode ? (
+                                <>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-500 dark:text-gray-400">Melhor pontuação:</span>
+                                        <span className="font-medium">
+                                            {ranking.length > 0 && statistics?.bestPercentage !== undefined
+                                                ? `${statistics.bestPercentage}%`
+                                                : "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-500 dark:text-gray-400">Média geral:</span>
+                                        <span className="font-medium">
+                                            {ranking.length > 0 && statistics?.averagePercentage !== undefined
+                                                ? `${statistics.averagePercentage}%`
+                                                : "N/A"}
+                                        </span>
+                                    </li>
+                                </>
+                            ) : (
+                                <>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-500 dark:text-gray-400">Melhor eficiência:</span>
+                                        <span className="font-medium">
+                                            {studyRanking.length > 0 && statistics?.bestEfficiency !== undefined
+                                                ? `${statistics.bestEfficiency}%`
+                                                : "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-500 dark:text-gray-400">Média de tentativas:</span>
+                                        <span className="font-medium">
+                                            {studyRanking.length > 0 && statistics?.averageTotalAttempts !== undefined
+                                                ? statistics.averageTotalAttempts
+                                                : "N/A"}
+                                        </span>
+                                    </li>
+                                </>
+                            )}
                             <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Melhor pontuação:</span>
-                                <span className="font-medium">
-                                    {ranking.length > 0 ? `${statistics?.bestPercentage}%` : "N/A"}
-                                </span>
-                            </li>
-                            <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Média geral:</span>
-                                <span className="font-medium">
-                                    {ranking.length > 0
-                                        ? `${statistics?.averagePercentage}%`
-                                        : "N/A"}
+                                <span className="text-gray-500 dark:text-gray-400">Tipo de ranking:</span>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${isUntilCorrectMode
+                                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                                    : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                                    }`}>
+                                    {isUntilCorrectMode ? (
+                                        <>📊 Eficiência</>
+                                    ) : (
+                                        <>🏆 Pontuação</>
+                                    )}
                                 </span>
                             </li>
                         </ul>
@@ -432,8 +505,8 @@ function QuizDetails() {
                                                         <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
                                                             {question.question}
                                                         </h3>
-                                                        <div className="flex flex-wrap gap-2 mt-2">
-                                                            <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300">
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300 whitespace-nowrap">
                                                                 {question.type === "multiple-choice"
                                                                     ? "Múltipla Escolha"
                                                                     : question.type === "true-false"
@@ -441,7 +514,7 @@ function QuizDetails() {
                                                                         : "Preenchimento"}
                                                             </span>
                                                             {question.type === "multiple-choice" && (
-                                                                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300">
+                                                                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300 whitespace-nowrap">
                                                                     4 opções
                                                                 </span>
                                                             )}
@@ -473,10 +546,11 @@ function QuizDetails() {
                     </div>
                 )}
 
-                {!isUntilCorrectMode && isCreator && (
+                {isCreator && (
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                         <RankingDisplay
                             ranking={ranking}
+                            studyRanking={studyRanking}
                             allUserAttempts={allUserAttempts}
                             questions={questions}
                             operationLoading={operationLoading}
