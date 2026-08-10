@@ -81,7 +81,8 @@ const OptionButton: React.FC<OptionButtonProps> = ({
                 <div className="flex items-center">
                     <span
                         className={clsx(
-                            'flex items-center justify-center w-8 h-8 mr-3 rounded-full transition-colors duration-200',
+                            'flex items-center justify-center mr-3 rounded-full transition-colors duration-200',
+                            'min-w-[2rem] min-h-[2rem] w-8 h-8 flex-shrink-0',
                             isUntilCorrect
                                 ? isCorrect && isCorrectAnswer
                                     ? 'bg-green-600 text-white dark:bg-green-500'
