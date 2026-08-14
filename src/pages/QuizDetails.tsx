@@ -556,6 +556,7 @@ function QuizDetails() {
                         onDeleteAllAttempts={deleteAllAttempts}
                         onDeleteAttempt={deleteAttempt}
                         isCreator={isCreator}
+                        currentUserId={user?.uid}
                     />
                 </div>
 
