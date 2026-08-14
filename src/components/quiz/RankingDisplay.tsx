@@ -16,6 +16,7 @@ interface RankingDisplayProps {
     onDeleteAllAttempts: () => Promise<void>;
     onDeleteAttempt: (attemptId: string) => Promise<void>;
     isCreator?: boolean;
+    currentUserId?: string;
 }
 
 export const RankingDisplay = ({
@@ -27,6 +28,7 @@ export const RankingDisplay = ({
     onDeleteAllAttempts,
     onDeleteAttempt,
     isCreator = false,
+    currentUserId,
 }: RankingDisplayProps) => {
     const [expandedUser, setExpandedUser] = useState<string | null>(null);
     const [expandedStudyUser, setExpandedStudyUser] = useState<string | null>(null);
@@ -118,23 +120,26 @@ export const RankingDisplay = ({
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                    {(isCreator || currentUserId === attempt.userId) && (
+                                        <button
+                                            onClick={() => openAnswersModal(attempt)}
+                                            className="text-gray-600 cursor-pointer dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200 p-1"
+                                            aria-label={`Ver respostas de ${attempt.displayName}`}
+                                            title="Visualizar respostas"
+                                        >
+                                            <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
+                                        </button>
+                                    )}
+
                                     {isCreator && (
-                                        <>
-                                            <button
-                                                onClick={() => openAnswersModal(attempt)}
-                                                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200 p-1"
-                                                aria-label={`Ver respostas de ${attempt.displayName}`}
-                                            >
-                                                <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteAttempt(attempt.id)}
-                                                className="text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors duration-200 p-1"
-                                                aria-label={`Excluir tentativa de ${attempt.displayName}`}
-                                            >
-                                                <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
-                                            </button>
-                                        </>
+                                        <button
+                                            onClick={() => handleDeleteAttempt(attempt.id)}
+                                            className="text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors duration-200 p-1"
+                                            aria-label={`Excluir tentativa de ${attempt.displayName}`}
+                                            title="Excluir tentativa"
+                                        >
+                                            <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
+                                        </button>
                                     )}
                                     {hasMultipleAttempts && (
                                         <button
@@ -177,24 +182,26 @@ export const RankingDisplay = ({
                                                             Concluída em: {extraAttempt.completedAt.toDate().toLocaleString()}
                                                         </p>
                                                     </div>
-                                                    {isCreator && (
+                                                    {(isCreator || currentUserId === extraAttempt.userId) && (
                                                         <div className="flex gap-1 flex-shrink-0">
                                                             <button
                                                                 onClick={() => openAnswersModal(extraAttempt)}
-                                                                className="p-1.5 rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
+                                                                className="p-1.5 rounded-md cursor-pointer bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
                                                                 aria-label={`Ver respostas da tentativa ${idx + 1}`}
                                                                 title="Visualizar respostas"
                                                             >
                                                                 <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5" />
                                                             </button>
-                                                            <button
-                                                                onClick={() => handleDeleteAttempt(extraAttempt.id)}
-                                                                className="p-1.5 rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
-                                                                aria-label={`Excluir tentativa ${idx + 1}`}
-                                                                title="Excluir tentativa"
-                                                            >
-                                                                <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            </button>
+                                                            {isCreator && (
+                                                                <button
+                                                                    onClick={() => handleDeleteAttempt(extraAttempt.id)}
+                                                                    className="p-1.5 rounded-md cursor-pointer bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
+                                                                    aria-label={`Excluir tentativa ${idx + 1}`}
+                                                                    title="Excluir tentativa"
+                                                                >
+                                                                    <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -248,7 +255,29 @@ export const RankingDisplay = ({
                                         Total de respostas: {entry.totalAttempts} | Eficiência: {entry.score}%
                                     </p>
                                 </div>
-                                <div className="flex items-center flex-shrink-0">
+                                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                    {(isCreator || currentUserId === entry.userId) && userAttempts.length > 0 && (
+                                        <button
+                                            onClick={() => openAnswersModal(userAttempts[0])}
+                                            className="text-gray-600 cursor-pointer dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200 p-1"
+                                            aria-label={`Ver respostas de ${entry.userName}`}
+                                            title="Visualizar respostas"
+                                        >
+                                            <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
+                                        </button>
+                                    )}
+
+                                    {isCreator && userAttempts.length > 0 && (
+                                        <button
+                                            onClick={() => handleDeleteAttempt(userAttempts[0].id)}
+                                            className="text-gray-600 cursor-pointer dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors duration-200 p-1"
+                                            aria-label={`Excluir tentativa de ${entry.userName}`}
+                                            title="Excluir tentativa"
+                                        >
+                                            <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
+                                        </button>
+                                    )}
+
                                     {hasMultipleAttempts && (
                                         <button
                                             onClick={() => toggleExpandStudy(entry.userId)}
@@ -296,24 +325,26 @@ export const RankingDisplay = ({
                                                             Concluída em: {extraAttempt.completedAt.toDate().toLocaleString()}
                                                         </p>
                                                     </div>
-                                                    {isCreator && (
+                                                    {(isCreator || currentUserId === extraAttempt.userId) && (
                                                         <div className="flex gap-1 flex-shrink-0">
                                                             <button
                                                                 onClick={() => openAnswersModal(extraAttempt)}
-                                                                className="p-1.5 rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
+                                                                className="p-1.5 cursor-pointer rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
                                                                 aria-label={`Ver respostas da rodada ${idx + 1}`}
                                                                 title="Visualizar respostas"
                                                             >
                                                                 <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5" />
                                                             </button>
-                                                            <button
-                                                                onClick={() => handleDeleteAttempt(extraAttempt.id)}
-                                                                className="p-1.5 rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
-                                                                aria-label={`Excluir rodada ${idx + 1}`}
-                                                                title="Excluir tentativa"
-                                                            >
-                                                                <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            </button>
+                                                            {isCreator && (
+                                                                <button
+                                                                    onClick={() => handleDeleteAttempt(extraAttempt.id)}
+                                                                    className="p-1.5 rounded-md bg-white cursor-pointer dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
+                                                                    aria-label={`Excluir rodada ${idx + 1}`}
+                                                                    title="Excluir tentativa"
+                                                                >
+                                                                    <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
