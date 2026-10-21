@@ -24,7 +24,7 @@ export default function ImportQuestionsModal({
     onClose,
     onSaveImportedQuestions,
 }: ImportQuestionsModalProps) {
-    const [_, setSelectedFile] = useState<File | null>(null);
+    const [, setSelectedFile] = useState<File | null>(null);
     const [previewQuestions, setPreviewQuestions] = useState<PreviewQuestion[]>([]);
     const [fileError, setFileError] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -70,19 +70,20 @@ export default function ImportQuestionsModal({
                 if (typeof text !== 'string') {
                     throw new Error("Não foi possível ler o conteúdo do arquivo.");
                 }
-                const json = JSON.parse(text);
+                const json: unknown = JSON.parse(text);
 
                 if (!Array.isArray(json)) {
                     throw new Error("O arquivo JSON deve conter um array de perguntas.");
                 }
 
-                const previews: PreviewQuestion[] = json.map((qData: any, index: number): PreviewQuestion => {
+                const previews: PreviewQuestion[] = json.map((qData: unknown, index: number): PreviewQuestion => {
                     if (typeof qData !== 'object' || qData === null) {
                         return { data: {}, errors: [`Item ${index + 1} não é um objeto de pergunta válido.`], isValid: false };
                     }
-                    const errors = validateQuestionData(qData as Partial<Question>);
+                    const questionData = qData as Partial<Question>;
+                    const errors = validateQuestionData(questionData);
                     return {
-                        data: qData,
+                        data: questionData,
                         errors: errors,
                         isValid: errors.length === 0,
                     };
@@ -90,9 +91,9 @@ export default function ImportQuestionsModal({
 
                 setPreviewQuestions(previews);
 
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Erro ao processar JSON:", error);
-                setFileError(`Erro ao processar o arquivo: ${error.message}`);
+                setFileError(`Erro ao processar o arquivo: ${error instanceof Error ? error.message : String(error)}`);
                 setPreviewQuestions([]);
             } finally {
                 setIsProcessing(false);
@@ -125,9 +126,9 @@ export default function ImportQuestionsModal({
             await onSaveImportedQuestions(validQuestionsToSave);
             toast.success(`Sucesso! ${validQuestionsToSave.length} perguntas importadas.`);
             handleClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Erro ao salvar perguntas importadas:", error);
-            setFileError(`Erro ao salvar perguntas: ${error.message || 'Erro desconhecido'}`);
+            setFileError(`Erro ao salvar perguntas: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         } finally {
             setIsSaving(false);
         }
