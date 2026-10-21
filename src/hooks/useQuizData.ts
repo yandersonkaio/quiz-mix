@@ -321,7 +321,7 @@ export const useQuizData = () => {
                 : (correctAnswers / totalQuestions) * 100
             : 0;
 
-        const attemptData: any = {
+        const attemptData = {
             userId: user.uid,
             quizId,
             completedAt: Timestamp.now(),
@@ -332,11 +332,8 @@ export const useQuizData = () => {
             photoURL: user.photoURL || undefined,
             answers,
             mode,
+            ...(mode === 'study' && totalAttempts !== undefined ? { totalAttempts } : {}),
         };
-
-        if (mode === 'study' && totalAttempts !== undefined) {
-            attemptData.totalAttempts = totalAttempts;
-        }
 
         await addDoc(collection(db, "attempts"), attemptData);
 
@@ -347,7 +344,7 @@ export const useQuizData = () => {
         if (!quizId || !quiz) return;
 
         try {
-            const cleanedSettings: any = {
+            const cleanedSettings: Quiz["settings"] = {
                 ...quiz.settings,
                 ...updatedQuiz.settings,
             };
@@ -356,15 +353,14 @@ export const useQuizData = () => {
                 delete cleanedSettings.timeLimitPerQuestion;
             }
 
-            const updatedData: any = {
+            const updatedData = {
                 name: updatedQuiz.name ?? quiz.name,
                 description: updatedQuiz.description ?? quiz.description,
                 settings: cleanedSettings,
+                ...(updatedQuiz.difficulty !== undefined
+                    ? { difficulty: updatedQuiz.difficulty }
+                    : {}),
             };
-
-            if (updatedQuiz.difficulty !== undefined) {
-                updatedData.difficulty = updatedQuiz.difficulty;
-            }
 
             await updateDoc(doc(db, "quizzes", quizId), updatedData);
 
@@ -414,7 +410,7 @@ export const useQuizData = () => {
         if (!quizId) return;
         setOperationLoading(true);
         try {
-            const cleanedQuestion: any = {
+            const cleanedQuestion: Record<string, unknown> = {
                 type: questionData.type,
                 question: questionData.question,
             };
@@ -464,7 +460,7 @@ export const useQuizData = () => {
             const questionsRef = collection(db, "quizzes", quizId, "questions");
 
             questionsData.forEach((questionData) => {
-                const cleanedQuestion: any = {
+                const cleanedQuestion: Record<string, unknown> = {
                     type: questionData.type,
                     question: questionData.question,
                 };
@@ -514,7 +510,7 @@ export const useQuizData = () => {
         if (!quizId || !questionId) return;
         setOperationLoading(true);
         try {
-            const cleanedQuestion: any = {
+            const cleanedQuestion: Record<string, unknown> = {
                 ...questionData,
             };
 

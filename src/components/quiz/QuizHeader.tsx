@@ -1,5 +1,6 @@
+
 import { Quiz } from "../../types/quiz";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 interface QuizHeaderProps {
     quiz: Quiz;
@@ -20,7 +21,7 @@ export const QuizHeader = ({
         ? (timeLeft / quiz.settings.timeLimitPerQuestion) * 100
         : null;
 
-    const containerVariants = {
+    const containerVariants: Variants = {
         hidden: { opacity: 0, y: -20 },
         visible: {
             opacity: 1,

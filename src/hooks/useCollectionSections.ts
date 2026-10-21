@@ -8,6 +8,7 @@ import {
     orderBy,
     query,
     serverTimestamp,
+    Timestamp,
     updateDoc,
 } from "firebase/firestore";
 
@@ -17,7 +18,7 @@ export interface CollectionSection {
     id: string;
     name: string;
     order: number;
-    createdAt?: any;
+    createdAt?: Timestamp;
 }
 
 export function useCollectionSections(collectionId?: string) {

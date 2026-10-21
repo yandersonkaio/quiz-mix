@@ -20,7 +20,7 @@ export const useTimer = ({ initialTime, onTimeUp, isActive }: UseTimerProps) => 
     }, [initialTime, isActive]);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout | null = null;
+        let timer: ReturnType<typeof setInterval> | null = null;
 
         if (isRunning && timeLeft > 0) {
             timer = setInterval(() => {
