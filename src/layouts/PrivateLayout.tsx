@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "../components/SideBar";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 
 const PrivateLayout: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);

@@ -14,7 +14,7 @@ import {
     deleteDoc,
     writeBatch,
 } from "firebase/firestore";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
 import { Quiz, Question, UserAnswer, Attempt, RankingEntry } from "../types/quiz";

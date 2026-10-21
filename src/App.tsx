@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AppRoutes from "./routes/AppRoutes";
 import Loading from "./components/Loading";

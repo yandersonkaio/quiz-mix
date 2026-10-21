@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { QuizCollection } from "@/types/quiz";
 import { useCollectionData } from "@/hooks/useCollectionData";

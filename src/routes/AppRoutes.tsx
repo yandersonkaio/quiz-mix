@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router";
 import { Suspense, lazy } from "react";
 import Loading from "../components/Loading";
 import PrivateRoute from "./PrivateRoute";

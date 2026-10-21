@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import Loading from "../components/Loading";
 import { FaEdit, FaTrash, FaPlay, FaFileUpload, FaTrophy, FaInfoCircle, FaListUl } from "react-icons/fa";
 import { FiBookOpen, FiEye, FiEyeOff } from "react-icons/fi";
