@@ -1,6 +1,6 @@
 
 import { Quiz } from "../../types/quiz";
-import { motion, type Variants } from "framer-motion";
+import { motion, type Variants } from "motion/react";
 
 interface QuizHeaderProps {
     quiz: Quiz;
