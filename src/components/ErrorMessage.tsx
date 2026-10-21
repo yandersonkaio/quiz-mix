@@ -1,15 +1,37 @@
-import React from 'react';
+
+import { CircleAlert } from 'lucide-react'
 
 interface ErrorMessageProps {
-    message: string;
+    message: string
 }
 
-const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => {
+export default function ErrorMessage({
+    message,
+}: ErrorMessageProps) {
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center transition-colors duration-200">
-            <p className="text-center text-lg">{message}</p>
-        </div>
-    );
-};
+        <div className="bg-background text-foreground flex min-h-[60dvh] w-full items-center justify-center px-4 py-8">
+            <div className="border-border bg-card flex w-full max-w-md flex-col items-center rounded-xl border px-6 py-10 text-center sm:px-8">
+                {/* Ícone */}
+                <div className="bg-destructive/10 text-destructive mb-5 flex size-14 items-center justify-center rounded-xl">
+                    <CircleAlert
+                        size={26}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                    />
+                </div>
 
-export default ErrorMessage;
+                {/* Conteúdo */}
+                <h2 className="text-foreground text-lg font-semibold tracking-tight">
+                    Algo deu errado
+                </h2>
+
+                <p
+                    role="alert"
+                    className="text-muted-foreground mt-2 max-w-sm text-sm leading-relaxed wrap-break-word sm:text-base"
+                >
+                    {message}
+                </p>
+            </div>
+        </div>
+    )
+}

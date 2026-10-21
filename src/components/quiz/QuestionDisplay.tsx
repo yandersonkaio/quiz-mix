@@ -1,33 +1,36 @@
-import { useState, useEffect } from 'react';
-import { FaCheck, FaTimes } from 'react-icons/fa';
-import clsx from 'clsx';
-import { Question } from '../../types/quiz';
+
+import { useState, useEffect } from 'react'
+import type { FormEvent, ReactNode } from 'react'
+import { Check, X, ArrowRight } from 'lucide-react'
+import clsx from 'clsx'
+
+import type { Question } from '../../types/quiz'
 
 interface QuestionDisplayProps {
-    question: Question;
-    onAnswer: (answer: number | string) => void;
-    showAnswersAfter: 'immediately' | 'end' | 'untilCorrect';
-    onNext: () => void;
-    currentAttempt?: (number | string)[];
-    isLastQuestion?: boolean;
+    question: Question
+    onAnswer: (answer: number | string) => void
+    showAnswersAfter: 'immediately' | 'end' | 'untilCorrect'
+    onNext: () => void
+    currentAttempt?: (number | string)[]
+    isLastQuestion?: boolean
 }
 
 interface OptionButtonProps {
-    option: string | number;
-    isSelected: boolean;
-    isCorrect: boolean;
-    isIncorrect: boolean;
-    isSubmitted: boolean;
-    showAnswersAfter: QuestionDisplayProps['showAnswersAfter'];
-    onClick: (option: number | string) => void;
-    disabled: boolean;
-    label: string;
-    icon?: React.ReactNode;
-    isCorrectAnswer?: boolean;
-    feedback?: string | null;
+    option: string | number
+    isSelected: boolean
+    isCorrect: boolean
+    isIncorrect: boolean
+    isSubmitted: boolean
+    showAnswersAfter: QuestionDisplayProps['showAnswersAfter']
+    onClick: (option: number | string) => void
+    disabled: boolean
+    label: string
+    icon?: ReactNode
+    isCorrectAnswer?: boolean
+    feedback?: string | null
 }
 
-const OptionButton: React.FC<OptionButtonProps> = ({
+function OptionButton({
     option,
     isSelected,
     isCorrect,
@@ -40,178 +43,224 @@ const OptionButton: React.FC<OptionButtonProps> = ({
     icon,
     isCorrectAnswer,
     feedback,
-}) => {
-    const isUntilCorrect = showAnswersAfter === 'untilCorrect';
-    const baseClass = 'flex items-center w-full p-3 rounded-lg text-left transition-colors duration-200';
-    const className = clsx(baseClass, {
-        // Estilo para resposta correta
-        'text-green-700 bg-green-100 border border-green-300 dark:text-green-400 dark:bg-green-900/50 dark:border-green-700/50':
-            (isUntilCorrect && isCorrect) ||
-            (showAnswersAfter === 'immediately' && isSubmitted && isCorrectAnswer),
-        // Estilo para resposta incorreta selecionada
-        'text-red-700 bg-red-100 border border-red-300 dark:text-red-400 dark:bg-red-900/50 dark:border-red-700/50':
-            (isUntilCorrect && isIncorrect) ||
-            (showAnswersAfter === 'immediately' && isSubmitted && isSelected && !isCorrectAnswer),
-        // Estilo para resposta selecionada (antes de submeter)
-        'text-blue-700 bg-blue-100 border border-blue-300 dark:text-blue-400 dark:bg-blue-900/50 dark:border-blue-700/50':
-            isSelected && !isSubmitted && !isCorrect && !isIncorrect,
-        // Estilo para opções não selecionadas e interativas
-        'cursor-pointer bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white':
-            !isSubmitted && !isSelected && !isCorrect && !isIncorrect,
-        // Estilo para opções desabilitadas no modo untilCorrect após acertar
-        'opacity-70 cursor-not-allowed bg-gray-100 dark:bg-gray-700 dark:text-white':
-            isUntilCorrect && isCorrect && !isCorrectAnswer,
-        // Estilo para opções não selecionadas no modo immediately após submissão
-        'opacity-75 cursor-not-allowed bg-gray-100 dark:bg-gray-700 dark:text-white':
-            showAnswersAfter === 'immediately' && isSubmitted && !isSelected && !isCorrectAnswer,
-        // Estilo para opções desabilitadas no modo end após submissão
-        'opacity-50 bg-gray-100 dark:bg-gray-700 dark:text-white':
-            showAnswersAfter === 'end' && isSubmitted && !isCorrectAnswer,
-    });
+}: OptionButtonProps) {
+    const isUntilCorrect = showAnswersAfter === 'untilCorrect'
+
+    const showCorrect =
+        (isUntilCorrect && isCorrect && isCorrectAnswer) ||
+        (showAnswersAfter === 'immediately' &&
+            isSubmitted &&
+            isCorrectAnswer)
+
+    const showIncorrect =
+        (isUntilCorrect && isIncorrect) ||
+        (showAnswersAfter === 'immediately' &&
+            isSubmitted &&
+            isSelected &&
+            !isCorrectAnswer)
+
+    const showSelected =
+        isSelected &&
+        !isSubmitted &&
+        !isCorrect &&
+        !isIncorrect
+
+    const isDisabled =
+        disabled ||
+        isIncorrect ||
+        (isUntilCorrect && isCorrect && !isCorrectAnswer) ||
+        (showAnswersAfter === 'immediately' && isSubmitted)
+
+    const optionColors = showCorrect
+        ? 'border-answer-correct-foreground/30 bg-answer-correct text-answer-correct-foreground'
+        : showIncorrect
+            ? 'border-answer-incorrect-foreground/30 bg-answer-incorrect text-answer-incorrect-foreground'
+            : showSelected
+                ? 'border-answer-selected-foreground/30 bg-answer-selected text-answer-selected-foreground'
+                : isDisabled
+                    ? 'border-border bg-muted/50 text-muted-foreground'
+                    : 'border-border bg-muted/50 text-foreground hover:border-ring/50 hover:bg-accent hover:text-accent-foreground'
+
+    const indicatorColors = showCorrect
+        ? 'bg-answer-correct-foreground text-answer-correct'
+        : showIncorrect
+            ? 'bg-answer-incorrect-foreground text-answer-incorrect'
+            : showSelected
+                ? 'bg-answer-selected-foreground text-answer-selected'
+                : 'border-border bg-background text-foreground border'
 
     return (
         <button
-            className={className}
+            type="button"
             onClick={() => onClick(option)}
-            disabled={disabled || isIncorrect || (isUntilCorrect && isCorrect && !isCorrectAnswer)}
-            aria-label={`Opção ${label}`}
-            aria-disabled={disabled || isIncorrect || (isUntilCorrect && isCorrect && !isCorrectAnswer)}
+            disabled={isDisabled}
+            aria-label={`Opção ${label}: ${option}`}
+            aria-pressed={isSelected}
+            className={clsx(
+                'flex w-full min-w-0 items-start rounded-xl border p-3.5 text-left transition-all duration-200 sm:p-4',
+                'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+                optionColors,
+                isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+            )}
         >
-            <div className="flex flex-col w-full">
-                <div className="flex items-center">
+            <div className="flex w-full min-w-0 flex-col">
+                <div className="flex min-w-0 items-center gap-3">
+                    {/* Identificador da alternativa */}
                     <span
                         className={clsx(
-                            'flex items-center justify-center mr-3 rounded-full transition-colors duration-200',
-                            'min-w-[2rem] min-h-[2rem] w-8 h-8 flex-shrink-0',
-                            isUntilCorrect
-                                ? isCorrect && isCorrectAnswer
-                                    ? 'bg-green-600 text-white dark:bg-green-500'
-                                    : isIncorrect
-                                        ? 'bg-red-600 text-white dark:bg-red-500'
-                                        : isCorrect && !isCorrectAnswer
-                                            ? 'bg-gray-300 text-gray-600 dark:bg-gray-600 dark:text-gray-400'
-                                            : isSelected && !isSubmitted
-                                                ? 'bg-blue-600 text-white dark:bg-blue-500'
-                                                : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white'
-                                : showAnswersAfter === 'immediately' && isSubmitted
-                                    ? isCorrectAnswer
-                                        ? 'bg-green-600 text-white dark:bg-green-500'
-                                        : isSelected && !isCorrectAnswer
-                                            ? 'bg-red-600 text-white dark:bg-red-500'
-                                            : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white opacity-70'
-                                    : isSelected && !isSubmitted
-                                        ? 'bg-blue-600 text-white dark:bg-blue-500'
-                                        : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-white'
+                            'flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold transition-colors',
+                            indicatorColors
                         )}
                     >
                         {icon || label}
                     </span>
 
-                    <span>{option}</span>
+                    {/* Texto da alternativa */}
+                    <span className="min-w-0 flex-1 text-sm leading-relaxed wrap-break-word sm:text-base">
+                        {option}
+                    </span>
                 </div>
 
+                {/* Feedback individual */}
                 {feedback && (
-                    <div className="mt-3 ml-11 border-t border-current/20 pt-3 text-sm whitespace-pre-line">
+                    <div className="mt-3 ml-12 border-t border-current/20 pt-3 text-sm leading-relaxed whitespace-pre-line">
                         {feedback}
                     </div>
                 )}
             </div>
         </button>
-    );
-};
+    )
+}
 
-export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
+export function QuestionDisplay({
     question,
     onAnswer,
     showAnswersAfter,
     onNext,
     currentAttempt,
     isLastQuestion = false,
-}) => {
-    const [selectedAnswer, setSelectedAnswer] = useState<number | string | null>(null);
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [incorrectAnswers, setIncorrectAnswers] = useState<Set<number | string>>(new Set());
-    const [inputValue, setInputValue] = useState<string>('');
+}: QuestionDisplayProps) {
+    const [selectedAnswer, setSelectedAnswer] = useState<
+        number | string | null
+    >(null)
 
-    const isUntilCorrect = showAnswersAfter === 'untilCorrect';
-    const latestAttempt = currentAttempt && currentAttempt.length > 0 ? currentAttempt[currentAttempt.length - 1] : null;
+    const [isSubmitted, setIsSubmitted] = useState(false)
+
+    const [incorrectAnswers, setIncorrectAnswers] = useState<
+        Set<number | string>
+    >(new Set())
+
+    const [inputValue, setInputValue] = useState('')
+
+    const isUntilCorrect = showAnswersAfter === 'untilCorrect'
+
+    const latestAttempt =
+        currentAttempt && currentAttempt.length > 0
+            ? currentAttempt[currentAttempt.length - 1]
+            : null
+
     const isCorrect =
         latestAttempt !== null &&
-        (question.type === 'multiple-choice' || question.type === 'true-false'
+        (question.type === 'multiple-choice' ||
+            question.type === 'true-false'
             ? Number(latestAttempt) === question.correctAnswer
-            : String(latestAttempt).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase());
+            : String(latestAttempt).trim().toLowerCase() ===
+            question.blankAnswer?.trim().toLowerCase())
 
     useEffect(() => {
-        setSelectedAnswer(null);
-        setIsSubmitted(false);
-        setIncorrectAnswers(new Set());
-        setInputValue('');
-    }, [question]);
+        setSelectedAnswer(null)
+        setIsSubmitted(false)
+        setIncorrectAnswers(new Set())
+        setInputValue('')
+    }, [question])
 
     const handleOptionClick = (answer: number | string) => {
-        if (isUntilCorrect && isCorrect) return;
-        if (!isUntilCorrect && isSubmitted) return;
+        if (isUntilCorrect && isCorrect) return
+        if (!isUntilCorrect && isSubmitted) return
+        if (incorrectAnswers.has(answer)) return
 
-        if (incorrectAnswers.has(answer)) return;
-
-        setSelectedAnswer(answer);
+        setSelectedAnswer(answer)
 
         if (!isUntilCorrect) {
-            setIsSubmitted(true);
-            onAnswer(answer);
+            setIsSubmitted(true)
+            onAnswer(answer)
+
             if (showAnswersAfter === 'immediately') {
                 if (isLastQuestion) {
-                    onNext();
+                    onNext()
                 } else {
                     setTimeout(() => {
-                        setSelectedAnswer(null);
-                        setIsSubmitted(false);
-                        onNext();
-                    }, 2000);
+                        setSelectedAnswer(null)
+                        setIsSubmitted(false)
+                        onNext()
+                    }, 2000)
                 }
             }
         }
-    };
+    }
 
     const handleSubmit = () => {
-        if (isUntilCorrect && selectedAnswer !== null && !isCorrect) {
-            setIsSubmitted(true);
-            onAnswer(selectedAnswer);
+        if (
+            isUntilCorrect &&
+            selectedAnswer !== null &&
+            !isCorrect
+        ) {
+            setIsSubmitted(true)
+            onAnswer(selectedAnswer)
+
             const isAnswerCorrect =
-                question.type === 'multiple-choice' || question.type === 'true-false'
+                question.type === 'multiple-choice' ||
+                    question.type === 'true-false'
                     ? Number(selectedAnswer) === question.correctAnswer
-                    : String(selectedAnswer).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
+                    : String(selectedAnswer).trim().toLowerCase() ===
+                    question.blankAnswer?.trim().toLowerCase()
 
             if (!isAnswerCorrect) {
-                setIncorrectAnswers(prev => new Set([...prev, selectedAnswer]));
+                setIncorrectAnswers(
+                    (prev) => new Set([...prev, selectedAnswer])
+                )
             }
-            setSelectedAnswer(null);
-            setIsSubmitted(false);
-        }
-    };
 
-    const handleInputSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!inputValue.trim()) return;
+            setSelectedAnswer(null)
+            setIsSubmitted(false)
+        }
+    }
+
+    const handleInputSubmit = (
+        event: FormEvent<HTMLFormElement>
+    ) => {
+        event.preventDefault()
+
+        if (!inputValue.trim()) return
 
         if (isUntilCorrect) {
-            setIsSubmitted(true);
-            onAnswer(inputValue);
+            setIsSubmitted(true)
+            onAnswer(inputValue)
+
             const isAnswerCorrect =
-                String(inputValue).trim().toLowerCase() === question.blankAnswer?.trim().toLowerCase();
+                String(inputValue).trim().toLowerCase() ===
+                question.blankAnswer?.trim().toLowerCase()
+
             if (!isAnswerCorrect) {
-                setIncorrectAnswers(prev => new Set([...prev, inputValue.trim().toLowerCase()]));
+                setIncorrectAnswers(
+                    (prev) =>
+                        new Set([
+                            ...prev,
+                            inputValue.trim().toLowerCase(),
+                        ])
+                )
             }
-            setInputValue('');
-            setIsSubmitted(false);
+
+            setInputValue('')
+            setIsSubmitted(false)
         } else {
-            handleOptionClick(inputValue);
+            handleOptionClick(inputValue)
         }
-    };
+    }
 
     const getOptionLetter = (index: number): string => {
-        return String.fromCharCode(65 + index);
-    };
+        return String.fromCharCode(65 + index)
+    }
 
     const renderOptions = () => {
         if (question.type === 'multiple-choice') {
@@ -230,26 +279,32 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                     icon={
                         isUntilCorrect
                             ? isCorrect && latestAttempt === index
-                                ? <FaCheck />
+                                ? <Check size={18} strokeWidth={2.5} />
                                 : incorrectAnswers.has(index)
-                                    ? <FaTimes />
+                                    ? <X size={18} strokeWidth={2.5} />
                                     : undefined
-                            : showAnswersAfter === 'immediately' && isSubmitted
+                            : showAnswersAfter === 'immediately' &&
+                                isSubmitted
                                 ? Number(index) === question.correctAnswer
-                                    ? <FaCheck />
-                                    : selectedAnswer === index && Number(index) !== question.correctAnswer
-                                        ? <FaTimes />
+                                    ? <Check size={18} strokeWidth={2.5} />
+                                    : selectedAnswer === index &&
+                                        Number(index) !== question.correctAnswer
+                                        ? <X size={18} strokeWidth={2.5} />
                                         : undefined
                                 : undefined
                     }
-                    isCorrectAnswer={Number(index) === question.correctAnswer}
+                    isCorrectAnswer={
+                        Number(index) === question.correctAnswer
+                    }
                     feedback={
-                        isUntilCorrect && (incorrectAnswers.has(index) || latestAttempt === index)
+                        isUntilCorrect &&
+                            (incorrectAnswers.has(index) ||
+                                latestAttempt === index)
                             ? question.optionFeedback?.[index] ?? null
                             : null
                     }
                 />
-            ));
+            ))
         }
 
         if (question.type === 'true-false') {
@@ -268,48 +323,74 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                     icon={
                         isUntilCorrect
                             ? isCorrect && latestAttempt === value
-                                ? <FaCheck />
+                                ? <Check size={18} strokeWidth={2.5} />
                                 : incorrectAnswers.has(value)
-                                    ? <FaTimes />
+                                    ? <X size={18} strokeWidth={2.5} />
                                     : undefined
-                            : showAnswersAfter === 'immediately' && isSubmitted
+                            : showAnswersAfter === 'immediately' &&
+                                isSubmitted
                                 ? Number(value) === question.correctAnswer
-                                    ? <FaCheck />
-                                    : selectedAnswer === value && Number(value) !== question.correctAnswer
-                                        ? <FaTimes />
+                                    ? <Check size={18} strokeWidth={2.5} />
+                                    : selectedAnswer === value &&
+                                        Number(value) !== question.correctAnswer
+                                        ? <X size={18} strokeWidth={2.5} />
                                         : undefined
                                 : undefined
                     }
-                    isCorrectAnswer={Number(value) === question.correctAnswer}
+                    isCorrectAnswer={
+                        Number(value) === question.correctAnswer
+                    }
                 />
-            ));
+            ))
         }
 
-        return null;
-    };
+        return null
+    }
+
+    const inputColors =
+        isUntilCorrect && isCorrect
+            ? 'border-answer-correct-foreground/40 bg-answer-correct text-answer-correct-foreground'
+            : isUntilCorrect &&
+                incorrectAnswers.size > 0 &&
+                !isCorrect
+                ? 'border-answer-incorrect-foreground/40 bg-answer-incorrect text-answer-incorrect-foreground'
+                : inputValue && !isSubmitted && !isCorrect
+                    ? 'border-answer-selected-foreground/40 bg-answer-selected text-answer-selected-foreground'
+                    : 'border-input bg-background text-foreground'
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-md dark:shadow-lg transition-colors duration-200">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{question.question}</h2>
-            {(question.type === 'multiple-choice' || question.type === 'true-false') && (
-                <div className="space-y-2">{renderOptions()}</div>
-            )}
+        <div className="border-border bg-card text-card-foreground w-full min-w-0 rounded-xl border p-4 sm:p-6">
+            {/* Pergunta */}
+            <div className="mb-6">
+                <h2 className="text-foreground text-lg leading-relaxed font-semibold tracking-tight wrap-break-word sm:text-xl">
+                    {question.question}
+                </h2>
+            </div>
+
+            {/* Múltipla escolha / Verdadeiro ou falso */}
+            {(question.type === 'multiple-choice' ||
+                question.type === 'true-false') && (
+                    <div className="space-y-3">
+                        {renderOptions()}
+                    </div>
+                )}
+
+            {/* Preenchimento */}
             {question.type === 'fill-in-the-blank' && (
-                <form onSubmit={handleInputSubmit} className="space-y-4">
+                <form
+                    onSubmit={handleInputSubmit}
+                    className="space-y-4"
+                >
                     <input
                         type="text"
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(event) =>
+                            setInputValue(event.target.value)
+                        }
                         className={clsx(
-                            'w-full p-3 bg-gray-50 dark:bg-gray-700 dark:text-white text-gray-900 rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 focus:outline-none transition-colors duration-200',
-                            {
-                                'bg-green-100 border-green-300 dark:bg-green-900/50 dark:border-green-700/50':
-                                    isUntilCorrect && isCorrect,
-                                'bg-red-100 border-red-300 dark:bg-red-900/50 dark:border-red-700/50':
-                                    isUntilCorrect && incorrectAnswers.size > 0 && !isCorrect,
-                                'bg-blue-100 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700/50':
-                                    inputValue && !isSubmitted && !isCorrect,
-                            }
+                            'placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/30 h-12 w-full rounded-xl border px-4 text-sm outline-none transition-colors focus-visible:ring-2',
+                            'disabled:cursor-not-allowed disabled:opacity-60',
+                            inputColors
                         )}
                         placeholder="Digite sua resposta"
                         required
@@ -317,34 +398,53 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                         aria-label="Resposta para a pergunta"
                         autoFocus
                     />
+
                     <button
                         type="submit"
-                        className="w-full p-3 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200"
-                        disabled={isUntilCorrect && (isCorrect || !inputValue.trim())}
+                        disabled={
+                            (isUntilCorrect &&
+                                (isCorrect || !inputValue.trim())) ||
+                            (!isUntilCorrect && isSubmitted)
+                        }
                         aria-label="Enviar resposta"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Responder
                     </button>
                 </form>
             )}
-            {isUntilCorrect && question.type !== 'fill-in-the-blank' && !isCorrect && selectedAnswer !== null && (
-                <button
-                    onClick={handleSubmit}
-                    className="mt-4 w-full p-3 cursor-pointer bg-blue-600 rounded-lg hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200"
-                    aria-label="Enviar resposta"
-                >
-                    Responder
-                </button>
-            )}
+
+            {/* Botão de resposta no modo Estudo */}
+            {isUntilCorrect &&
+                question.type !== 'fill-in-the-blank' &&
+                !isCorrect &&
+                selectedAnswer !== null && (
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        aria-label="Enviar resposta"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring mt-5 flex h-12 w-full items-center justify-center rounded-xl px-5 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                    >
+                        Responder
+                    </button>
+                )}
+
+            {/* Avançar depois de acertar */}
             {isUntilCorrect && isCorrect && (
                 <button
+                    type="button"
                     onClick={onNext}
-                    className="mt-4 w-full p-3 cursor-pointer bg-green-600 rounded-lg hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-700 transition-colors duration-200"
-                    aria-label="Avançar para a próxima pergunta"
+                    aria-label={
+                        isLastQuestion
+                            ? 'Ver resultado do quiz'
+                            : 'Avançar para a próxima pergunta'
+                    }
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 >
-                    Avançar
+                    {isLastQuestion ? 'Ver resultado' : 'Avançar'}
+                    <ArrowRight size={18} />
                 </button>
             )}
         </div>
-    );
-};
+    )
+}

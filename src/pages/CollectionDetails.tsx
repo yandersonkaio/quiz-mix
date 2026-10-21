@@ -1,438 +1,407 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useState, type ReactNode } from 'react'
+import { useNavigate, useParams } from 'react-router'
 import {
-    FaEdit,
-    FaTrash,
-    FaInfoCircle,
-    FaListUl,
-    FaFolder
-} from "react-icons/fa";
-import { GrConfigure } from "react-icons/gr";
-import { MdFavoriteBorder, MdFavorite } from "react-icons/md";
-import { IoIosArrowDown } from "react-icons/io";
-import { IoIosArrowUp } from "react-icons/io";
+    ChevronDown,
+    Folder,
+    FolderOpen,
+    Heart,
+    Info,
+    Layers3,
+    ListChecks,
+    LoaderCircle,
+    Pencil,
+    Settings2,
+    Trash2,
+} from 'lucide-react'
+import { toast } from 'sonner'
 
-import Loading from "../components/Loading";
-import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
-import { CollectionSettingsModal } from "@/components/collection/CollectionSettingsModal";
-import AddQuizToCollectionModal from "@/components/collection/AddQuizToCollectionModal";
-import ManageSectionsModal from "@/components/collection/ManageSectionsModal";
-import { QuizListItem } from "@/components/quiz/QuizListItem";
+import Loading from '../components/Loading'
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal'
+import { CollectionSettingsModal } from '@/components/collection/CollectionSettingsModal'
+import AddQuizToCollectionModal from '@/components/collection/AddQuizToCollectionModal'
+import ManageSectionsModal from '@/components/collection/ManageSectionsModal'
+import { QuizListItem } from '@/components/quiz/QuizListItem'
 
-import { useCollection } from "@/hooks/useCollection";
-import { useCollectionData } from "../hooks/useCollectionData";
-import { useCollectionQuizzes } from "@/hooks/useCollectionQuizzes";
-import { useCollectionSections } from "@/hooks/useCollectionSections";
-import { useCollectionFavorite } from "@/hooks/useCollectionFavorite";
+import { useCollection } from '@/hooks/useCollection'
+import { useCollectionData } from '../hooks/useCollectionData'
+import { useCollectionQuizzes } from '@/hooks/useCollectionQuizzes'
+import { useCollectionSections } from '@/hooks/useCollectionSections'
+import { useCollectionFavorite } from '@/hooks/useCollectionFavorite'
 
-import { toast } from "sonner";
-import { QuizCollection } from "@/types/quiz";
+import type { QuizCollection } from '@/types/quiz'
 
-function CollectionDetails() {
-    const { collectionId } = useParams<{ collectionId: string }>();
-    const navigate = useNavigate();
+interface SectionCardProps {
+    title: string
+    description?: string
+    count: number
+    expanded: boolean
+    onToggle: () => void
+    children: ReactNode
+}
 
-    const {
-        collection,
-        loading,
-        user
-    } = useCollection(collectionId);
+function SectionCard({
+    title,
+    description,
+    count,
+    expanded,
+    onToggle,
+    children,
+}: SectionCardProps) {
+    return (
+        <section className="border-border bg-muted/40 overflow-hidden rounded-xl border">
+            <button
+                type="button"
+                onClick={onToggle}
+                aria-expanded={expanded}
+                className="hover:bg-accent/60 focus-visible:ring-ring flex w-full items-center gap-3 p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none sm:p-5"
+            >
+                <span className="bg-card text-muted-foreground border-border flex size-10 shrink-0 items-center justify-center rounded-lg border">
+                    {expanded ? (
+                        <FolderOpen size={20} aria-hidden="true" />
+                    ) : (
+                        <Folder size={20} aria-hidden="true" />
+                    )}
+                </span>
 
-    const {
-        sections,
-        loading: sectionsLoading
-    } = useCollectionSections(collectionId);
+                <span className="min-w-0 flex-1">
+                    <span className="text-foreground block truncate text-sm font-semibold sm:text-base">
+                        {title}
+                    </span>
+                    {description && (
+                        <span className="text-muted-foreground mt-0.5 block truncate text-xs sm:text-sm">
+                            {description}
+                        </span>
+                    )}
+                </span>
 
-    const {
-        quizzes,
-        loading: quizzesLoading
-    } = useCollectionQuizzes(collectionId);
+                <span className="bg-card text-muted-foreground border-border shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium">
+                    {count} {count === 1 ? 'quiz' : 'quizzes'}
+                </span>
 
-    const {
-        deleteCollection,
-        operationLoading
-    } = useCollectionData();
+                <ChevronDown
+                    size={18}
+                    aria-hidden="true"
+                    className={`text-muted-foreground shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''
+                        }`}
+                />
+            </button>
 
-    const { updateCollection } = useCollectionData();
+            {expanded && (
+                <div className="border-border border-t px-3 py-4 sm:px-5">
+                    {children}
+                </div>
+            )}
+        </section>
+    )
+}
+
+export default function CollectionDetails() {
+    const { collectionId } = useParams<{ collectionId: string }>()
+    const navigate = useNavigate()
+
+    const { collection, loading, user } = useCollection(collectionId)
+    const { sections, loading: sectionsLoading } = useCollectionSections(collectionId)
+    const { quizzes, loading: quizzesLoading } = useCollectionQuizzes(collectionId)
+    const { deleteCollection, operationLoading } = useCollectionData()
+    const { updateCollection } = useCollectionData()
 
     const {
         isFavorite,
         loading: favoriteLoading,
         toggleFavorite,
-        operationLoading: favoriteOperationLoading
-    } = useCollectionFavorite(collectionId);
+        operationLoading: favoriteOperationLoading,
+    } = useCollectionFavorite(collectionId)
 
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [isAddQuizModalOpen, setIsAddQuizModalOpen] = useState(false);
-    const [isSectionsModalOpen, setIsSectionsModalOpen] = useState(false);
-    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [isAddQuizModalOpen, setIsAddQuizModalOpen] = useState(false)
+    const [isSectionsModalOpen, setIsSectionsModalOpen] = useState(false)
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
 
     const toggleSection = (sectionId: string) => {
-        setExpandedSections(prev => ({
+        setExpandedSections((prev) => ({
             ...prev,
-            [sectionId]: !prev[sectionId]
-        }));
-    };
+            [sectionId]: !prev[sectionId],
+        }))
+    }
 
-    const handleSaveCollection = async (
-        updatedCollection: Partial<QuizCollection>
-    ) => {
-        if (!collection) return;
+    const handleSaveCollection = async (updatedCollection: Partial<QuizCollection>) => {
+        if (!collection) return
 
         try {
-            await updateCollection(
-                collection.id,
-                updatedCollection
-            );
-
-            toast.success("Coleção atualizada com sucesso.");
-
-            setIsSettingsModalOpen(false);
+            await updateCollection(collection.id, updatedCollection)
+            toast.success('Coleção atualizada com sucesso.')
+            setIsSettingsModalOpen(false)
         } catch (error) {
-            console.error(error);
-            toast.error("Erro ao atualizar coleção.");
-
+            console.error(error)
+            toast.error('Erro ao atualizar coleção.')
         }
-    };
+    }
 
     const handleDeleteCollection = async () => {
-        if (!collection) return;
+        if (!collection) return
 
         try {
-            await deleteCollection(collection.id);
-
-            toast.success("Coleção excluída com sucesso.");
-
-            navigate("/my-collections");
+            await deleteCollection(collection.id)
+            toast.success('Coleção excluída com sucesso.')
+            navigate('/my-collections')
         } catch (error) {
-            console.error(error);
-            toast.error("Erro ao excluir coleção.");
+            console.error(error)
+            toast.error('Erro ao excluir coleção.')
         }
-    };
+    }
 
     const handleToggleFavorite = async () => {
         try {
-            await toggleFavorite();
+            await toggleFavorite()
             toast.success(
                 isFavorite
-                    ? "Coleção removida dos favoritos."
-                    : "Coleção adicionada aos favoritos!"
-            );
+                    ? 'Coleção removida dos favoritos.'
+                    : 'Coleção adicionada aos favoritos!'
+            )
         } catch (error) {
-            console.error(error);
-            toast.error("Erro ao atualizar favorito.");
+            console.error(error)
+            toast.error('Erro ao atualizar favorito.')
         }
-    };
-
-    const getQuizzesBySection = (sectionId: string | null) => {
-        return quizzes.filter(quiz => quiz.sectionId === sectionId);
-    };
-
-    const quizzesSemSecao = getQuizzesBySection(null);
-
-    if (loading) {
-        return <Loading />;
     }
+
+    const getQuizzesBySection = (sectionId: string | null) =>
+        quizzes.filter((quiz) => quiz.sectionId === sectionId)
+
+    const quizzesSemSecao = getQuizzesBySection(null)
+
+    if (loading) return <Loading />
 
     if (!collection) {
         return (
-            <div className="p-6 text-gray-900 dark:text-white">
+            <div className="text-muted-foreground flex min-h-[60vh] items-center justify-center px-4 text-center">
                 Coleção não encontrada.
             </div>
-        );
+        )
     }
 
-    const isCreator = collection.userId === user?.uid;
+    const isCreator = collection.userId === user?.uid
+    const favoriteBusy = favoriteLoading || favoriteOperationLoading
+
+    const formattedDate = collection.createdAt?.toDate
+        ? collection.createdAt.toDate().toLocaleDateString('pt-BR')
+        : 'N/A'
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6 text-gray-900 dark:text-white">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start gap-4">
-                            <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
-                                {collection.name}
-                            </h1>
-
-                            <button
-                                onClick={handleToggleFavorite}
-                                disabled={favoriteLoading || favoriteOperationLoading}
-                                className={`
-                                    p-3 rounded-full 
-                                    transition-all duration-200 
-                                    hover:scale-110 active:scale-95
-                                    ${isFavorite
-                                        ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                                        : 'text-gray-400 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                    }
-                                    ${(favoriteLoading || favoriteOperationLoading) && 'opacity-50 cursor-not-allowed'}
-                                `}
-                                aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                                title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                            >
-                                {favoriteLoading || favoriteOperationLoading ? (
-                                    <div className="animate-spin h-6 w-6 border-2 border-current border-t-transparent rounded-full" />
-                                ) : (
-                                    isFavorite ? (
-                                        <MdFavorite className="text-3xl cursor-pointer" />
-                                    ) : (
-                                        <MdFavoriteBorder className="text-3xl cursor-pointer" />
-                                    )
-                                )}
-                            </button>
-                        </div>
-
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">
-                            {collection.description || "Sem descrição"}
+        <div className="bg-background text-foreground min-h-full w-full">
+            <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+                {/* Cabeçalho */}
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-2xl font-bold tracking-tight wrap-break-word sm:text-3xl">
+                            {collection.name}
+                        </h1>
+                        <p className="text-muted-foreground mt-2 text-sm leading-relaxed sm:text-base">
+                            {collection.description || 'Sem descrição'}
                         </p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={handleToggleFavorite}
+                        disabled={favoriteBusy}
+                        aria-pressed={isFavorite}
+                        aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                        title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                        className={`border-border bg-card hover:bg-accent focus-visible:ring-ring inline-flex h-10 shrink-0 items-center justify-center gap-2 self-start rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${isFavorite ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        {favoriteBusy ? (
+                            <LoaderCircle size={18} className="motion-safe:animate-spin" aria-hidden="true" />
+                        ) : (
+                            <Heart
+                                size={18}
+                                className={isFavorite ? 'fill-current' : ''}
+                                aria-hidden="true"
+                            />
+                        )}
+                        {isFavorite ? 'Favorita' : 'Favoritar'}
+                    </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="flex items-center mb-4">
-                            <FaInfoCircle className="text-blue-500 mr-3" />
-                            <h2 className="text-xl font-semibold">
-                                Informações
-                            </h2>
+
+                {/* Informações e gerenciamento */}
+                <div className={`mb-8 grid gap-5 ${isCreator ? 'md:grid-cols-3' : 'md:grid-cols-1'}`}>
+                    <section className="border-border bg-card rounded-xl border p-5 sm:p-6">
+                        <div className="mb-5 flex items-center gap-2.5">
+                            <Info size={20} className="text-muted-foreground" aria-hidden="true" />
+                            <h2 className="text-lg font-semibold">Informações</h2>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">
-                                    Criada em:
-                                </span>
-                                <span>
-                                    {collection.createdAt
-                                        ? collection.createdAt
-                                            .toDate()
-                                            .toLocaleDateString("pt-BR")
-                                        : "N/A"
-                                    }
-                                </span>
+                        <dl className="space-y-4 text-sm">
+                            <div className="flex items-center justify-between gap-4">
+                                <dt className="text-muted-foreground">Criada em</dt>
+                                <dd className="font-medium">{formattedDate}</dd>
                             </div>
-
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">
-                                    Total de Quizzes:
-                                </span>
-                                <span className="font-semibold">
-                                    {quizzes.length}
-                                </span>
+                            <div className="flex items-center justify-between gap-4">
+                                <dt className="text-muted-foreground">Total de quizzes</dt>
+                                <dd className="font-semibold">{quizzes.length}</dd>
                             </div>
-
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">
-                                    Seções:
-                                </span>
-                                <span className="font-semibold">
-                                    {sections.length}
-                                </span>
+                            <div className="flex items-center justify-between gap-4">
+                                <dt className="text-muted-foreground">Seções</dt>
+                                <dd className="font-semibold">{sections.length}</dd>
                             </div>
-                        </div>
-                    </div>
+                        </dl>
+                    </section>
 
                     {isCreator && (
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2">
-                            <div className="flex items-center mb-4">
-                                <FaEdit className="text-purple-500 mr-3 flex-shrink-0" />
-                                <h2 className="text-lg sm:text-xl font-semibold whitespace-nowrap">
-                                    Configurações da Coleção
-                                </h2>
+                        <section className="border-border bg-card rounded-xl border p-5 md:col-span-2 sm:p-6">
+                            <div className="mb-5 flex items-center gap-2.5">
+                                <Settings2 size={20} className="text-muted-foreground" aria-hidden="true" />
+                                <h2 className="text-lg font-semibold">Configurações da coleção</h2>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
                                 <button
+                                    type="button"
                                     onClick={() => setIsSettingsModalOpen(true)}
-                                    className="flex items-center justify-between cursor-pointer px-3 sm:px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                    className="border-border bg-muted/60 text-foreground hover:bg-accent flex min-h-11 items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors"
                                 >
-                                    <span className="text-sm sm:text-base mr-2">Editar informações</span>
-                                    <FaEdit className="flex-shrink-0" />
+                                    Editar informações
+                                    <Pencil size={18} className="shrink-0" aria-hidden="true" />
                                 </button>
 
                                 <button
+                                    type="button"
                                     onClick={() => setIsDeleteModalOpen(true)}
-                                    className="flex items-center cursor-pointer justify-between px-3 sm:px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                                    className="border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15 flex min-h-11 items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors"
                                 >
-                                    <span className="text-sm sm:text-base mr-2">Excluir coleção</span>
-                                    <FaTrash className="flex-shrink-0" />
+                                    Excluir coleção
+                                    <Trash2 size={18} className="shrink-0" aria-hidden="true" />
                                 </button>
                             </div>
-                        </div>
+                        </section>
                     )}
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                        <div className="flex items-center">
-                            <FaListUl className="text-indigo-500 mr-3" />
-                            <h2 className="text-xl font-semibold">
-                                Quizzes
-                            </h2>
+                {/* Conteúdo da coleção */}
+                <section className="border-border bg-card rounded-xl border p-4 sm:p-6">
+                    <div className="mb-6 flex flex-col gap-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                                <ListChecks size={20} className="text-muted-foreground" aria-hidden="true" />
+                                <h2 className="text-lg font-semibold">Quizzes</h2>
+                            </div>
+
+                            <span className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-medium">
+                                {sections.length} {sections.length === 1 ? 'seção' : 'seções'} ·{' '}
+                                {quizzes.length} {quizzes.length === 1 ? 'quiz' : 'quizzes'}
+                            </span>
                         </div>
 
                         {isCreator && (
-                            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                                 <button
+                                    type="button"
                                     onClick={() => setIsAddQuizModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none text-sm sm:text-base whitespace-nowrap"
+                                    className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                                 >
-                                    <GrConfigure className="text-lg sm:text-xl flex-shrink-0" />
-                                    Gerenciar Quizzes
+                                    <ListChecks size={18} aria-hidden="true" />
+                                    Gerenciar quizzes
                                 </button>
-
                                 <button
+                                    type="button"
                                     onClick={() => setIsSectionsModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors cursor-pointer shadow-sm flex-1 sm:flex-none text-sm sm:text-base whitespace-nowrap"
+                                    className="border-border bg-card text-foreground hover:bg-accent inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
                                 >
-                                    <FaListUl className="flex-shrink-0" />
-                                    Gerenciar Seções
+                                    <Layers3 size={18} aria-hidden="true" />
+                                    Gerenciar seções
                                 </button>
                             </div>
                         )}
-
-                        <span className="text-sm bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full whitespace-nowrap">
-                            {sections.length} seções • {quizzes.length} quizzes
-                        </span>
                     </div>
 
                     {sectionsLoading || quizzesLoading ? (
-                        <div className="text-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
-                            <p className="text-gray-500 mt-4">
-                                Carregando estrutura...
-                            </p>
+                        <div role="status" className="flex flex-col items-center justify-center gap-3 py-12">
+                            <LoaderCircle
+                                size={28}
+                                aria-hidden="true"
+                                className="text-primary motion-safe:animate-spin"
+                            />
+                            <p className="text-muted-foreground text-sm">Carregando estrutura...</p>
                         </div>
                     ) : sections.length === 0 && quizzes.length === 0 ? (
-                        <div className="text-center py-12">
-                            <div className="text-6xl mb-4">📚</div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                                Coleção vazia
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-6">
+                        <div className="flex flex-col items-center py-10 text-center sm:py-12">
+                            <div className="bg-muted text-muted-foreground mb-4 flex size-16 items-center justify-center rounded-2xl">
+                                <FolderOpen size={30} strokeWidth={1.5} aria-hidden="true" />
+                            </div>
+                            <h3 className="text-lg font-semibold">Coleção vazia</h3>
+                            <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
                                 Comece adicionando seções e quizzes para organizar sua coleção.
                             </p>
                             {isCreator && (
-                                <div className="flex justify-center gap-3">
+                                <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => setIsSectionsModalOpen(true)}
-                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg cursor-pointer transition-colors"
+                                        className="border-border bg-card text-foreground hover:bg-accent rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
                                     >
-                                        Criar Seção
+                                        Criar seção
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => setIsAddQuizModalOpen(true)}
-                                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg cursor-pointer transition-colors"
+                                        className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                                     >
-                                        Adicionar Quiz
+                                        Adicionar quiz
                                     </button>
                                 </div>
                             )}
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {sections.map((section) => {
-                                const sectionQuizzes = getQuizzesBySection(section.id);
-                                const isExpanded = expandedSections[section.id] === true;
+                                const sectionQuizzes = getQuizzesBySection(section.id)
+                                const isExpanded = expandedSections[section.id] === true
 
                                 return (
-                                    <div
+                                    <SectionCard
                                         key={section.id}
-                                        className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700"
+                                        title={section.name}
+                                        count={sectionQuizzes.length}
+                                        expanded={isExpanded}
+                                        onToggle={() => toggleSection(section.id)}
                                     >
-                                        <div
-                                            className="flex items-center gap-3 mb-3 cursor-pointer"
-                                            onClick={() => toggleSection(section.id)}
-                                        >
-                                            <FaFolder className="text-yellow-500 text-2xl flex-shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white truncate">
-                                                    {section.name}
-                                                </h3>
+                                        {sectionQuizzes.length > 0 ? (
+                                            <div className="space-y-3">
+                                                {sectionQuizzes.map((quiz) => (
+                                                    <QuizListItem key={quiz.id} quiz={quiz} />
+                                                ))}
                                             </div>
-                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                                <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded whitespace-nowrap">
-                                                    {sectionQuizzes.length} {sectionQuizzes.length === 1 ? 'quiz' : 'quizzes'}
-                                                </span>
-                                                <button
-                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors flex-shrink-0"
-                                                    aria-label={isExpanded ? "Recolher seção" : "Expandir seção"}
-                                                >
-                                                    {isExpanded ? (
-                                                        <IoIosArrowUp className="text-lg" />
-                                                    ) : (
-                                                        <IoIosArrowDown className="text-lg" />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        {isExpanded && (
-                                            <>
-                                                {sectionQuizzes.length > 0 ? (
-                                                    <div className="ml-6 space-y-3 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
-                                                        {sectionQuizzes.map((quiz) => (
-                                                            <QuizListItem key={quiz.id} quiz={quiz} />
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="ml-6 border-l-2 border-gray-200 dark:border-gray-600 pl-4 py-2">
-                                                        <p className="text-sm text-gray-400 dark:text-gray-500 italic">
-                                                            Nenhum quiz nesta seção
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </>
+                                        ) : (
+                                            <p className="text-muted-foreground py-2 text-sm italic">
+                                                Nenhum quiz nesta seção
+                                            </p>
                                         )}
-                                    </div>
-                                );
+                                    </SectionCard>
+                                )
                             })}
 
                             {quizzesSemSecao.length > 0 && (
-                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
-                                    <div
-                                        className="flex items-center gap-3 mb-3 cursor-pointer"
-                                        onClick={() => toggleSection('sem-secao')}
-                                    >
-                                        <FaFolder className="text-2xl flex-shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white truncate">
-                                                Sem seção
-                                            </h3>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                                Quizzes não organizados em seções
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            <span className="text-sm text-gray-500 bg-white dark:bg-gray-600 px-2 py-1 rounded whitespace-nowrap">
-                                                {quizzesSemSecao.length} {quizzesSemSecao.length === 1 ? 'quiz' : 'quizzes'}
-                                            </span>
-                                            <button
-                                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors flex-shrink-0"
-                                                aria-label={expandedSections['sem-secao'] === true ? "Recolher seção" : "Expandir seção"}
-                                            >
-                                                {expandedSections['sem-secao'] === true ? (
-                                                    <IoIosArrowUp className="text-lg" />
-                                                ) : (
-                                                    <IoIosArrowDown className="text-lg" />
-                                                )}
-                                            </button>
-                                        </div>
+                                <SectionCard
+                                    title="Sem seção"
+                                    description="Quizzes não organizados em seções"
+                                    count={quizzesSemSecao.length}
+                                    expanded={expandedSections['sem-secao'] === true}
+                                    onToggle={() => toggleSection('sem-secao')}
+                                >
+                                    <div className="space-y-3">
+                                        {quizzesSemSecao.map((quiz) => (
+                                            <QuizListItem key={quiz.id} quiz={quiz} />
+                                        ))}
                                     </div>
-
-                                    {expandedSections['sem-secao'] === true && (
-                                        <div className="ml-6 space-y-3 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
-                                            {quizzesSemSecao.map((quiz) => (
-                                                <QuizListItem key={quiz.id} quiz={quiz} />
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                </SectionCard>
                             )}
                         </div>
                     )}
-                </div>
+                </section>
             </div>
 
+            {/* Modais: mesmo comportamento do componente original */}
             {isCreator && (
                 <>
                     <CollectionSettingsModal
@@ -465,7 +434,5 @@ function CollectionDetails() {
                 </>
             )}
         </div>
-    );
+    )
 }
-
-export default CollectionDetails;

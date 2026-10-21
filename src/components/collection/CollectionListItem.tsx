@@ -1,64 +1,81 @@
-import { Link } from "react-router";
-import { HiOutlineFolder } from "react-icons/hi2";
-import { QuizCollection } from "@/types/quiz";
+
+import { Link } from 'react-router'
+import { FolderOpen } from 'lucide-react'
+
+import type { QuizCollection } from '@/types/quiz'
 
 interface CollectionListItemProps {
-    collection: QuizCollection;
+    collection: QuizCollection
 }
 
-export function CollectionListItem({ collection }: CollectionListItemProps) {
+export function CollectionListItem({
+    collection,
+}: CollectionListItemProps) {
     const formattedDate = collection.createdAt?.toDate
-        ? new Date(collection.createdAt.toDate()).toLocaleDateString("pt-BR")
-        : "Data desconhecida";
+        ? collection.createdAt.toDate().toLocaleDateString('pt-BR')
+        : 'Data desconhecida'
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-            <Link
-                to={`/collections/${collection.id}`}
-                className="block"
-            >
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1">
-                        <HiOutlineFolder className="w-7 h-7 mt-1 text-blue-600 dark:text-blue-400 shrink-0" />
-
-                        <div>
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                {collection.name}
-                            </h2>
-
-                            <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">
-                                {collection.description || "Sem descrição"}
-                            </p>
-
-                            <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                <span>Criada em {formattedDate}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-6 text-sm">
-                        <div className="text-center min-w-[70px]">
-                            <div className="text-gray-500 dark:text-gray-400">
-                                Quizzes
-                            </div>
-
-                            <div className="font-semibold text-blue-600 dark:text-blue-400">
-                                {collection.quizCount ?? 0}
-                            </div>
-                        </div>
-
-                        <div className="text-center min-w-[70px]">
-                            <div className="text-gray-500 dark:text-gray-400">
-                                Seções
-                            </div>
-
-                            <div className="font-semibold text-green-600 dark:text-green-400">
-                                {collection.sectionCount ?? 0}
-                            </div>
-                        </div>
-                    </div>
+        <Link
+            to={`/collections/${collection.id}`}
+            className="group border-border bg-card text-card-foreground hover:border-ring/50 flex min-w-0 flex-col rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:p-5"
+        >
+            {/* Cabeçalho */}
+            <div className="flex min-w-0 items-start gap-3">
+                <div className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
+                    <FolderOpen
+                        size={21}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                    />
                 </div>
-            </Link>
-        </div>
-    );
+
+                <div className="min-w-0 flex-1">
+                    <h2 className="text-foreground text-base leading-snug font-semibold tracking-tight wrap-break-word sm:text-lg">
+                        {collection.name}
+                    </h2>
+
+                    <p className="text-muted-foreground mt-2 line-clamp-2 text-sm leading-relaxed sm:line-clamp-1">
+                        {collection.description || 'Sem descrição'}
+                    </p>
+                </div>
+            </div>
+
+            {/* Informações */}
+            <div className="border-border mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-4 sm:grid-cols-3 sm:gap-5">
+                {/* Data */}
+                <div className="min-w-0 space-y-1.5">
+                    <p className="text-muted-foreground text-xs">
+                        Criada em
+                    </p>
+
+                    <p className="text-foreground text-sm font-medium">
+                        {formattedDate}
+                    </p>
+                </div>
+
+                {/* Quizzes */}
+                <div className="min-w-0 space-y-1.5">
+                    <p className="text-muted-foreground text-xs">
+                        Quizzes
+                    </p>
+
+                    <p className="text-foreground text-sm font-semibold">
+                        {collection.quizCount ?? 0}
+                    </p>
+                </div>
+
+                {/* Seções */}
+                <div className="min-w-0 space-y-1.5">
+                    <p className="text-muted-foreground text-xs">
+                        Seções
+                    </p>
+
+                    <p className="text-foreground text-sm font-semibold">
+                        {collection.sectionCount ?? 0}
+                    </p>
+                </div>
+            </div>
+        </Link>
+    )
 }

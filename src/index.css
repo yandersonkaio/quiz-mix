@@ -1,204 +1,479 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
 
-@import 'prismjs/themes/prism.css';
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
+
+@import "prismjs/themes/prism.css";
 
 @import "tailwindcss";
-
 @import "tw-animate-css";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* ========================================
+   CUSTOM VARIANTS
+======================================== */
 
-.dark pre[class*="language-"],
-.dark code[class*="language-"] {
-  @apply bg-gray-700 text-gray-100;
-}
+@custom-variant dark (&:where(
+  .dark,
+  .dark *,
+  .mocha,
+  .mocha *,
+  .forest,
+  .forest *
+));
 
-.dark .token.comment,
-.dark .token.prolog,
-.dark .token.doctype,
-.dark .token.cdata {
-  @apply text-gray-400;
-}
-
-.dark .token.punctuation {
-  @apply text-gray-300;
-}
-
-.dark .token.property,
-.dark .token.tag,
-.dark .token.constant,
-.dark .token.symbol,
-.dark .token.deleted {
-  @apply text-red-400;
-}
-
-.dark .token.boolean,
-.dark .token.number {
-  @apply text-purple-400;
-}
-
-.dark .token.selector,
-.dark .token.attr-name,
-.dark .token.string,
-.dark .token.char,
-.dark .token.builtin,
-.dark .token.inserted {
-  @apply text-green-400;
-}
-
-.dark .token.operator,
-.dark .token.entity,
-.dark .token.url,
-.dark .token.variable {
-  @apply text-gray-200;
-}
-
-.dark .token.atrule,
-.dark .token.attr-value,
-.dark .token.function,
-.dark .token.class-name {
-  @apply text-blue-400;
-}
-
-.dark .token.keyword {
-  @apply text-pink-400;
-}
-
-.dark .token.regex,
-.dark .token.important {
-  @apply text-orange-400;
-}
-
-@theme {
-    --animate-pulse: pulse 1s ease-in-out infinite;
-
-    @keyframes pulse {
-        0%, 100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.1);
-        }
-    }
-}
-
-body {
-    font-family: 'Roboto', sans-serif;
-}
+/* ========================================
+   THEME TOKENS
+======================================== */
 
 @theme inline {
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-destructive: var(--destructive);
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-destructive: var(--destructive);
+
+  --color-selection: var(--selection);
+  --color-selection-foreground: var(--selection-foreground);
+
+  /* Quiz answers */
+  --color-answer-correct: var(--answer-correct);
+  --color-answer-correct-foreground: var(--answer-correct-foreground);
+
+  --color-answer-incorrect: var(--answer-incorrect);
+  --color-answer-incorrect-foreground: var(--answer-incorrect-foreground);
+
+  --color-answer-selected: var(--answer-selected);
+  --color-answer-selected-foreground: var(--answer-selected-foreground);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ========================================
+   ANIMATIONS
+======================================== */
+
+@theme {
+  --font-sans: "Roboto", sans-serif;
+  --animate-pulse: pulse 1s ease-in-out infinite;
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.1);
+    }
+  }
+}
+
+/* ========================================
+   LIGHT THEME
+======================================== */
+
 :root {
+  color-scheme: light;
+
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+
+  --background: #fafafa;
+  --foreground: #18181b;
+
+  --card: #ffffff;
+  --card-foreground: #18181b;
+
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+
+  --primary: #27272a;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #a1a1aa;
+
+  --destructive: #dc2626;
+
+  --selection: #27272a;
+  --selection-foreground: #ffffff;
+
+  /* Quiz answers */
+  --answer-correct: #dcfce7;
+  --answer-correct-foreground: #166534;
+
+  --answer-incorrect: #fee2e2;
+  --answer-incorrect-foreground: #991b1b;
+
+  --answer-selected: #dbeafe;
+  --answer-selected-foreground: #1d4ed8;
+
+  /* Charts */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* ========================================
+   DARK THEME
+======================================== */
+
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  color-scheme: dark;
+
+  --background: #111114;
+  --foreground: #f4f4f5;
+
+  --card: #202024;
+  --card-foreground: #f4f4f5;
+
+  --popover: #202024;
+  --popover-foreground: #f4f4f5;
+
+  --primary: #e4e4e7;
+  --primary-foreground: #18181b;
+
+  --secondary: #2c2c32;
+  --secondary-foreground: #f4f4f5;
+
+  --muted: #2c2c32;
+  --muted-foreground: #a1a1aa;
+
+  --accent: #323239;
+  --accent-foreground: #f4f4f5;
+
+  --border: #393940;
+  --input: #393940;
+  --ring: #71717a;
+
+  --destructive: #f87171;
+
+  --selection: #3a3a43;
+  --selection-foreground: #f4f4f5;
+
+  /* Quiz answers */
+  --answer-correct: #14532d;
+  --answer-correct-foreground: #bbf7d0;
+
+  --answer-incorrect: #7f1d1d;
+  --answer-incorrect-foreground: #fecaca;
+
+  --answer-selected: #1e3a5f;
+  --answer-selected-foreground: #bfdbfe;
+
+  /* Charts */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ========================================
+   MOCHA THEME
+======================================== */
+
+.mocha {
+  color-scheme: dark;
+
+  --background: #3b2a1e;
+  --foreground: #f2e2c9;
+
+  --card: #4a3524;
+  --card-foreground: #f2e2c9;
+
+  --popover: #4a3524;
+  --popover-foreground: #f2e2c9;
+
+  --primary: #c98a3f;
+  --primary-foreground: #2a1c10;
+
+  --secondary: #553d29;
+  --secondary-foreground: #f2e2c9;
+
+  --muted: #553d29;
+  --muted-foreground: #c9b291;
+
+  --accent: #a86b32;
+  --accent-foreground: #fff3dc;
+
+  --border: #6b4d33;
+  --input: #6b4d33;
+  --ring: #c98a3f;
+
+  --destructive: #d15a4a;
+
+  --selection: #c98a3f;
+  --selection-foreground: #2a1c10;
+
+  /* Quiz answers */
+  --answer-correct: #43513a;
+  --answer-correct-foreground: #d4e9c5;
+
+  --answer-incorrect: #672e2b;
+  --answer-incorrect-foreground: #ffd0c7;
+
+  --answer-selected: #6b4d33;
+  --answer-selected-foreground: #ffe0a3;
+
+  /* Charts */
+  --chart-1: #c98a3f;
+  --chart-2: #8ca66a;
+  --chart-3: #d6a34f;
+  --chart-4: #d15a4a;
+  --chart-5: #bba17e;
+}
+
+/* ========================================
+   FOREST THEME
+======================================== */
+
+.forest {
+  color-scheme: dark;
+
+  --background: #101c18;
+  --foreground: #f0f5ee;
+
+  --card: #1c2c25;
+  --card-foreground: #f0f5ee;
+
+  --popover: #1c2c25;
+  --popover-foreground: #f0f5ee;
+
+  --primary: #c5d6c9;
+  --primary-foreground: #101c18;
+
+  --secondary: #263a30;
+  --secondary-foreground: #f0f5ee;
+
+  --muted: #263a30;
+  --muted-foreground: #b4c8ba;
+
+  --accent: #294d3e;
+  --accent-foreground: #f0f5ee;
+
+  --border: #31473d;
+  --input: #31473d;
+  --ring: #88ad94;
+
+  --destructive: #f87171;
+
+  --selection: #345747;
+  --selection-foreground: #e7f4e9;
+
+  /* Quiz answers */
+  --answer-correct: #294d3e;
+  --answer-correct-foreground: #b4e0c2;
+
+  --answer-incorrect: #5c3030;
+  --answer-incorrect-foreground: #fecaca;
+
+  --answer-selected: #345747;
+  --answer-selected-foreground: #e7f4e9;
+
+  /* Charts */
+  --chart-1: #86efac;
+  --chart-2: #8cbfa6;
+  --chart-3: #c5d6c9;
+  --chart-4: #d6bd75;
+  --chart-5: #81b8b0;
+}
+
+/* ========================================
+   PINK THEME
+======================================== */
+
+.pink {
+  color-scheme: light;
+
+  --background: #fff5f8;
+  --foreground: #512b3d;
+
+  --card: #fffafb;
+  --card-foreground: #512b3d;
+
+  --popover: #fffafb;
+  --popover-foreground: #512b3d;
+
+  --primary: #a84d75;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f9e5ec;
+  --secondary-foreground: #512b3d;
+
+  --muted: #f9e5ec;
+  --muted-foreground: #956d7f;
+
+  --accent: #f5d6e2;
+  --accent-foreground: #512b3d;
+
+  --border: #efd6df;
+  --input: #e9cbd6;
+  --ring: #c46b92;
+
+  --destructive: #c62845;
+
+  --selection: #a84d75;
+  --selection-foreground: #ffffff;
+
+  /* Quiz answers */
+  --answer-correct: #e4f2e7;
+  --answer-correct-foreground: #24663f;
+
+  --answer-incorrect: #ffe0e9;
+  --answer-incorrect-foreground: #9f244a;
+
+  --answer-selected: #f9e0e9;
+  --answer-selected-foreground: #963c64;
+
+  /* Charts */
+  --chart-1: #a84d75;
+  --chart-2: #c46b92;
+  --chart-3: #8c6aab;
+  --chart-4: #d69b77;
+  --chart-5: #bc759d;
+}
+
+/* ========================================
+   SIDEBAR THEME TOKENS
+======================================== */
+
+:root,
+.dark,
+.mocha,
+.forest,
+.pink {
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--card-foreground);
+
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+/* ========================================
+   PRISMJS - DARK THEMES
+======================================== */
+
+:is(.dark, .mocha, .forest) pre[class*="language-"],
+:is(.dark, .mocha, .forest) code[class*="language-"] {
+  @apply bg-muted text-foreground;
+}
+
+:is(.dark, .mocha, .forest)
+:is(.token.comment, .token.prolog, .token.doctype, .token.cdata) {
+  @apply text-gray-400;
+}
+
+:is(.dark, .mocha, .forest) .token.punctuation {
+  @apply text-gray-300;
+}
+
+:is(.dark, .mocha, .forest)
+:is(.token.property, .token.tag, .token.constant, .token.symbol, .token.deleted) {
+  @apply text-red-400;
+}
+
+:is(.dark, .mocha, .forest)
+:is(.token.boolean, .token.number) {
+  @apply text-purple-400;
+}
+
+:is(.dark, .mocha, .forest)
+:is(.token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted) {
+  @apply text-green-400;
+}
+
+:is(.dark, .mocha, .forest)
+:is(.token.operator, .token.entity, .token.url, .token.variable) {
+  @apply text-gray-200;
+}
+
+:is(.dark, .mocha, .forest)
+:is(.token.atrule, .token.attr-value, .token.function, .token.class-name) {
+  @apply text-blue-400;
+}
+
+:is(.dark, .mocha, .forest) .token.keyword {
+  @apply text-pink-400;
+}
+
+:is(.dark, .mocha, .forest)
+:is(.token.regex, .token.important) {
+  @apply text-orange-400;
+}
+
+/* ========================================
+   GLOBAL STYLES
+======================================== */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
+
   body {
-    @apply bg-background text-foreground;
-    }
+    @apply bg-background text-foreground font-sans;
+    min-height: 100vh;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a {
+    cursor: pointer;
+  }
 }

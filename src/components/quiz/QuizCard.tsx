@@ -1,87 +1,113 @@
-import { Link } from "react-router";
-import { Quiz } from "@/types/quiz";
-import { getDifficultyConfig } from "@/utils/quis";
+
+import { Link } from 'react-router'
+import { ArrowUpRight } from 'lucide-react'
+
+import type { Quiz } from '@/types/quiz'
+import { getDifficultyConfig } from '@/utils/quis'
 
 interface QuizCardProps {
-    quiz: Quiz;
+    quiz: Quiz
 }
 
 export function QuizCard({ quiz }: QuizCardProps) {
-    const difficultyConfig = getDifficultyConfig(quiz.difficulty);
+    const difficultyConfig = getDifficultyConfig(quiz.difficulty)
+
     const formattedDate = quiz.createdAt?.toDate
-        ? new Date(quiz.createdAt.toDate()).toLocaleDateString("pt-BR")
-        : "Data desconhecida";
+        ? new Date(quiz.createdAt.toDate()).toLocaleDateString('pt-BR')
+        : 'Data desconhecida'
+
+    const difficultyColors =
+        quiz.difficulty === 'easy'
+            ? 'border-answer-correct-foreground/20 bg-answer-correct text-answer-correct-foreground'
+            : quiz.difficulty === 'medium'
+                ? 'border-answer-selected-foreground/20 bg-answer-selected text-answer-selected-foreground'
+                : quiz.difficulty === 'hard'
+                    ? 'border-answer-incorrect-foreground/20 bg-answer-incorrect text-answer-incorrect-foreground'
+                    : 'border-border bg-muted text-muted-foreground'
 
     return (
         <Link
             to={`/quiz/details/${quiz.id}`}
-            className="flex flex-col bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md hover:shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 transition-all duration-200 h-full"
+            className="group border-border bg-card text-card-foreground hover:border-ring/50 flex h-full min-w-0 flex-col rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-6"
         >
-            <div className="flex-grow">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {/* Cabeçalho */}
+            <div className="flex-1">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                    <h2 className="min-w-0 flex-1 text-lg leading-snug font-semibold tracking-tight wrap-break-word sm:text-xl">
                         {quiz.name}
                     </h2>
 
-                    {/* Badge de dificuldade */}
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${difficultyConfig.colors} whitespace-nowrap`}>
+                    <span
+                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap ${difficultyColors}`}
+                    >
                         {difficultyConfig.icon}
                         {difficultyConfig.label}
                     </span>
                 </div>
 
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                    {quiz.description || "Sem descrição"}
+                <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
+                    {quiz.description || 'Sem descrição'}
                 </p>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">
+            {/* Informações */}
+            <div className="border-border mt-6 border-t pt-4">
+                <div className="mb-5 grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">
                             Perguntas
-                        </span>
-                        <span className="block font-semibold text-blue-600 dark:text-blue-400">
+                        </p>
+
+                        <p className="text-foreground text-sm font-semibold">
                             {quiz.questionCount || 0}
-                        </span>
+                        </p>
                     </div>
 
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">
                             Tempo
-                        </span>
-                        <span className="block font-semibold">
+                        </p>
+
+                        <p className="text-foreground text-sm font-semibold">
                             {quiz.settings?.timeLimitPerQuestion
                                 ? `${quiz.settings.timeLimitPerQuestion}s`
-                                : "Sem limite"}
-                        </span>
+                                : 'Sem limite'}
+                        </p>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>Criado em {formattedDate}</span>
+                {/* Rodapé */}
+                <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs">
+                    <span>
+                        Criado em {formattedDate}
+                    </span>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex min-w-0 max-w-full items-center gap-2">
                         {quiz.creator?.photoUrl ? (
                             <img
                                 src={quiz.creator.photoUrl}
-                                alt={quiz.creator.name}
-                                className="w-5 h-5 rounded-full object-cover"
+                                alt=""
+                                className="size-6 shrink-0 rounded-full object-cover"
                             />
                         ) : (
-                            <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                <span className="text-xs text-gray-500 dark:text-gray-300">
-                                    {quiz.creator?.name?.charAt(0)?.toUpperCase() || "U"}
-                                </span>
+                            <div className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+                                {quiz.creator?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
                         )}
 
-                        <span className="font-medium">
-                            {quiz.creator?.name || "Usuário"}
+                        <span className="max-w-32 truncate font-medium sm:max-w-40">
+                            {quiz.creator?.name || 'Usuário'}
                         </span>
                     </div>
                 </div>
             </div>
+
+            {/* Indicador visual de navegação */}
+            <ArrowUpRight
+                size={16}
+                aria-hidden="true"
+                className="text-muted-foreground absolute hidden"
+            />
         </Link>
-    );
+    )
 }

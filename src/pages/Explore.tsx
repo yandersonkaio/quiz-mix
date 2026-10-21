@@ -1,127 +1,168 @@
-import { useState, useEffect } from "react";
-import Loading from "../components/Loading";
-import { useAllQuizzes } from "../hooks/useAllQuizzes";
-import { useAllCollections } from "../hooks/useAllCollections";
-import { QuizCard } from "../components/quiz/QuizCard";
-import { CollectionCard } from "../components/collection/CollectionCard";
-import { EmptyState } from "../components/quiz/EmptyState";
-import { FiSearch } from "react-icons/fi";
-import { Quiz } from "../types/quiz";
-import { QuizCollection } from "../types/quiz";
 
-function Explore() {
+import { useMemo, useState } from 'react'
+import { Search, X } from 'lucide-react'
+
+import Loading from '../components/Loading'
+import { useAllQuizzes } from '../hooks/useAllQuizzes'
+import { useAllCollections } from '../hooks/useAllCollections'
+import { QuizCard } from '../components/quiz/QuizCard'
+import { CollectionCard } from '../components/collection/CollectionCard'
+import { EmptyState } from '../components/quiz/EmptyState'
+
+type ExploreTab = 'quizzes' | 'collections'
+
+export default function Explore() {
     const {
         allQuizzes,
         loading: quizzesLoading,
-        error: quizzesError
-    } = useAllQuizzes();
+        error: quizzesError,
+    } = useAllQuizzes()
 
     const {
         collections,
         loading: collectionsLoading,
-        error: collectionsError
-    } = useAllCollections();
+        error: collectionsError,
+    } = useAllCollections()
 
-    const [activeTab, setActiveTab] = useState<"quizzes" | "collections">("quizzes");
-    const [searchTerm, setSearchTerm] = useState("");
+    const [activeTab, setActiveTab] = useState<ExploreTab>('quizzes')
+    const [searchTerm, setSearchTerm] = useState('')
 
-    const [filteredQuizzes, setFilteredQuizzes] = useState<Quiz[]>([]);
-    const [filteredCollections, setFilteredCollections] = useState<QuizCollection[]>([]);
+    const filteredQuizzes = useMemo(() => {
+        const term = searchTerm.toLowerCase()
 
-    useEffect(() => {
-        const term = searchTerm.toLowerCase();
+        return allQuizzes.filter(
+            (quiz) =>
+                quiz.name.toLowerCase().includes(term) ||
+                quiz.description?.toLowerCase().includes(term) ||
+                quiz.creator?.name.toLowerCase().includes(term)
+        )
+    }, [allQuizzes, searchTerm])
 
-        setFilteredQuizzes(
-            allQuizzes.filter(
-                (quiz) =>
-                    quiz.name.toLowerCase().includes(term) ||
-                    quiz.description?.toLowerCase().includes(term) ||
-                    quiz.creator?.name.toLowerCase().includes(term)
-            )
-        );
+    const filteredCollections = useMemo(() => {
+        const term = searchTerm.toLowerCase()
 
-        setFilteredCollections(
-            collections.filter(
-                (collection) =>
-                    collection.name.toLowerCase().includes(term) ||
-                    collection.description?.toLowerCase().includes(term)
-            )
-        );
-    }, [searchTerm, allQuizzes, collections]);
+        return collections.filter(
+            (collection) =>
+                collection.name.toLowerCase().includes(term) ||
+                collection.description?.toLowerCase().includes(term)
+        )
+    }, [collections, searchTerm])
 
-    const loading = quizzesLoading || collectionsLoading;
-    const error = quizzesError || collectionsError;
+    const loading = quizzesLoading || collectionsLoading
+    const error = quizzesError || collectionsError
 
     if (loading) {
-        return <Loading />;
+        return <Loading />
     }
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 text-gray-900 dark:text-white flex items-center justify-center">
-                <p className="text-red-600 dark:text-red-500">
-                    Erro ao carregar conteúdo: {error.message}
-                </p>
+            <div className="flex min-h-[60vh] items-center justify-center px-4 py-8">
+                <div className="border-destructive/20 bg-destructive/10 w-full max-w-lg rounded-xl border p-6 text-center">
+                    <h2 className="text-destructive mb-2 text-lg font-semibold">
+                        Erro ao carregar conteúdo
+                    </h2>
+
+                    <p className="text-destructive text-sm">
+                        {error.message}
+                    </p>
+                </div>
             </div>
-        );
+        )
     }
 
-    const showQuizzes = activeTab === "quizzes";
+    const showQuizzes = activeTab === 'quizzes'
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white">
-            <div className="max-w-6xl mx-auto">
+        <div className="bg-background text-foreground w-full min-h-full">
+            <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
 
+                {/* Cabeçalho da página */}
                 <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                         Explorar
                     </h1>
 
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-muted-foreground mt-2 text-sm sm:text-base">
                         Encontre quizzes e coleções criadas pela comunidade.
                     </p>
                 </div>
 
-                <div className="flex gap-3 mb-6">
-                    <button
-                        onClick={() => setActiveTab("quizzes")}
-                        className={`px-5 py-2 rounded-lg cursor-pointer ${showQuizzes
-                            ? "bg-blue-600 text-white"
-                            : "bg-white dark:bg-gray-800"
-                            }`}
-                    >
-                        Quizzes
-                    </button>
+                {/* Filtros e pesquisa */}
+                <div className="mb-7 space-y-5">
 
-                    <button
-                        onClick={() => setActiveTab("collections")}
-                        className={`px-5 py-2 rounded-lg cursor-pointer ${!showQuizzes
-                            ? "bg-blue-600 text-white"
-                            : "bg-white dark:bg-gray-800"
-                            }`}
+                    {/* Abas */}
+                    <div
+                        role="group"
+                        aria-label="Tipo de conteúdo"
+                        className="bg-muted inline-flex items-center gap-1 rounded-xl p-1"
                     >
-                        Coleções
-                    </button>
-                </div>
+                        <button
+                            type="button"
+                            aria-pressed={showQuizzes}
+                            onClick={() => setActiveTab('quizzes')}
+                            className={`rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 ${showQuizzes
+                                    ? 'bg-card text-card-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                        >
+                            Quizzes
+                        </button>
 
-                <div className="mb-8 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                        <FiSearch className="text-gray-400" />
+                        <button
+                            type="button"
+                            aria-pressed={!showQuizzes}
+                            onClick={() => setActiveTab('collections')}
+                            className={`rounded-lg px-5 py-2 text-sm font-medium transition-all duration-200 ${!showQuizzes
+                                    ? 'bg-card text-card-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                        >
+                            Coleções
+                        </button>
                     </div>
 
-                    <input
-                        type="text"
-                        placeholder={
-                            showQuizzes
-                                ? "Pesquisar quizzes..."
-                                : "Pesquisar coleções..."
-                        }
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700"
-                    />
+                    {/* Campo de pesquisa */}
+                    <div className="relative">
+                        <Search
+                            size={19}
+                            aria-hidden="true"
+                            className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 -translate-y-1/2"
+                        />
+
+                        <label htmlFor="explore-search" className="sr-only">
+                            {showQuizzes
+                                ? 'Pesquisar quizzes'
+                                : 'Pesquisar coleções'}
+                        </label>
+
+                        <input
+                            id="explore-search"
+                            type="search"
+                            placeholder={
+                                showQuizzes
+                                    ? 'Pesquisar quizzes...'
+                                    : 'Pesquisar coleções...'
+                            }
+                            value={searchTerm}
+                            onChange={(event) => setSearchTerm(event.target.value)}
+                            className="border-input bg-card text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/30 h-12 w-full rounded-xl border pr-12 pl-11 text-sm outline-none transition-colors focus-visible:ring-2 [&::-webkit-search-cancel-button]:hidden"
+                        />
+
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                aria-label="Limpar pesquisa"
+                                onClick={() => setSearchTerm('')}
+                                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg transition-colors"
+                            >
+                                <X size={17} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
+                {/* Conteúdo */}
                 {showQuizzes ? (
                     filteredQuizzes.length === 0 ? (
                         <EmptyState
@@ -129,7 +170,7 @@ function Explore() {
                             description="Não existem quizzes disponíveis."
                         />
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
                             {filteredQuizzes.map((quiz) => (
                                 <QuizCard
                                     key={quiz.id}
@@ -145,7 +186,7 @@ function Explore() {
                             description="Não existem coleções disponíveis."
                         />
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
                             {filteredCollections.map((collection) => (
                                 <CollectionCard
                                     key={collection.id}
@@ -155,10 +196,7 @@ function Explore() {
                         </div>
                     )
                 )}
-
             </div>
         </div>
-    );
+    )
 }
-
-export default Explore;

@@ -51,7 +51,7 @@ export const QuizHeader = ({
             className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-xl transition-all duration-300 hover:shadow-xl hover:dark:shadow-2xl"
         >
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     {quiz.name}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300 italic">
@@ -72,7 +72,7 @@ export const QuizHeader = ({
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                         <motion.div
                             variants={progressBarVariants}
-                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full"
+                            className="bg-linear-to-r from-blue-500 to-blue-600 h-2.5 rounded-full"
                         />
                     </div>
                 </div>
@@ -96,8 +96,8 @@ export const QuizHeader = ({
                             <motion.div
                                 variants={timeBarVariants}
                                 className={`h-2.5 rounded-full ${timeLeft && timeLeft <= 5
-                                    ? "bg-gradient-to-r from-red-500 to-red-600"
-                                    : "bg-gradient-to-r from-green-500 to-green-600"
+                                    ? "bg-linear-to-r from-red-500 to-red-600"
+                                    : "bg-linear-to-r from-green-500 to-green-600"
                                     }`}
                             />
                         </div>
