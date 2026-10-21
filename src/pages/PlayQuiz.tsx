@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useQuizData } from '../hooks/useQuizData';
 import { useTimer } from '../hooks/useTimer';
 import { QuizHeader } from '../components/quiz/QuizHeader';

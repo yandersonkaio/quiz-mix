@@ -1,3 +1,4 @@
+
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -19,6 +20,10 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+
+      // Temporariamente como aviso durante a refatoração
+      'react-hooks/set-state-in-effect': 'warn',
+
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

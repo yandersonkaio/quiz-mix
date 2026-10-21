@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { auth, googleProvider } from '../db/firebase';
 import { signInWithPopup } from 'firebase/auth';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from '../assets/logo.svg';
 import Loading from '../components/Loading';

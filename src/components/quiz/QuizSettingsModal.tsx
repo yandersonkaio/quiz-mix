@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useQuizData } from "@/hooks/useQuizData";
 import { Quiz, QuizDifficulty } from "@/types/quiz";
 import { getDifficultyConfig } from "@/utils/quis";

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { HiOutlineFolder } from "react-icons/hi2";
 import { QuizCollection } from "@/types/quiz";
 

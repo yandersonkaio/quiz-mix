@@ -1,4 +1,5 @@
-import { Timestamp } from "firebase/firestore";
+
+import type { Timestamp } from "firebase/firestore";
 
 export interface QuizUser {
     id: string;
@@ -10,7 +11,7 @@ export interface Quiz {
     id: string;
     name: string;
     userId: string;
-    createdAt: Timestamp | any;
+    createdAt: Timestamp;
     description?: string;
     questionCount?: number;
     creator?: QuizUser;
@@ -36,7 +37,6 @@ export interface Question {
     options?: string[];
     correctAnswer?: number;
     blankAnswer?: string;
-
     optionFeedback?: (string | null)[];
 }
 
@@ -51,7 +51,7 @@ export interface Attempt {
     id: string;
     userId: string;
     quizId: string;
-    completedAt: any;
+    completedAt: Timestamp;
     correctAnswers: number;
     totalQuestions: number;
     percentage: number;
@@ -71,7 +71,7 @@ export interface RankingEntry {
     correctAnswers: number;
     totalQuestions: number;
     totalAttempts: number;
-    completedAt: any;
+    completedAt: Timestamp;
     mode: 'challenge' | 'study';
 }
 
@@ -79,10 +79,8 @@ export interface QuizCollection {
     id: string;
     name: string;
     description?: string;
-
     userId: string;
-    createdAt: Timestamp | any;
-
+    createdAt: Timestamp;
     quizCount?: number;
     sectionCount?: number;
     isFavorite?: boolean;

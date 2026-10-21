@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useUserQuizzes } from "../hooks/useUserQuizzes";
 import Loading from "../components/Loading";
 import { IoMdAdd } from "react-icons/io";
