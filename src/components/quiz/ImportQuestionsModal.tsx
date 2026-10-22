@@ -65,7 +65,13 @@ const exampleJson = `[
       "Opção C",
       "Opção D"
     ],
-    "correctAnswer": 0
+    "correctAnswer": 0,
+    "optionFeedback": [
+      "Feedback da opção A",
+      "Feedback da opção B",
+      "Feedback da opção C",
+      "Feedback da opção D"
+    ]
   },
   {
     "type": "multiple-choice",
@@ -76,7 +82,13 @@ const exampleJson = `[
       "Opção C",
       "Opção D"
     ],
-    "correctAnswer": 2
+    "correctAnswer": 2,
+    "optionFeedback": [
+      "",
+      "Feedback da opção B",
+      "Feedback da opção C",
+      ""
+    ]
   }
 ]`
 
