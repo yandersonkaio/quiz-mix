@@ -43,26 +43,32 @@ export const useQuizData = () => {
     const [studyRanking, setStudyRanking] = useState<RankingEntry[]>([]);
     const [allUserAttempts, setAllUserAttempts] = useState<{ [userId: string]: Attempt[] }>({});
     const [statistics, setStatistics] = useState<QuizStatistics | null>(null);
-    const [loading, setLoading] = useState(!!quizId);
+    const [loadedRequestKey, setLoadedRequestKey] = useState<string | null>(null);
     const [operationLoading, setOperationLoading] = useState(false);
 
-    useEffect(() => {
-        if (!quizId) {
-            setLoading(false);
-            return;
-        }
+    const userId = user?.uid;
+    const requestKey = quizId && userId ? `${userId}:${quizId}` : null;
+    const loading = requestKey !== null && loadedRequestKey !== requestKey;
 
-        if (!user) {
-            setLoading(false);
+    useEffect(() => {
+        if (!quizId) return;
+
+        if (!userId) {
             navigate("/login");
             return;
         }
+
+        let cancelled = false;
+        let unsubscribeQuestions: (() => void) | undefined;
 
         const fetchQuizAndCheckAttempts = async () => {
             try {
                 const quizDoc = await getDoc(doc(db, "quizzes", quizId));
 
+                if (cancelled) return;
+
                 if (!quizDoc.exists()) {
+                    setLoadedRequestKey(requestKey);
                     toast.error("Quiz não encontrado.");
                     navigate("/my-quizzes");
                     return;
@@ -83,32 +89,41 @@ export const useQuizData = () => {
                     settings: quizSettings,
                 });
 
-                const unsubscribe = onSnapshot(
+                unsubscribeQuestions = onSnapshot(
                     collection(db, "quizzes", quizId, "questions"),
                     (snapshot) => {
+                        if (cancelled) return;
+
                         const fetchedQuestions = snapshot.docs.map((doc) => ({
                             id: doc.id,
                             ...doc.data(),
                         })) as Question[];
                         setQuestions(fetchedQuestions);
-                        setLoading(false);
+                        setLoadedRequestKey(requestKey);
                     },
                     (error) => {
+                        if (cancelled) return;
+
                         console.error("useQuizData: Erro ao carregar perguntas:", error);
-                        setLoading(false);
+                        setLoadedRequestKey(requestKey);
                     }
                 );
-
-                return () => unsubscribe();
             } catch (error) {
+                if (cancelled) return;
+
                 console.error("useQuizData: Erro ao carregar quiz:", error);
                 toast.error("Erro ao carregar quiz.");
-                setLoading(false);
+                setLoadedRequestKey(requestKey);
             }
         };
 
-        fetchQuizAndCheckAttempts();
-    }, [quizId, navigate, user]);
+        void fetchQuizAndCheckAttempts();
+
+        return () => {
+            cancelled = true;
+            unsubscribeQuestions?.();
+        };
+    }, [quizId, navigate, userId, requestKey]);
 
     const calculateQuizStatistics = (
         allAttempts: Attempt[],

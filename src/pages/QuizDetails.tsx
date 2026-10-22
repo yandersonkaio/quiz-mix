@@ -1,39 +1,58 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
-import Loading from "../components/Loading";
-import { FaEdit, FaTrash, FaPlay, FaFileUpload, FaTrophy, FaInfoCircle, FaListUl } from "react-icons/fa";
-import { FiBookOpen, FiEye, FiEyeOff } from "react-icons/fi";
-import { RankingDisplay } from "../components/quiz/RankingDisplay";
-import { useQuizData, QuestionData } from "../hooks/useQuizData";
-import { QuizSettingsModal } from "../components/quiz/QuizSettingsModal";
-import QuestionModal from "../components/quiz/QuestionModal";
-import ImportQuestionsModal from "../components/quiz/ImportQuestionsModal";
-import { IoMdAdd } from "react-icons/io";
-import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
-import { Quiz, Question } from "../types/quiz";
-import { toast } from "sonner"
-import { getDifficultyConfig } from "@/utils/quis";
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import {
+    BookOpen,
+    ChartNoAxesColumnIncreasing,
+    CircleHelp,
+    Clock3,
+    Eye,
+    EyeOff,
+    FileUp,
+    ListChecks,
+    Pencil,
+    Play,
+    Plus,
+    Settings2,
+    Trash2,
+    Trophy,
+} from 'lucide-react'
+import { toast } from 'sonner'
 
-function QuizDetails() {
-    const { quizId } = useParams<{ quizId: string }>();
-    const navigate = useNavigate();
+import Loading from '../components/Loading'
+import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal'
+import { RankingDisplay } from '../components/quiz/RankingDisplay'
+import { QuizSettingsModal } from '../components/quiz/QuizSettingsModal'
+import QuestionModal from '../components/quiz/QuestionModal'
+import ImportQuestionsModal from '../components/quiz/ImportQuestionsModal'
+import { useQuizData, type QuestionData } from '../hooks/useQuizData'
+import type { Question, Quiz } from '../types/quiz'
+import { DifficultyBadge } from '@/components/quiz/DifficultyBadge'
 
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState<"quiz" | "question" | null>(null);
-    const [questionIdToDelete, setQuestionIdToDelete] = useState<string | null>(null);
+const managementButtonClass =
+    'border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+
+const iconButtonClass =
+    'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground inline-flex size-10 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+
+export default function QuizDetails() {
+    const { quizId } = useParams<{ quizId: string }>()
+    const navigate = useNavigate()
+
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState<'quiz' | 'question' | null>(null)
+    const [questionIdToDelete, setQuestionIdToDelete] = useState<string | null>(null)
 
     const [currentQuestion, setCurrentQuestion] = useState<Question>({
-        id: "",
-        type: "multiple-choice",
-        question: "",
-        options: ["", "", "", ""],
+        id: '',
+        type: 'multiple-choice',
+        question: '',
+        options: ['', '', '', ''],
         correctAnswer: 0,
-    });
-
-    const [isEditing, setIsEditing] = useState(false);
+    })
+    const [isEditing, setIsEditing] = useState(false)
 
     const {
         quiz,
@@ -53,489 +72,503 @@ function QuizDetails() {
         deleteQuestion,
         statistics,
         deleteAttempt,
-        deleteAllAttempts
-    } = useQuizData();
+        deleteAllAttempts,
+    } = useQuizData()
 
-    const isUntilCorrectMode = quiz?.settings.showAnswersAfter === "untilCorrect";
-    const isImmediatelyMode = quiz?.settings.showAnswersAfter === "immediately";
+    const isUntilCorrectMode = quiz?.settings.showAnswersAfter === 'untilCorrect'
+    const isImmediatelyMode = quiz?.settings.showAnswersAfter === 'immediately'
 
-    const [quizDetails, setQuizDetails] = useState<Partial<Quiz>>({
-        name: "",
-        description: "",
-        difficulty: undefined,
-        settings: {
-            showAnswersAfter: "end",
-            timeLimitPerQuestion: undefined,
-        },
-    });
+    const quizDetails: Partial<Quiz> | undefined = quiz
+        ? {
+            name: quiz.name,
+            description: quiz.description || '',
+            difficulty: quiz.difficulty,
+            settings: {
+                showAnswersAfter: quiz.settings.showAnswersAfter,
+                timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
+            },
+        }
+        : undefined
 
     useEffect(() => {
         if (!quizId) {
-            navigate("/login");
-            return;
+            navigate('/login')
+            return
         }
-        fetchRanking('challenge');
-        fetchRanking('study');
-    }, [quizId, navigate, fetchRanking]);
-
-    useEffect(() => {
-        if (quiz) {
-            setQuizDetails({
-                name: quiz.name,
-                description: quiz.description || "",
-                difficulty: quiz.difficulty,
-                settings: {
-                    showAnswersAfter: quiz.settings.showAnswersAfter,
-                    timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
-                },
-            });
-        }
-    }, [quiz]);
+        fetchRanking('challenge')
+        fetchRanking('study')
+    }, [quizId, navigate, fetchRanking])
 
     const handleDeleteQuiz = async () => {
-        if (!quiz || operationLoading) return;
-        setDeleteTarget("quiz");
-        setIsDeleteModalOpen(true);
-    };
+        if (!quiz || operationLoading) return
+        setDeleteTarget('quiz')
+        setIsDeleteModalOpen(true)
+    }
 
     const handleRemoveQuestion = async (questionId: string) => {
-        if (operationLoading) return;
-        setDeleteTarget("question");
-        setQuestionIdToDelete(questionId);
-        setIsDeleteModalOpen(true);
-    };
+        if (operationLoading) return
+        setDeleteTarget('question')
+        setQuestionIdToDelete(questionId)
+        setIsDeleteModalOpen(true)
+    }
 
     const confirmDelete = async () => {
         try {
-            if (deleteTarget === "quiz") {
-                await deleteQuiz();
-                navigate("/my-quizzes");
-            } else if (deleteTarget === "question" && questionIdToDelete) {
-                await deleteQuestion(questionIdToDelete);
+            if (deleteTarget === 'quiz') {
+                await deleteQuiz()
+                navigate('/my-quizzes')
+            } else if (deleteTarget === 'question' && questionIdToDelete) {
+                await deleteQuestion(questionIdToDelete)
             }
-            setIsDeleteModalOpen(false);
-            setDeleteTarget(null);
-            setQuestionIdToDelete(null);
+            setIsDeleteModalOpen(false)
+            setDeleteTarget(null)
+            setQuestionIdToDelete(null)
         } catch (error) {
-            console.error("Erro ao excluir:", error);
-            toast.error("Erro ao realizar a exclusão.");
+            console.error('Erro ao excluir:', error)
+            toast.error('Erro ao realizar a exclusão.')
         }
-    };
+    }
 
     const handleSaveQuestion = async (question: Question) => {
-        const questionData: Omit<Question, "id"> = {
+        const questionData: Omit<Question, 'id'> = {
             type: question.type,
             question: question.question,
-            ...(question.type === "multiple-choice" && {
+            ...(question.type === 'multiple-choice' && {
                 options: question.options,
                 correctAnswer: question.correctAnswer,
                 optionFeedback: question.optionFeedback,
             }),
-            ...(question.type === "true-false" && {
-                correctAnswer: question.correctAnswer
+            ...(question.type === 'true-false' && {
+                correctAnswer: question.correctAnswer,
             }),
-            ...(question.type === "fill-in-the-blank" && {
-                blankAnswer: question.blankAnswer
+            ...(question.type === 'fill-in-the-blank' && {
+                blankAnswer: question.blankAnswer,
             }),
-        };
+        }
 
         if (!questionData.question.trim()) {
-            toast.error("A pergunta não pode estar vazia.");
-            return;
+            toast.error('A pergunta não pode estar vazia.')
+            return
         }
 
         try {
             if (isEditing && question.id) {
-                await updateQuestion(question.id, questionData);
+                await updateQuestion(question.id, questionData)
             } else {
-                await addQuestion(questionData);
+                await addQuestion(questionData)
             }
-            setIsModalOpen(false);
+            setIsModalOpen(false)
         } catch (error) {
-            console.error("Erro ao processar questão:", error);
+            console.error('Erro ao processar questão:', error)
         }
-    };
+    }
 
     const handleSaveImportedQuestions = async (importedQuestions: QuestionData[]) => {
         if (!quizId) {
-            console.error("Quiz ID não encontrado para importar perguntas.");
-            throw new Error("ID do Quiz não encontrado.");
+            console.error('Quiz ID não encontrado para importar perguntas.')
+            throw new Error('ID do Quiz não encontrado.')
         }
         if (!addMultipleQuestions) {
-            console.error("Função addMultipleQuestions não disponível no hook useQuizData.");
-            throw new Error("Funcionalidade de importar não disponível.");
+            console.error('Função addMultipleQuestions não disponível no hook useQuizData.')
+            throw new Error('Funcionalidade de importar não disponível.')
         }
 
         try {
-            await addMultipleQuestions(importedQuestions);
+            await addMultipleQuestions(importedQuestions)
         } catch (error) {
-            console.error("Falha ao chamar addMultipleQuestions a partir de QuizDetails:", error);
-            throw error;
+            console.error('Falha ao chamar addMultipleQuestions a partir de QuizDetails:', error)
+            throw error
         }
-    };
+    }
 
     const openModalForEdit = (question: Question) => {
-        setCurrentQuestion({ ...question });
-        setIsEditing(true);
-        setIsModalOpen(true);
-    };
+        setCurrentQuestion({ ...question })
+        setIsEditing(true)
+        setIsModalOpen(true)
+    }
 
     const openModalForAdd = () => {
         setCurrentQuestion({
-            id: "",
-            type: "multiple-choice",
-            question: "",
-            options: ["", "", "", ""],
+            id: '',
+            type: 'multiple-choice',
+            question: '',
+            options: ['', '', '', ''],
             correctAnswer: 0,
-        });
-        setIsEditing(false);
-        setIsModalOpen(true);
-    };
+        })
+        setIsEditing(false)
+        setIsModalOpen(true)
+    }
 
     const handlePlayQuiz = () => {
-        if (!quizId) return;
+        if (!quizId) return
         if (questions.length === 0) {
-            toast.info("Adicione perguntas ao quiz antes de jogar!");
-            return;
+            toast.info('Adicione perguntas ao quiz antes de jogar!')
+            return
         }
-        navigate(`/play-quiz/${quizId}`);
-    };
+        navigate(`/play-quiz/${quizId}`)
+    }
 
     const handleSaveQuizDetails = async (updatedDetails: Partial<Quiz>) => {
         try {
-            await updateQuizDetails(updatedDetails);
-            setQuizDetails((prev) => {
-                const newSettings: Quiz["settings"] = {
-                    showAnswersAfter: updatedDetails.settings?.showAnswersAfter ?? prev.settings?.showAnswersAfter ?? "end",
-                    timeLimitPerQuestion: updatedDetails.settings?.timeLimitPerQuestion ?? prev.settings?.timeLimitPerQuestion,
-                };
-                return {
-                    ...prev,
-                    ...updatedDetails,
-                    settings: newSettings,
-                };
-            });
-            toast.success("Detalhes do quiz atualizados com sucesso!");
-            setIsSettingsModalOpen(false);
+            await updateQuizDetails(updatedDetails)
+            toast.success('Detalhes do quiz atualizados com sucesso!')
+            setIsSettingsModalOpen(false)
         } catch (error) {
-            console.error("Erro ao salvar detalhes do quiz:", error);
-            toast.error("Erro ao salvar detalhes do quiz.");
+            console.error('Erro ao salvar detalhes do quiz:', error)
+            toast.error('Erro ao salvar detalhes do quiz.')
         }
-    };
+    }
 
-    const getModeConfig = () => {
-        if (isUntilCorrectMode) {
-            return {
-                icon: <FiBookOpen className="w-4 h-4" />,
-                label: "Modo Estudo",
-                description: "Responde até acertar cada questão",
-                badgeColor: "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700",
-                buttonColor: "from-blue-500 to-cyan-500",
-            };
-        } else if (isImmediatelyMode) {
-            return {
-                icon: <FiEye className="w-4 h-4" />,
-                label: "Respostas Imediatas",
-                description: "Feedback instantâneo após cada resposta",
-                badgeColor: "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700",
-                buttonColor: "from-amber-500 to-orange-500",
-            };
-        } else {
-            return {
-                icon: <FiEyeOff className="w-4 h-4" />,
-                label: "Resultado no Final",
-                description: "Respostas reveladas apenas no final",
-                badgeColor: "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700",
-                buttonColor: "from-green-500 to-emerald-500",
-            };
+    if (loading) return <Loading />
+
+    if (!quiz) {
+        return (
+            <div className="text-muted-foreground flex min-h-[60dvh] items-center justify-center px-4 py-8 text-sm">
+                Quiz não encontrado.
+            </div>
+        )
+    }
+
+    const isCreator = quiz.userId === user?.uid
+    const modeConfig = isUntilCorrectMode
+        ? {
+            icon: BookOpen,
+            label: 'Modo Estudo',
+            description: 'Responde até acertar cada questão',
+            colors: 'border-answer-selected-foreground/20 bg-answer-selected text-answer-selected-foreground',
         }
-    };
+        : isImmediatelyMode
+            ? {
+                icon: Eye,
+                label: 'Respostas Imediatas',
+                description: 'Feedback instantâneo após cada resposta',
+                colors: 'border-border bg-accent text-accent-foreground',
+            }
+            : {
+                icon: EyeOff,
+                label: 'Resultado no Final',
+                description: 'Respostas reveladas apenas no final',
+                colors: 'border-answer-correct-foreground/20 bg-answer-correct text-answer-correct-foreground',
+            }
 
-    if (loading) return <Loading />;
-    if (!quiz) return <div className="text-gray-900 dark:text-white p-6">Quiz não encontrado.</div>;
-
-    const isCreator = quiz.userId === user?.uid;
-    const difficultyConfig = getDifficultyConfig(quiz.difficulty);
-    const modeConfig = getModeConfig();
+    const ModeIcon = modeConfig.icon
+    const formattedDate = quiz.createdAt?.toDate
+        ? quiz.createdAt.toDate().toLocaleDateString('pt-BR')
+        : 'N/A'
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6 text-gray-900 dark:text-white">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
-                                {quiz.name}
-                            </h1>
-                        </div>
-                        <p className="text-gray-600 dark:text-gray-400">
-                            {quiz.description || "Sem descrição"}
+        <div className="bg-background text-foreground min-h-full w-full">
+            <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+                <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-2xl font-bold tracking-tight wrap-break-word sm:text-3xl">
+                            {quiz.name}
+                        </h1>
+                        <p className="text-muted-foreground mt-2 text-sm leading-relaxed sm:text-base">
+                            {quiz.description || 'Sem descrição'}
                         </p>
                     </div>
 
                     <button
+                        type="button"
                         onClick={handlePlayQuiz}
                         disabled={questions.length === 0 || operationLoading}
-                        className={`flex items-center cursor-pointer px-6 py-3 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105
-                            ${questions.length === 0 ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' :
-                                `bg-gradient-to-r ${modeConfig.buttonColor} hover:shadow-xl`}
-                            text-white font-semibold text-lg`}
-                        title={questions.length === 0 ? "Adicione perguntas para jogar" : "Jogar o Quiz"}
+                        title={questions.length === 0 ? 'Adicione perguntas para jogar' : 'Jogar o Quiz'}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                     >
-                        <FaPlay className="mr-3" /> Responder Quiz
+                        <Play size={17} fill="currentColor" />
+                        Responder Quiz
                         {questions.length > 0 && (
-                            <span className="ml-3 px-2 py-1 bg-white/20 rounded-full text-sm">
+                            <span className="bg-primary-foreground/15 ml-1 rounded-full px-2 py-0.5 text-xs font-medium">
                                 {questions.length} {questions.length === 1 ? 'pergunta' : 'perguntas'}
                             </span>
                         )}
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="flex items-center mb-4">
-                            <FaInfoCircle className="text-blue-500 dark:text-blue-400 mr-3 text-xl" />
-                            <h2 className="text-xl font-semibold">Detalhes</h2>
+                <div className={`mb-8 grid grid-cols-1 gap-4 lg:gap-5 ${isCreator ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2'}`}>
+                    <section className="border-border bg-card text-card-foreground min-w-0 rounded-xl border p-5 sm:p-6">
+                        <div className="mb-5 flex items-center gap-2.5">
+                            <div className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-lg">
+                                <CircleHelp size={19} />
+                            </div>
+                            <h2 className="text-lg font-semibold tracking-tight">Detalhes</h2>
                         </div>
-                        <ul className="space-y-4">
-                            <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Criado em:</span>
-                                <span className="font-medium">
-                                    {quiz.createdAt
-                                        ? new Date(quiz.createdAt.toDate()).toLocaleDateString()
-                                        : "N/A"}
-                                </span>
-                            </li>
-                            <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Dificuldade:</span>
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${difficultyConfig.colors}`}>
-                                    {difficultyConfig.icon}
-                                    {difficultyConfig.label}
-                                </span>
-                            </li>
-                            <li>
-                                <div className="flex justify-between mb-2">
-                                    <span className="text-gray-500 dark:text-gray-400">Modo de resposta:</span>
-                                </div>
-                                <div className={`p-3 rounded-lg border ${modeConfig.badgeColor}`}>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        {modeConfig.icon}
-                                        <span className="font-semibold text-sm">{modeConfig.label}</span>
+
+                        <dl className="space-y-4 text-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <dt className="text-muted-foreground">Criado em</dt>
+                                <dd className="font-medium">{formattedDate}</dd>
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <dt className="text-muted-foreground">Dificuldade</dt>
+                                <dd>
+                                    <DifficultyBadge difficulty={quiz.difficulty} />
+                                </dd>
+                            </div>
+
+                            <div>
+                                <dt className="text-muted-foreground mb-2">Modo de resposta</dt>
+                                <dd className={`rounded-lg border p-3 ${modeConfig.colors}`}>
+                                    <div className="flex items-center gap-2 text-sm font-semibold">
+                                        <ModeIcon size={17} />
+                                        {modeConfig.label}
                                     </div>
-                                    <p className="text-xs opacity-80">{modeConfig.description}</p>
-                                </div>
-                            </li>
-                            <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Tempo por pergunta:</span>
-                                <span className="font-medium">
+                                    <p className="mt-1 text-xs opacity-85">{modeConfig.description}</p>
+                                </dd>
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <dt className="text-muted-foreground flex items-center gap-1.5">
+                                    <Clock3 size={15} />
+                                    Tempo por pergunta
+                                </dt>
+                                <dd className="font-medium">
                                     {quiz.settings?.timeLimitPerQuestion
                                         ? `${quiz.settings.timeLimitPerQuestion}s`
-                                        : "Sem limite"}
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
+                                        : 'Sem limite'}
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
 
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="flex items-center mb-4">
-                            <FaTrophy className="text-yellow-500 dark:text-yellow-400 mr-3 text-xl" />
-                            <h2 className="text-xl font-semibold">Estatísticas</h2>
+                    <section className="border-border bg-card text-card-foreground min-w-0 rounded-xl border p-5 sm:p-6">
+                        <div className="mb-5 flex items-center gap-2.5">
+                            <div className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-lg">
+                                <Trophy size={19} />
+                            </div>
+                            <h2 className="text-lg font-semibold tracking-tight">Estatísticas</h2>
                         </div>
-                        <ul className="space-y-3">
-                            <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Total de participantes:</span>
-                                <span className="font-medium">{statistics?.totalUniqueUsers || 0}</span>
-                            </li>
+
+                        <dl className="space-y-4 text-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <dt className="text-muted-foreground">Total de participantes</dt>
+                                <dd className="font-semibold">{statistics?.totalUniqueUsers || 0}</dd>
+                            </div>
+
                             {!isUntilCorrectMode ? (
                                 <>
-                                    <li className="flex justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">Melhor pontuação:</span>
-                                        <span className="font-medium">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <dt className="text-muted-foreground">Melhor pontuação</dt>
+                                        <dd className="font-semibold">
                                             {ranking.length > 0 && statistics?.bestPercentage !== undefined
                                                 ? `${statistics.bestPercentage}%`
-                                                : "N/A"}
-                                        </span>
-                                    </li>
-                                    <li className="flex justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">Média geral:</span>
-                                        <span className="font-medium">
+                                                : 'N/A'}
+                                        </dd>
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <dt className="text-muted-foreground">Média geral</dt>
+                                        <dd className="font-semibold">
                                             {ranking.length > 0 && statistics?.averagePercentage !== undefined
                                                 ? `${statistics.averagePercentage}%`
-                                                : "N/A"}
-                                        </span>
-                                    </li>
+                                                : 'N/A'}
+                                        </dd>
+                                    </div>
                                 </>
                             ) : (
                                 <>
-                                    <li className="flex justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">Melhor eficiência:</span>
-                                        <span className="font-medium">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <dt className="text-muted-foreground">Melhor eficiência</dt>
+                                        <dd className="font-semibold">
                                             {studyRanking.length > 0 && statistics?.bestEfficiency !== undefined
                                                 ? `${statistics.bestEfficiency}%`
-                                                : "N/A"}
-                                        </span>
-                                    </li>
-                                    <li className="flex justify-between">
-                                        <span className="text-gray-500 dark:text-gray-400">Média de tentativas:</span>
-                                        <span className="font-medium">
+                                                : 'N/A'}
+                                        </dd>
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <dt className="text-muted-foreground">Média de tentativas</dt>
+                                        <dd className="font-semibold">
                                             {studyRanking.length > 0 && statistics?.averageTotalAttempts !== undefined
                                                 ? statistics.averageTotalAttempts
-                                                : "N/A"}
-                                        </span>
-                                    </li>
+                                                : 'N/A'}
+                                        </dd>
+                                    </div>
                                 </>
                             )}
-                            <li className="flex justify-between">
-                                <span className="text-gray-500 dark:text-gray-400">Tipo de ranking:</span>
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${isUntilCorrectMode
-                                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-                                    : 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
-                                    }`}>
-                                    {isUntilCorrectMode ? (
-                                        <>📊 Eficiência</>
-                                    ) : (
-                                        <>🏆 Pontuação</>
-                                    )}
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
+
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <dt className="text-muted-foreground">Tipo de ranking</dt>
+                                <dd>
+                                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${isUntilCorrectMode ? 'border-answer-selected-foreground/20 bg-answer-selected text-answer-selected-foreground' : 'border-answer-correct-foreground/20 bg-answer-correct text-answer-correct-foreground'}`}>
+                                        {isUntilCorrectMode ? (
+                                            <>
+                                                <ChartNoAxesColumnIncreasing size={14} />
+                                                Eficiência
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trophy size={14} />
+                                                Pontuação
+                                            </>
+                                        )}
+                                    </span>
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
 
                     {isCreator && (
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center mb-4">
-                                <FaEdit className="text-purple-500 dark:text-purple-400 mr-3 text-xl" />
-                                <h2 className="text-xl font-semibold">Gerenciar Quiz</h2>
+                        <section className="border-border bg-card text-card-foreground min-w-0 rounded-xl border p-5 sm:p-6">
+                            <div className="mb-5 flex items-center gap-2.5">
+                                <div className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-lg">
+                                    <Settings2 size={19} />
+                                </div>
+                                <h2 className="text-lg font-semibold tracking-tight">Gerenciar Quiz</h2>
                             </div>
-                            <div className="space-y-3">
+
+                            <div className="space-y-2.5">
                                 <button
+                                    type="button"
                                     onClick={() => setIsSettingsModalOpen(true)}
                                     disabled={operationLoading}
-                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-lg transition-colors duration-200"
+                                    className={managementButtonClass}
                                 >
-                                    <span>Editar Configurações</span>
-                                    <FaEdit className="ml-2" />
+                                    <span>Editar configurações</span>
+                                    <Pencil size={17} />
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={openModalForAdd}
                                     disabled={operationLoading}
-                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-600 dark:text-green-300 rounded-lg transition-colors duration-200"
+                                    className={managementButtonClass}
                                 >
-                                    <span>Adicionar Pergunta</span>
-                                    <IoMdAdd className="ml-2" />
+                                    <span>Adicionar pergunta</span>
+                                    <Plus size={18} />
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setIsImportModalOpen(true)}
                                     disabled={operationLoading}
-                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-300 rounded-lg transition-colors duration-200"
+                                    className={managementButtonClass}
                                 >
-                                    <span>Importar Perguntas</span>
-                                    <FaFileUpload className="ml-2" />
+                                    <span>Importar perguntas</span>
+                                    <FileUp size={18} />
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleDeleteQuiz}
                                     disabled={operationLoading}
-                                    className="w-full flex items-center justify-between cursor-pointer px-4 py-2 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-colors duration-200"
+                                    className="border-destructive/25 text-destructive hover:bg-destructive/10 flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <span>Excluir Quiz</span>
-                                    <FaTrash className="ml-2" />
+                                    <span>Excluir quiz</span>
+                                    <Trash2 size={17} />
                                 </button>
                             </div>
-                        </div>
+                        </section>
                     )}
                 </div>
 
                 {isCreator && (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="flex items-center">
-                                <FaListUl className="text-indigo-500 dark:text-indigo-400 mr-3 text-xl" />
-                                <h2 className="text-xl font-semibold">Perguntas ({questions.length})</h2>
+                    <section className="border-border bg-card text-card-foreground mb-8 rounded-xl border p-5 sm:p-6">
+                        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-lg">
+                                    <ListChecks size={19} />
+                                </div>
+                                <h2 className="text-lg font-semibold tracking-tight">
+                                    Perguntas <span className="text-muted-foreground">({questions.length})</span>
+                                </h2>
                             </div>
+
                             {questions.length > 0 && (
-                                <div className="flex gap-2">
+                                <div className="flex items-center gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => setIsImportModalOpen(true)}
                                         disabled={operationLoading}
-                                        title="Importar Perguntas de JSON"
-                                        className="flex items-center p-3 cursor-pointer bg-purple-600 text-white rounded-lg hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 disabled:opacity-50 transition-colors duration-200"
+                                        title="Importar perguntas de JSON"
+                                        aria-label="Importar perguntas de JSON"
+                                        className={iconButtonClass}
                                     >
-                                        <FaFileUpload className="w-5 h-5" />
+                                        <FileUp size={18} />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={openModalForAdd}
                                         disabled={operationLoading}
-                                        title="Adicionar Pergunta Manualmente"
-                                        className="flex items-center p-3 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 disabled:opacity-50 transition-colors duration-200"
+                                        title="Adicionar pergunta manualmente"
+                                        aria-label="Adicionar pergunta manualmente"
+                                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        <IoMdAdd className="w-5 h-5" />
+                                        <Plus size={20} />
                                     </button>
                                 </div>
                             )}
                         </div>
 
                         {questions.length === 0 ? (
-                            <div className="text-center py-12">
-                                <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                                    <IoMdAdd className="text-4xl text-gray-400 dark:text-gray-500" />
+                            <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-muted/30 px-4 py-10 text-center">
+                                <div className="bg-muted text-muted-foreground mb-4 flex size-14 items-center justify-center rounded-xl">
+                                    <Plus size={26} />
                                 </div>
-                                <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Nenhuma pergunta ainda</h3>
-                                <p className="text-gray-500 dark:text-gray-400 mb-6">Adicione perguntas para começar seu quiz</p>
+                                <h3 className="text-foreground text-base font-semibold">Nenhuma pergunta ainda</h3>
+                                <p className="text-muted-foreground mt-2 max-w-sm text-sm">
+                                    Adicione perguntas para começar seu quiz.
+                                </p>
                                 <button
+                                    type="button"
                                     onClick={openModalForAdd}
-                                    className="px-6 py-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
+                                    disabled={operationLoading}
+                                    className="bg-primary text-primary-foreground hover:bg-primary/90 mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    Adicionar Primeira Pergunta
+                                    <Plus size={17} />
+                                    Adicionar primeira pergunta
                                 </button>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {questions.map((question, index) => (
                                     <div
                                         key={question.id}
-                                        className="group bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200"
+                                        className="border-border bg-background hover:bg-accent/40 group rounded-lg border p-4 transition-colors sm:p-5"
                                     >
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-grow">
-                                                <div className="flex items-start">
-                                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-medium mr-3 mt-0.5 flex-shrink-0">
-                                                        {index + 1}
-                                                    </span>
-                                                    <div>
-                                                        <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">
-                                                            {question.question}
-                                                        </h3>
-                                                        <div className="flex items-center gap-2 mt-2">
-                                                            <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                                                {question.type === "multiple-choice"
-                                                                    ? "Múltipla Escolha"
-                                                                    : question.type === "true-false"
-                                                                        ? "Verdadeiro/Falso"
-                                                                        : "Preenchimento"}
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                                                <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold">
+                                                    {index + 1}
+                                                </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="text-foreground text-sm font-medium leading-relaxed wrap-break-word sm:text-base">
+                                                        {question.question}
+                                                    </h3>
+                                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                        <span className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium">
+                                                            {question.type === 'multiple-choice'
+                                                                ? 'Múltipla escolha'
+                                                                : question.type === 'true-false'
+                                                                    ? 'Verdadeiro/Falso'
+                                                                    : 'Preenchimento'}
+                                                        </span>
+                                                        {question.type === 'multiple-choice' && (
+                                                            <span className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium">
+                                                                4 opções
                                                             </span>
-                                                            {question.type === "multiple-choice" && (
-                                                                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                                                    4 opções
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex space-x-2 group-hover:opacity-100 transition-opacity duration-200">
+
+                                            <div className="flex shrink-0 items-center gap-1">
                                                 <button
+                                                    type="button"
                                                     onClick={() => openModalForEdit(question)}
-                                                    className="p-2 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors duration-200"
-                                                    title="Editar Pergunta"
+                                                    disabled={operationLoading}
+                                                    title="Editar pergunta"
+                                                    aria-label={`Editar pergunta ${index + 1}`}
+                                                    className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex size-9 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
-                                                    <FaEdit />
+                                                    <Pencil size={17} />
                                                 </button>
                                                 <button
+                                                    type="button"
                                                     onClick={() => question.id && handleRemoveQuestion(question.id)}
-                                                    className="p-2 cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-200"
-                                                    title="Excluir Pergunta"
+                                                    disabled={operationLoading}
+                                                    title="Excluir pergunta"
+                                                    aria-label={`Excluir pergunta ${index + 1}`}
+                                                    className="text-destructive hover:bg-destructive/10 inline-flex size-9 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                                 >
-                                                    <FaTrash />
+                                                    <Trash2 size={17} />
                                                 </button>
                                             </div>
                                         </div>
@@ -543,10 +576,10 @@ function QuizDetails() {
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </section>
                 )}
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                <section className="border-border bg-card text-card-foreground rounded-xl border p-4 sm:p-6">
                     <RankingDisplay
                         ranking={ranking}
                         studyRanking={studyRanking}
@@ -558,7 +591,7 @@ function QuizDetails() {
                         isCreator={isCreator}
                         currentUserId={user?.uid}
                     />
-                </div>
+                </section>
 
                 {isCreator && (
                     <>
@@ -579,17 +612,17 @@ function QuizDetails() {
                             isOpen={isImportModalOpen}
                             onClose={() => setIsImportModalOpen(false)}
                             onSaveImportedQuestions={handleSaveImportedQuestions}
-                            quizId={quizId || ""}
+                            quizId={quizId || ''}
                         />
                         <ConfirmDeleteModal
                             isOpen={isDeleteModalOpen}
                             onClose={() => setIsDeleteModalOpen(false)}
                             onConfirm={confirmDelete}
-                            title={deleteTarget === "quiz" ? "Excluir Quiz" : "Excluir Pergunta"}
+                            title={deleteTarget === 'quiz' ? 'Excluir Quiz' : 'Excluir Pergunta'}
                             message={
-                                deleteTarget === "quiz"
+                                deleteTarget === 'quiz'
                                     ? `Tem certeza que deseja excluir o quiz "${quiz.name}"? Esta ação não pode ser desfeita.`
-                                    : "Tem certeza que deseja excluir esta pergunta? Esta ação não pode ser desfeita."
+                                    : 'Tem certeza que deseja excluir esta pergunta? Esta ação não pode ser desfeita.'
                             }
                             isLoading={operationLoading}
                         />
@@ -597,7 +630,5 @@ function QuizDetails() {
                 )}
             </div>
         </div>
-    );
+    )
 }
-
-export default QuizDetails;

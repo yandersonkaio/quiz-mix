@@ -1,12 +1,28 @@
+import { Clock3, ListChecks } from 'lucide-react'
+import { motion, type Variants } from 'motion/react'
 
-import { Quiz } from "../../types/quiz";
-import { motion, type Variants } from "motion/react";
+import type { Quiz } from '../../types/quiz'
 
 interface QuizHeaderProps {
-    quiz: Quiz;
-    currentQuestionIndex: number;
-    totalQuestions: number;
-    timeLeft: number | null;
+    quiz: Quiz
+    currentQuestionIndex: number
+    totalQuestions: number
+    timeLeft: number | null
+}
+
+const containerVariants: Variants = {
+    hidden: {
+        opacity: 0,
+        y: -16,
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.4,
+            ease: 'easeOut',
+        },
+    },
 }
 
 export const QuizHeader = ({
@@ -15,95 +31,140 @@ export const QuizHeader = ({
     totalQuestions,
     timeLeft,
 }: QuizHeaderProps) => {
-    const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-    const hasTimeLimit = quiz.settings.timeLimitPerQuestion !== undefined && timeLeft !== null;
-    const timeProgress = hasTimeLimit && quiz.settings.timeLimitPerQuestion
-        ? (timeLeft / quiz.settings.timeLimitPerQuestion) * 100
-        : null;
+    const currentQuestion = currentQuestionIndex + 1
 
-    const containerVariants: Variants = {
-        hidden: { opacity: 0, y: -20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.5, ease: "easeOut" },
-        },
-    };
+    const progress =
+        totalQuestions > 0
+            ? Math.min(
+                100,
+                Math.max(0, (currentQuestion / totalQuestions) * 100)
+            )
+            : 0
 
-    const progressBarVariants = {
-        hidden: { width: 0 },
-        visible: { width: `${progress}%`, transition: { duration: 0.8 } },
-    };
+    const timeLimit = quiz.settings.timeLimitPerQuestion
 
-    const timeBarVariants = {
-        hidden: { width: "100%" },
-        visible: {
-            width: `${timeProgress}%`,
-            transition: { duration: 1 },
-        },
-    };
+    const hasTimeLimit =
+        timeLimit !== undefined &&
+        timeLimit > 0 &&
+        timeLeft !== null
+
+    const timeProgress =
+        hasTimeLimit && timeLimit
+            ? Math.min(100, Math.max(0, (timeLeft / timeLimit) * 100))
+            : null
+
+    const isTimeRunningOut =
+        hasTimeLimit && timeLeft !== null && timeLeft <= 5
 
     return (
-        <motion.div
+        <motion.section
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-xl transition-all duration-300 hover:shadow-xl hover:dark:shadow-2xl"
+            className="border-border bg-card text-card-foreground mb-6 rounded-xl border p-5 sm:p-6"
         >
-            <div className="space-y-2">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="min-w-0">
+                <h1 className="text-foreground text-xl font-semibold tracking-tight wrap-break-word sm:text-2xl">
                     {quiz.name}
                 </h1>
-                <p className="text-gray-600 dark:text-gray-300 italic">
-                    {quiz.description || "Sem descrição"}
+
+                <p className="text-muted-foreground mt-2 text-sm leading-relaxed wrap-break-word">
+                    {quiz.description || 'Sem descrição'}
                 </p>
             </div>
 
-            <div className="mt-6 space-y-4">
-                <div>
-                    <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                            Progresso
-                        </span>
-                        <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                            {currentQuestionIndex + 1}/{totalQuestions}
+            <div className="border-border mt-6 space-y-5 border-t pt-5">
+                <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="text-muted-foreground flex items-center gap-2">
+                            <ListChecks
+                                size={17}
+                                strokeWidth={1.8}
+                                aria-hidden="true"
+                            />
+
+                            <span className="text-sm font-medium">
+                                Progresso
+                            </span>
+                        </div>
+
+                        <span className="bg-muted text-foreground inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold tabular-nums">
+                            {currentQuestion}/{totalQuestions}
                         </span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+
+                    <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
                         <motion.div
-                            variants={progressBarVariants}
-                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full"
+                            role="progressbar"
+                            aria-label="Progresso do quiz"
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={Math.round(progress)}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{
+                                duration: 0.6,
+                                ease: 'easeOut',
+                            }}
+                            className="bg-primary h-full rounded-full"
                         />
                     </div>
                 </div>
 
                 {hasTimeLimit && timeProgress !== null && (
-                    <div>
-                        <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                Tempo restante
-                            </span>
-                            <span
-                                className={`text-sm font-semibold ${timeLeft && timeLeft <= 5
-                                    ? "text-red-500 dark:text-red-400 animate-pulse"
-                                    : "text-green-600 dark:text-green-400"
+                    <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                            <div
+                                className={`flex items-center gap-2 ${isTimeRunningOut
+                                    ? 'text-destructive'
+                                    : 'text-muted-foreground'
                                     }`}
                             >
-                                {timeLeft !== null ? `${timeLeft}s` : "—"}
+                                <Clock3
+                                    size={17}
+                                    strokeWidth={1.8}
+                                    aria-hidden="true"
+                                />
+
+                                <span className="text-sm font-medium">
+                                    Tempo restante
+                                </span>
+                            </div>
+
+                            <span
+                                className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold tabular-nums ${isTimeRunningOut
+                                    ? 'bg-destructive/10 text-destructive animate-pulse'
+                                    : 'bg-muted text-foreground'
+                                    }`}
+                            >
+                                {timeLeft}s
                             </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+
+                        <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
                             <motion.div
-                                variants={timeBarVariants}
-                                className={`h-2.5 rounded-full ${timeLeft && timeLeft <= 5
-                                    ? "bg-gradient-to-r from-red-500 to-red-600"
-                                    : "bg-gradient-to-r from-green-500 to-green-600"
+                                role="progressbar"
+                                aria-label="Tempo restante"
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={Math.round(timeProgress)}
+                                initial={{ width: '100%' }}
+                                animate={{
+                                    width: `${timeProgress}%`,
+                                }}
+                                transition={{
+                                    duration: 0.5,
+                                    ease: 'linear',
+                                }}
+                                className={`h-full rounded-full transition-colors duration-300 ${isTimeRunningOut
+                                    ? 'bg-destructive'
+                                    : 'bg-primary'
                                     }`}
                             />
                         </div>
                     </div>
                 )}
             </div>
-        </motion.div>
-    );
-};
+        </motion.section>
+    )
+}

@@ -1,114 +1,137 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { IoMdAdd } from "react-icons/io";
-import { FiGrid, FiList } from "react-icons/fi";
 
-import Loading from "../components/Loading";
-import { EmptyState } from "../components/quiz/EmptyState";
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { LayoutGrid, List, Plus } from 'lucide-react'
 
-import { CollectionCard } from "@/components/collection/CollectionCard";
-import { CollectionListItem } from "@/components/collection/CollectionListItem";
-import { CollectionModal } from "@/components/collection/CollectionModal";
-import { useUserCollections } from "@/hooks/useUserCollections";
+import Loading from '../components/Loading'
+import { EmptyState } from '../components/quiz/EmptyState'
 
-function MyCollections() {
-    const { collections, loading, error, user } = useUserCollections();
+import { CollectionCard } from '@/components/collection/CollectionCard'
+import { CollectionListItem } from '@/components/collection/CollectionListItem'
+import { CollectionModal } from '@/components/collection/CollectionModal'
+import { useUserCollections } from '@/hooks/useUserCollections'
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+type ViewMode = 'grid' | 'list'
+
+export default function MyCollections() {
+    const { collections, loading, error, user } = useUserCollections()
+
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [viewMode, setViewMode] = useState<ViewMode>('grid')
 
     if (loading) {
-        return <Loading />;
+        return <Loading />
     }
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white flex items-center justify-center">
-                <p className="text-red-600 dark:text-red-500">
-                    Erro ao carregar suas coleções: {error.message}
-                </p>
+            <div className="flex min-h-[60vh] items-center justify-center px-4 py-8">
+                <div className="border-destructive/20 bg-destructive/10 w-full max-w-lg rounded-xl border p-6 text-center">
+                    <h2 className="text-destructive mb-2 text-lg font-semibold">
+                        Erro ao carregar suas coleções
+                    </h2>
+
+                    <p className="text-destructive text-sm">
+                        {error.message}
+                    </p>
+                </div>
             </div>
-        );
+        )
     }
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-lg mb-4">
-                        Faça login para visualizar suas coleções.
-                    </p>
-
-                    <Link
-                        to="/login"
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        Entrar
-                    </Link>
-                </div>
+            <div className="flex min-h-[60vh] items-center justify-center px-4 py-8">
+                <EmptyState
+                    title="Faça login para continuar"
+                    description="Entre na sua conta para visualizar e gerenciar suas coleções."
+                    action={
+                        <Link
+                            to="/login"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center justify-center rounded-lg px-5 text-sm font-medium transition-colors"
+                        >
+                            Entrar
+                        </Link>
+                    }
+                />
             </div>
-        );
+        )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 text-gray-900 dark:text-white">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl ml-12 md:ml-0 font-bold text-gray-900 dark:text-white">
+        <div className="bg-background text-foreground min-h-full w-full">
+            <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+
+                {/* Cabeçalho */}
+                <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                             Minhas Coleções
                         </h1>
 
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            {collections.length}{" "}
-                            {collections.length === 1
-                                ? "coleção"
-                                : "coleções"}
+                        <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                            {collections.length}{' '}
+                            {collections.length === 1 ? 'coleção criada' : 'coleções criadas'}
                         </p>
                     </div>
 
-                    <div className="flex gap-3 w-full sm:w-auto">
+                    {/* Ações */}
+                    <div className="flex w-full items-center gap-2 sm:w-auto">
                         <button
+                            type="button"
                             onClick={() =>
-                                setViewMode(
-                                    viewMode === "grid" ? "list" : "grid"
+                                setViewMode((current) =>
+                                    current === 'grid' ? 'list' : 'grid'
                                 )
                             }
-                            className="p-2 cursor-pointer rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            title={
+                                viewMode === 'grid'
+                                    ? 'Alternar para visualização em lista'
+                                    : 'Alternar para visualização em grade'
+                            }
+                            aria-label={
+                                viewMode === 'grid'
+                                    ? 'Visualizar em lista'
+                                    : 'Visualizar em grade'
+                            }
+                            className="border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-10 shrink-0 items-center justify-center rounded-lg border transition-colors focus-visible:ring-2 focus-visible:outline-none"
                         >
-                            {viewMode === "grid" ? (
-                                <FiList size={20} />
+                            {viewMode === 'grid' ? (
+                                <List size={19} strokeWidth={1.8} />
                             ) : (
-                                <FiGrid size={20} />
+                                <LayoutGrid size={19} strokeWidth={1.8} />
                             )}
                         </button>
 
                         <button
+                            type="button"
                             onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none sm:flex-none"
                         >
-                            <IoMdAdd className="w-5 h-5" />
-                            <span>Nova coleção</span>
+                            <Plus size={18} strokeWidth={2} />
+                            Nova coleção
                         </button>
                     </div>
                 </div>
 
+                {/* Conteúdo */}
                 {collections.length === 0 ? (
                     <EmptyState
                         title="Você ainda não criou nenhuma coleção"
                         description="Crie coleções para organizar seus quizzes por assunto, disciplina ou qualquer outro critério."
                         action={
                             <button
+                                type="button"
                                 onClick={() => setIsModalOpen(true)}
-                                className="mt-4 inline-flex items-center gap-2 px-6 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-medium transition-colors"
                             >
-                                <IoMdAdd className="w-5 h-5" />
+                                <Plus size={18} />
                                 Criar primeira coleção
                             </button>
                         }
                     />
-                ) : viewMode === "grid" ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                ) : viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
                         {collections.map((collection) => (
                             <CollectionCard
                                 key={collection.id}
@@ -117,7 +140,7 @@ function MyCollections() {
                         ))}
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {collections.map((collection) => (
                             <CollectionListItem
                                 key={collection.id}
@@ -128,13 +151,12 @@ function MyCollections() {
                 )}
             </div>
 
+            {/* Modal de criação */}
             <CollectionModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 isCreating={true}
             />
         </div>
-    );
+    )
 }
-
-export default MyCollections;

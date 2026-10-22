@@ -13,7 +13,6 @@ const MyCollections = lazy(() => import("../pages/MyCollections"));
 const PlayQuiz = lazy(() => import("../pages/PlayQuiz"));
 const QuizDetails = lazy(() => import("../pages/QuizDetails"));
 const CollectionDetails = lazy(() => import("@/pages/CollectionDetails"));
-const Settings = lazy(() => import("../pages/Settings"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 
 export default function AppRoutes() {
@@ -38,7 +37,6 @@ export default function AppRoutes() {
                     <Route path="/my-collections" element={<MyCollections />} />
                     <Route path="/collections/:collectionId" element={<CollectionDetails />} />
                     <Route path="/quiz/details/:quizId" element={<QuizDetails />} />
-                    <Route path="/settings" element={<Settings />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>

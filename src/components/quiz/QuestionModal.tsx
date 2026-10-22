@@ -1,175 +1,231 @@
-import { useState, useEffect, useRef } from "react";
-import { Question } from "../../types/quiz";
-import { toast } from "sonner";
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import {
+    ChevronDown,
+    ChevronUp,
+    LoaderCircle,
+    MessageSquareText,
+    X,
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+import type { Question } from '../../types/quiz'
 
 interface QuestionModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    question: Question;
-    onSave: (question: Question) => Promise<void>;
-    isEditing: boolean;
+    isOpen: boolean
+    onClose: () => void
+    question: Question
+    onSave: (question: Question) => Promise<void>
+    isEditing: boolean
 }
 
-export default function QuestionModal({ isOpen, onClose, question, onSave, isEditing }: QuestionModalProps) {
-    const [formData, setFormData] = useState<Question>({ ...question });
-    const [isSaving, setIsSaving] = useState(false);
-    const [expandedFeedbacks, setExpandedFeedbacks] = useState<Record<number, boolean>>({});
+const inputClassName =
+    'border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/30 w-full rounded-xl border px-3.5 py-3 text-sm outline-none transition-colors focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60'
 
-    const isSavingRef = useRef(false);
-    const isFirstLoad = useRef(true);
+const labelClassName = 'text-foreground mb-2 block text-sm font-medium'
 
-    useEffect(() => {
-        // Só processa se o modal estiver aberto
-        if (!isOpen) return;
+// O conteúdo só é montado quando o modal abre, garantindo dados novos
+// a cada abertura sem precisar sincronizar o formulário via useEffect.
+function QuestionModalContent({
+    onClose,
+    question,
+    onSave,
+    isEditing,
+}: Omit<QuestionModalProps, 'isOpen'>) {
+    const [formData, setFormData] = useState<Question>(() => {
+        const initialData = { ...question }
 
-        const newFormData = { ...question };
-
-        if (newFormData.type === "multiple-choice") {
-            if (!newFormData.optionFeedback) {
-                newFormData.optionFeedback = Array(newFormData.options?.length || 4).fill(null);
-            }
+        if (initialData.type === 'multiple-choice' && !initialData.optionFeedback) {
+            initialData.optionFeedback = Array(
+                initialData.options?.length || 4
+            ).fill(null)
         }
 
-        // Só atualiza se não estiver salvando e for a primeira carga
-        if (!isSavingRef.current && isFirstLoad.current) {
-            setFormData(newFormData);
+        return initialData
+    })
 
-            // Inicia com todos recolhidos
-            setExpandedFeedbacks({});
-
-            isFirstLoad.current = false;
-        }
-    }, [question, isOpen]); // ✅ Adicionado isOpen como dependência
-
-    // ✅ Resetar a ref quando o modal abrir
-    useEffect(() => {
-        if (isOpen) {
-            isFirstLoad.current = true;
-            isSavingRef.current = false;
-        }
-    }, [isOpen]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const dataToSave = { ...formData };
-
-        if (!validateQuestion(dataToSave)) return;
-
-        isSavingRef.current = true;
-        setIsSaving(true);
-
-        try {
-            await onSave(dataToSave);
-            onClose();
-        } catch (error) {
-            console.error("Erro ao salvar pergunta:", error);
-            toast.error("Erro ao salvar a pergunta.");
-        } finally {
-            setIsSaving(false);
-            setTimeout(() => {
-                isSavingRef.current = false;
-            }, 500);
-        }
-    };
+    const [isSaving, setIsSaving] = useState(false)
+    const [expandedFeedbacks, setExpandedFeedbacks] = useState<
+        Record<number, boolean>
+    >({})
 
     const handleOptionChange = (index: number, value: string) => {
-        const newOptions = [...(formData.options || ["", "", "", ""])];
-        newOptions[index] = value;
+        setFormData((prev) => {
+            const options = [...(prev.options || ['', '', '', ''])]
+            options[index] = value
 
-        // Mantém o optionFeedback existente
-        const currentFeedback = formData.optionFeedback || Array(newOptions.length).fill("");
+            return {
+                ...prev,
+                options,
+                optionFeedback:
+                    prev.optionFeedback ?? Array(options.length).fill(''),
+            }
+        })
+    }
 
-        setFormData({
-            ...formData,
-            options: newOptions,
-            optionFeedback: currentFeedback
-        });
-    };
+    const handleFeedbackChange = (index: number, value: string) => {
+        setFormData((prev) => {
+            const feedback = [
+                ...(prev.optionFeedback ?? Array(prev.options?.length ?? 4).fill('')),
+            ]
+            feedback[index] = value
+
+            return { ...prev, optionFeedback: feedback }
+        })
+    }
 
     const toggleFeedback = (index: number) => {
         setExpandedFeedbacks((prev) => ({
             ...prev,
             [index]: !prev[index],
-        }));
-    };
+        }))
+    }
 
-    const handleFeedbackChange = (index: number, value: string) => {
-        const feedback = [
-            ...(formData.optionFeedback ?? Array(formData.options?.length ?? 4).fill("")),
-        ];
-        feedback[index] = value;
+    const toggleAllFeedbacks = () => {
+        const allExpanded = formData.options?.every(
+            (_, index) => expandedFeedbacks[index]
+        )
 
-        setFormData({
-            ...formData,
-            optionFeedback: feedback,
-        });
-    };
+        const nextExpanded: Record<number, boolean> = {}
+        formData.options?.forEach((_, index) => {
+            nextExpanded[index] = !allExpanded
+        })
+        setExpandedFeedbacks(nextExpanded)
+    }
 
-    const validateQuestion = (q: Question): boolean => {
-        if (!q.question.trim()) {
-            toast.error("A pergunta não pode estar vazia.");
-            return false;
+    const validateQuestion = (value: Question): boolean => {
+        if (!value.question.trim()) {
+            toast.error('A pergunta não pode estar vazia.')
+            return false
         }
-        if (q.type === "multiple-choice") {
-            if (!q.options || q.options.length < 2 || q.correctAnswer === undefined) {
-                toast.error("Perguntas de múltipla escolha devem ter pelo menos 2 opções e uma resposta correta definida.");
-                return false;
-            }
-            if (q.options.some((opt) => !opt.trim())) {
-                toast.error("Todas as opções devem ser preenchidas.");
-                return false;
-            }
-        } else if (q.type === "true-false" && q.correctAnswer === undefined) {
-            toast.error("Perguntas verdadeiro/falso devem ter uma resposta correta definida.");
-            return false;
-        } else if (q.type === "fill-in-the-blank" && !q.blankAnswer?.trim()) {
-            toast.error("Perguntas de preenchimento devem ter uma resposta definida.");
-            return false;
-        }
-        return true;
-    };
 
-    if (!isOpen) return null;
+        if (value.type === 'multiple-choice') {
+            if (
+                !value.options ||
+                value.options.length < 2 ||
+                value.correctAnswer === undefined
+            ) {
+                toast.error(
+                    'Perguntas de múltipla escolha devem ter pelo menos 2 opções e uma resposta correta definida.'
+                )
+                return false
+            }
+
+            if (value.options.some((option) => !option.trim())) {
+                toast.error('Todas as opções devem ser preenchidas.')
+                return false
+            }
+        } else if (
+            value.type === 'true-false' &&
+            value.correctAnswer === undefined
+        ) {
+            toast.error('Perguntas verdadeiro/falso devem ter uma resposta correta definida.')
+            return false
+        } else if (
+            value.type === 'fill-in-the-blank' &&
+            !value.blankAnswer?.trim()
+        ) {
+            toast.error('Perguntas de preenchimento devem ter uma resposta definida.')
+            return false
+        }
+
+        return true
+    }
+
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        if (isSaving) return
+
+        const dataToSave = { ...formData }
+        if (!validateQuestion(dataToSave)) return
+
+        setIsSaving(true)
+
+        try {
+            await onSave(dataToSave)
+            onClose()
+        } catch (error) {
+            console.error('Erro ao salvar pergunta:', error)
+            toast.error('Erro ao salvar a pergunta.')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const allFeedbacksExpanded =
+        (formData.options?.length ?? 0) > 0 &&
+        formData.options?.every((_, index) => expandedFeedbacks[index])
+
+    const filledFeedbacks =
+        formData.optionFeedback?.filter((feedback) => feedback?.trim()).length ?? 0
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300"
-            onClick={onClose}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 backdrop-blur-[2px] sm:p-6"
+            onClick={() => {
+                if (!isSaving) onClose()
+            }}
         >
             <div
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-none shadow-lg dark:shadow-lg transition-colors duration-200 animate-fadeIn"
-                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="question-modal-title"
+                className="border-border bg-card text-card-foreground flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[calc(100dvh-3rem)]"
+                onClick={(event) => event.stopPropagation()}
             >
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        {isEditing ? "Editar Pergunta" : "Adicionar Nova Pergunta"}
-                    </h2>
+                {/* Cabeçalho */}
+                <div className="border-border flex shrink-0 items-center justify-between gap-4 border-b px-5 py-4 sm:px-6">
+                    <div className="min-w-0">
+                        <h2
+                            id="question-modal-title"
+                            className="text-foreground text-lg font-semibold tracking-tight sm:text-xl"
+                        >
+                            {isEditing ? 'Editar Pergunta' : 'Adicionar Nova Pergunta'}
+                        </h2>
+                        <p className="text-muted-foreground mt-1 text-xs">
+                            {isEditing
+                                ? 'Atualize o conteúdo e as respostas desta pergunta.'
+                                : 'Configure a pergunta e defina a resposta correta.'}
+                        </p>
+                    </div>
+
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                        disabled={isSaving}
                         aria-label="Fechar modal"
+                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50"
                     >
-                        ✕
+                        <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Formulário com rolagem */}
+                <form
+                    id="question-modal-form"
+                    onSubmit={handleSubmit}
+                    className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6"
+                >
                     <div>
-                        <label className="block text-gray-700 dark:text-gray-300 mb-1">Tipo de Pergunta</label>
+                        <label htmlFor="question-type" className={labelClassName}>
+                            Tipo de pergunta
+                        </label>
                         <select
+                            id="question-type"
                             value={formData.type}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    type: e.target.value as Question["type"],
-                                    options: e.target.value === "multiple-choice" ? ["", "", "", ""] : undefined,
-                                    correctAnswer: e.target.value === "fill-in-the-blank" ? undefined : 0,
-                                    blankAnswer: e.target.value === "fill-in-the-blank" ? "" : undefined,
-                                    optionFeedback: e.target.value === "multiple-choice" ? ["", "", "", ""] : undefined,
-                                })
-                            }
-                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none transition-colors duration-200"
+                            onChange={(event) => {
+                                const type = event.target.value as Question['type']
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    type,
+                                    options: type === 'multiple-choice' ? ['', '', '', ''] : undefined,
+                                    correctAnswer: type === 'fill-in-the-blank' ? undefined : 0,
+                                    blankAnswer: type === 'fill-in-the-blank' ? '' : undefined,
+                                    optionFeedback: type === 'multiple-choice' ? ['', '', '', ''] : undefined,
+                                }))
+                                setExpandedFeedbacks({})
+                            }}
+                            className={inputClassName}
                             disabled={isSaving}
                         >
                             <option value="multiple-choice">Múltipla Escolha</option>
@@ -177,197 +233,227 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
                             <option value="fill-in-the-blank">Preenchimento de Lacunas</option>
                         </select>
                     </div>
+
                     <div>
-                        <label className="block text-gray-700 dark:text-gray-300 mb-1">Pergunta</label>
+                        <label htmlFor="question-text" className={labelClassName}>
+                            Pergunta
+                        </label>
                         <input
+                            id="question-text"
                             type="text"
                             value={formData.question}
-                            onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                            className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                            onChange={(event) =>
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    question: event.target.value,
+                                }))
+                            }
+                            className={inputClassName}
                             placeholder="Digite a pergunta"
                             required
                             disabled={isSaving}
                         />
                     </div>
 
-                    {formData.type === "multiple-choice" && (
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="text-gray-700 dark:text-gray-300">
+                    {formData.type === 'multiple-choice' && (
+                        <section className="space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <h3 className="text-foreground text-sm font-semibold">
                                     Opções
-                                </label>
-                                {formData.optionFeedback && (
-                                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400">
-                                        {formData.optionFeedback.filter(f => f?.trim()).length} de {formData.options?.length} com feedback
-                                    </span>
+                                </h3>
+                                <span className="border-border bg-muted text-muted-foreground rounded-full border px-2.5 py-1 text-xs font-medium">
+                                    {filledFeedbacks} de {formData.options?.length ?? 0} com feedback
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={toggleAllFeedbacks}
+                                disabled={isSaving}
+                                className="border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex min-h-9 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50"
+                            >
+                                {allFeedbacksExpanded ? (
+                                    <ChevronUp size={15} />
+                                ) : (
+                                    <ChevronDown size={15} />
                                 )}
-                            </div>
+                                {allFeedbacksExpanded
+                                    ? 'Recolher todos os feedbacks'
+                                    : 'Expandir todos os feedbacks'}
+                            </button>
 
-                            <div className="flex gap-2 mb-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const allExpanded = formData.options?.every((_, i) => expandedFeedbacks[i]);
-                                        const newExpanded: Record<number, boolean> = {};
-                                        formData.options?.forEach((_, i) => {
-                                            newExpanded[i] = !allExpanded;
-                                        });
-                                        setExpandedFeedbacks(newExpanded);
-                                    }}
-                                    className="text-xs px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 
-                                               text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 
-                                               transition-colors duration-200 cursor-pointer"
-                                >
-                                    {formData.options?.every((_, i) => expandedFeedbacks[i])
-                                        ? 'Recolher todos os feedbacks'
-                                        : 'Expandir todos os feedbacks'}
-                                </button>
-                            </div>
+                            <div className="space-y-3">
+                                {formData.options?.map((option, index) => {
+                                    const expanded = !!expandedFeedbacks[index]
+                                    const feedback = formData.optionFeedback?.[index] ?? ''
+                                    const hasFeedback = !!feedback.trim()
+                                    const letter = String.fromCharCode(65 + index)
 
-                            {formData.options?.map((option: string, index: number) => (
-                                <div
-                                    key={index}
-                                    className={`mb-3 rounded-lg border transition-all duration-200 ${expandedFeedbacks[index]
-                                        ? 'border-blue-400 dark:border-blue-500 bg-blue-50/30 dark:bg-blue-900/20'
-                                        : 'border-gray-300 dark:border-gray-600'
-                                        }`}
-                                >
-                                    <div className="p-3">
-                                        <div className="flex items-center space-x-2">
-                                            <span className={`font-medium ${expandedFeedbacks[index]
-                                                ? 'text-blue-600 dark:text-blue-400'
-                                                : 'text-gray-600 dark:text-gray-400'
-                                                }`}>
-                                                {String.fromCharCode(65 + index)}
-                                            </span>
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={`rounded-xl border transition-colors ${expanded
+                                                ? 'border-ring/50 bg-muted/30'
+                                                : 'border-border bg-background/40'
+                                                }`}
+                                        >
+                                            <div className="p-3 sm:p-4">
+                                                <div className="flex min-w-0 items-center gap-3">
+                                                    <span className="border-border bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-lg border text-sm font-semibold">
+                                                        {letter}
+                                                    </span>
+                                                    <label htmlFor={`question-option-${index}`} className="sr-only">
+                                                        Opção {letter}
+                                                    </label>
+                                                    <input
+                                                        id={`question-option-${index}`}
+                                                        type="text"
+                                                        value={option}
+                                                        onChange={(event) =>
+                                                            handleOptionChange(index, event.target.value)
+                                                        }
+                                                        className={inputClassName}
+                                                        placeholder={`Opção ${letter}`}
+                                                        required
+                                                        disabled={isSaving}
+                                                    />
+                                                </div>
 
-                                            <input
-                                                type="text"
-                                                value={option}
-                                                onChange={(e) => handleOptionChange(index, e.target.value)}
-                                                className="w-full p-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors duration-200"
-                                                placeholder={`Opção ${String.fromCharCode(65 + index)}`}
-                                                required
-                                                disabled={isSaving}
-                                            />
-                                        </div>
-
-                                        <div className="mt-2 flex items-center justify-between">
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleFeedback(index)}
-                                                className={`text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer
-                                                    ${expandedFeedbacks[index]
-                                                        ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
-                                                        : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
-                                                    }`}
-                                            >
-                                                {expandedFeedbacks[index] ? (
-                                                    <>
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                                        </svg>
-                                                        Ocultar feedback
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                                        </svg>
-                                                        {formData.optionFeedback?.[index]?.trim() ? (
-                                                            <span className="flex items-center gap-1">
-                                                                Editar feedback
-                                                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"
-                                                                    title="Feedback definido" />
-                                                            </span>
+                                                <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleFeedback(index)}
+                                                        disabled={isSaving}
+                                                        aria-expanded={expanded}
+                                                        aria-controls={`question-feedback-panel-${index}`}
+                                                        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-8 items-center gap-1.5 rounded-lg px-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50 sm:text-sm"
+                                                    >
+                                                        {expanded ? (
+                                                            <ChevronUp size={16} />
                                                         ) : (
-                                                            'Adicionar feedback explicativo'
+                                                            <MessageSquareText size={16} />
                                                         )}
-                                                    </>
-                                                )}
-                                            </button>
+                                                        {expanded
+                                                            ? 'Ocultar feedback'
+                                                            : hasFeedback
+                                                                ? 'Editar feedback'
+                                                                : 'Adicionar feedback explicativo'}
+                                                        {hasFeedback && !expanded && (
+                                                            <span
+                                                                className="bg-primary ml-1 size-1.5 rounded-full"
+                                                                title="Feedback definido"
+                                                            />
+                                                        )}
+                                                    </button>
 
-                                            {formData.optionFeedback?.[index]?.trim() && !expandedFeedbacks[index] && (
-                                                <span className="text-xs text-gray-400 dark:text-gray-500 italic truncate max-w-[200px]">
-                                                    "{formData.optionFeedback[index].substring(0, 30)}..."
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {expandedFeedbacks[index] && (
-                                        <div className="px-3 pb-3 animate-slideDown">
-                                            <div className="relative">
-                                                <textarea
-                                                    rows={4}
-                                                    className="w-full p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-blue-300 dark:border-blue-600 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200 resize-none"
-                                                    placeholder="Explique por que esta alternativa está correta ou incorreta. Este feedback será mostrado após responder."
-                                                    value={formData.optionFeedback?.[index] ?? ""}
-                                                    onChange={(e) => handleFeedbackChange(index, e.target.value)}
-                                                    maxLength={500}
-                                                    disabled={isSaving}
-                                                />
-                                                <div className="flex justify-between items-center mt-1">
-                                                    <span className="text-xs text-gray-400">
-                                                        💡 Dica: Explique o raciocínio por trás desta opção
-                                                    </span>
-                                                    <span className="text-xs text-gray-400">
-                                                        {`${(formData.optionFeedback?.[index] ?? "").length}/500`}
-                                                    </span>
+                                                    {hasFeedback && !expanded && (
+                                                        <span className="text-muted-foreground max-w-40 truncate text-xs italic sm:max-w-52">
+                                                            {feedback}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {(formData.optionFeedback?.[index] ?? "").trim() ? (
-                                                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-                                                    <div className="flex items-start gap-2">
-                                                        <span className="text-lg">💬</span>
-                                                        <div>
-                                                            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
-                                                                Prévia do feedback:
-                                                            </p>
-                                                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                                                                {formData.optionFeedback?.[index]}
-                                                            </p>
+                                            {expanded && (
+                                                <div
+                                                    id={`question-feedback-panel-${index}`}
+                                                    className="border-border space-y-3 border-t px-3 py-3 sm:px-4"
+                                                >
+                                                    <div>
+                                                        <label
+                                                            htmlFor={`question-feedback-${index}`}
+                                                            className={labelClassName}
+                                                        >
+                                                            Feedback da opção {letter}
+                                                        </label>
+                                                        <textarea
+                                                            id={`question-feedback-${index}`}
+                                                            rows={4}
+                                                            className={`${inputClassName} resize-y`}
+                                                            placeholder="Explique por que esta alternativa está correta ou incorreta. Este feedback será mostrado após responder."
+                                                            value={feedback}
+                                                            onChange={(event) =>
+                                                                handleFeedbackChange(index, event.target.value)
+                                                            }
+                                                            maxLength={500}
+                                                            disabled={isSaving}
+                                                        />
+                                                        <div className="text-muted-foreground mt-1.5 flex items-start justify-between gap-3 text-xs">
+                                                            <span>Explique o raciocínio por trás da opção.</span>
+                                                            <span className="shrink-0 tabular-nums">
+                                                                {feedback.length}/500
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-center">
-                                                    <p className="text-gray-400 dark:text-gray-500 text-sm">
-                                                        ✍️ Nenhum feedback definido ainda
-                                                    </p>
-                                                    <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                                                        O feedback ajuda a entender o raciocínio por trás de cada alternativa
-                                                    </p>
+
+                                                    {hasFeedback ? (
+                                                        <div className="border-border bg-muted/50 rounded-lg border p-3">
+                                                            <div className="mb-1 flex items-center gap-2">
+                                                                <MessageSquareText
+                                                                    size={15}
+                                                                    className="text-muted-foreground"
+                                                                />
+                                                                <p className="text-foreground text-xs font-semibold">
+                                                                    Prévia do feedback
+                                                                </p>
+                                                            </div>
+                                                            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line wrap-break-word">
+                                                                {feedback}
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="border-border text-muted-foreground rounded-lg border border-dashed p-3 text-center text-xs">
+                                                            Nenhum feedback definido ainda.
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
-                                    )}
-                                </div>
-                            ))}
-                            <label className="block text-gray-700 dark:text-gray-300 mb-1 mt-4">Resposta Correta</label>
-                            <select
-                                value={formData.correctAnswer}
-                                onChange={(e) => setFormData({ ...formData, correctAnswer: Number(e.target.value) })}
-                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none transition-colors duration-200"
-                                disabled={isSaving}
-                            >
-                                {formData.options?.map((_: string, index: number) => (
-                                    <option key={index} value={index}>
-                                        {String.fromCharCode(65 + index)}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            <div>
+                                <label htmlFor="question-correct" className={labelClassName}>
+                                    Resposta correta
+                                </label>
+                                <select
+                                    id="question-correct"
+                                    value={formData.correctAnswer ?? 0}
+                                    onChange={(event) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            correctAnswer: Number(event.target.value),
+                                        }))
+                                    }
+                                    className={inputClassName}
+                                    disabled={isSaving}
+                                >
+                                    {formData.options?.map((_, index) => (
+                                        <option key={index} value={index}>
+                                            {String.fromCharCode(65 + index)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </section>
                     )}
 
-                    {formData.type === "true-false" && (
+                    {formData.type === 'true-false' && (
                         <div>
-                            <label className="block text-gray-700 dark:text-gray-300 mb-1">Resposta Correta</label>
+                            <label htmlFor="question-correct" className={labelClassName}>
+                                Resposta correta
+                            </label>
                             <select
-                                value={formData.correctAnswer}
-                                onChange={(e) => setFormData({ ...formData, correctAnswer: Number(e.target.value) })}
-                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none appearance-none transition-colors duration-200"
+                                id="question-correct"
+                                value={formData.correctAnswer ?? 0}
+                                onChange={(event) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        correctAnswer: Number(event.target.value),
+                                    }))
+                                }
+                                className={inputClassName}
                                 disabled={isSaving}
                             >
                                 <option value={1}>Verdadeiro</option>
@@ -376,69 +462,73 @@ export default function QuestionModal({ isOpen, onClose, question, onSave, isEdi
                         </div>
                     )}
 
-                    {formData.type === "fill-in-the-blank" && (
+                    {formData.type === 'fill-in-the-blank' && (
                         <div>
-                            <label className="block text-gray-700 dark:text-gray-300 mb-1">Resposta da Lacuna</label>
+                            <label htmlFor="question-blank-answer" className={labelClassName}>
+                                Resposta da lacuna
+                            </label>
                             <input
+                                id="question-blank-answer"
                                 type="text"
-                                value={formData.blankAnswer || ""}
-                                onChange={(e) => setFormData({ ...formData, blankAnswer: e.target.value })}
-                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg border border-gray-300 dark:border-gray-600 focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                                value={formData.blankAnswer || ''}
+                                onChange={(event) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        blankAnswer: event.target.value,
+                                    }))
+                                }
+                                className={inputClassName}
                                 placeholder="Digite a resposta correta"
                                 required
                                 disabled={isSaving}
                             />
                         </div>
                     )}
-
-                    <div className="flex space-x-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 py-3 cursor-pointer bg-gray-500 dark:bg-gray-600 rounded-lg text-white hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-200"
-                            disabled={isSaving}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className={`flex-1 py-3 rounded-lg text-white flex items-center justify-center gap-2 transition-colors duration-200 ${isSaving
-                                ? "bg-green-400 cursor-not-allowed dark:bg-green-400"
-                                : "bg-green-600 hover:bg-green-700 cursor-pointer dark:bg-green-600 dark:hover:bg-green-700"
-                                }`}
-                        >
-                            {isSaving ? (
-                                <>
-                                    <svg
-                                        className="animate-spin h-5 w-5 text-white"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                        ></path>
-                                    </svg>
-                                    Salvando...
-                                </>
-                            ) : (
-                                "Salvar"
-                            )}
-                        </button>
-                    </div>
                 </form>
+
+                {/* Ações fixas no rodapé */}
+                <div className="border-border bg-card flex shrink-0 gap-3 border-t px-5 py-4 sm:justify-end sm:px-6">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={isSaving}
+                        className="border-border bg-muted text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 flex-1 items-center justify-center rounded-xl border px-5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        form="question-modal-form"
+                        disabled={isSaving}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-28 sm:flex-none"
+                    >
+                        {isSaving && (
+                            <LoaderCircle size={17} className="animate-spin" />
+                        )}
+                        {isSaving ? 'Salvando...' : 'Salvar'}
+                    </button>
+                </div>
             </div>
         </div>
-    );
+    )
+}
+
+export default function QuestionModal({
+    isOpen,
+    onClose,
+    question,
+    onSave,
+    isEditing,
+}: QuestionModalProps) {
+    if (!isOpen) return null
+
+    return (
+        <QuestionModalContent
+            question={question}
+            onClose={onClose}
+            onSave={onSave}
+            isEditing={isEditing}
+        />
+    )
 }

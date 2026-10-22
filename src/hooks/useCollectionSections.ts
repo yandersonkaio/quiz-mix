@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState } from 'react'
 import {
     addDoc,
     collection,
@@ -8,130 +9,144 @@ import {
     orderBy,
     query,
     serverTimestamp,
-    Timestamp,
     updateDoc,
-} from "firebase/firestore";
+} from 'firebase/firestore'
 
-import { db } from "../db/firebase";
+import type { Timestamp } from 'firebase/firestore'
+import { db } from '../db/firebase'
 
 export interface CollectionSection {
-    id: string;
-    name: string;
-    order: number;
-    createdAt?: Timestamp;
+    id: string
+    name: string
+    order: number
+    createdAt?: Timestamp
+}
+
+interface SectionsState {
+    collectionId: string
+    sections: CollectionSection[]
 }
 
 export function useCollectionSections(collectionId?: string) {
-    const [sections, setSections] = useState<CollectionSection[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [operationLoading, setOperationLoading] = useState(false);
+    const [state, setState] = useState<SectionsState | null>(null)
+    const [operationLoading, setOperationLoading] = useState(false)
 
     useEffect(() => {
-        if (!collectionId) {
-            setSections([]);
-            setLoading(false);
-            return;
-        }
+        if (!collectionId) return
 
-        const q = query(
-            collection(
-                db,
-                "collections",
-                collectionId,
-                "sections"
-            ),
-            orderBy("order")
-        );
+        let active = true
+
+        const sectionsQuery = query(
+            collection(db, 'collections', collectionId, 'sections'),
+            orderBy('order')
+        )
 
         const unsubscribe = onSnapshot(
-            q,
+            sectionsQuery,
             (snapshot) => {
+                if (!active) return
+
                 const sectionList = snapshot.docs.map((item) => ({
                     id: item.id,
                     ...item.data(),
-                })) as CollectionSection[];
+                })) as CollectionSection[]
 
-                setSections(sectionList);
-                setLoading(false);
+                setState({
+                    collectionId,
+                    sections: sectionList,
+                })
             },
             (error) => {
-                console.error("Erro ao carregar seções:", error);
-                setLoading(false);
-            }
-        );
+                if (!active) return
 
-        return unsubscribe;
-    }, [collectionId]);
+                console.error('Erro ao carregar seções:', error)
+
+                setState({
+                    collectionId,
+                    sections: [],
+                })
+            }
+        )
+
+        return () => {
+            active = false
+            unsubscribe()
+        }
+    }, [collectionId])
+
+    const isCurrentCollection =
+        !!collectionId && state?.collectionId === collectionId
+
+    const sections = isCurrentCollection
+        ? state.sections
+        : []
+
+    const loading = Boolean(collectionId && !isCurrentCollection)
 
     const addSection = async (name: string) => {
-        if (!collectionId) return;
+        if (!collectionId) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             await addDoc(
-                collection(
-                    db,
-                    "collections",
-                    collectionId,
-                    "sections"
-                ),
+                collection(db, 'collections', collectionId, 'sections'),
                 {
                     name,
                     order: sections.length,
                     createdAt: serverTimestamp(),
                 }
-            );
+            )
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
-    };
+    }
 
     const updateSection = async (
         sectionId: string,
         name: string
     ) => {
-        if (!collectionId) return;
+        if (!collectionId) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             await updateDoc(
                 doc(
                     db,
-                    "collections",
+                    'collections',
                     collectionId,
-                    "sections",
+                    'sections',
                     sectionId
                 ),
                 {
                     name,
                 }
-            );
+            )
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
-    };
+    }
 
     const removeSection = async (sectionId: string) => {
-        if (!collectionId) return;
+        if (!collectionId) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             await deleteDoc(
                 doc(
                     db,
-                    "collections",
+                    'collections',
                     collectionId,
-                    "sections",
+                    'sections',
                     sectionId
                 )
-            );
+            )
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
-    };
+    }
 
     return {
         sections,
@@ -140,5 +155,5 @@ export function useCollectionSections(collectionId?: string) {
         addSection,
         updateSection,
         removeSection,
-    };
+    }
 }
