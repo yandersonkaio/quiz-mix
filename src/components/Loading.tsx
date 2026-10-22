@@ -4,7 +4,7 @@ export default function Loading() {
         <div
             role="status"
             aria-label="Carregando conteúdo"
-            className="bg-background flex min-h-[60dvh] w-full items-center justify-center"
+            className="bg-background flex min-h-dvh w-full items-center justify-center"
         >
             <div className="relative flex size-20 items-center justify-center">
                 <div className="border-border border-t-primary absolute inset-0 rounded-full border-[3px] motion-safe:animate-spin" />

@@ -1,5 +1,22 @@
+import { useSyncExternalStore } from 'react'
+import { AlertTriangle, LoaderCircle, Trash2 } from 'lucide-react'
 
-import { AlertTriangle, LoaderCircle, Trash2, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import {
+    Drawer,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+} from '@/components/ui/drawer'
 
 interface ConfirmDeleteModalProps {
     isOpen: boolean
@@ -10,6 +27,69 @@ interface ConfirmDeleteModalProps {
     isLoading?: boolean
 }
 
+const mobileQuery = '(max-width: 767px)'
+
+function subscribeToViewport(callback: () => void) {
+    const mediaQuery = window.matchMedia(mobileQuery)
+    mediaQuery.addEventListener('change', callback)
+
+    return () => mediaQuery.removeEventListener('change', callback)
+}
+
+function getIsMobile() {
+    return window.matchMedia(mobileQuery).matches
+}
+
+function WarningIcon() {
+    return (
+        <div className="bg-destructive/10 text-destructive mx-auto mb-4 flex size-12 items-center justify-center rounded-xl">
+            <AlertTriangle size={23} strokeWidth={1.8} aria-hidden="true" />
+        </div>
+    )
+}
+
+interface ConfirmationActionsProps {
+    onClose: () => void
+    onConfirm: () => void
+    isLoading: boolean
+}
+
+function ConfirmationActions({ onClose, onConfirm, isLoading }: ConfirmationActionsProps) {
+    return (
+        <div className="flex w-full items-center gap-3">
+            <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+                className="h-11 min-w-0 flex-1 rounded-lg"
+            >
+                Cancelar
+            </Button>
+
+            <Button
+                type="button"
+                variant="destructive"
+                onClick={onConfirm}
+                disabled={isLoading}
+                className="h-11 min-w-0 flex-1 gap-2 rounded-lg"
+            >
+                {isLoading ? (
+                    <>
+                        <LoaderCircle size={17} className="animate-spin" aria-hidden="true" />
+                        Excluindo...
+                    </>
+                ) : (
+                    <>
+                        <Trash2 size={17} strokeWidth={1.8} aria-hidden="true" />
+                        Excluir
+                    </>
+                )}
+            </Button>
+        </div>
+    )
+}
+
 export function ConfirmDeleteModal({
     isOpen,
     onClose,
@@ -18,84 +98,79 @@ export function ConfirmDeleteModal({
     message = 'Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.',
     isLoading = false,
 }: ConfirmDeleteModalProps) {
-    if (!isOpen) return null
+    const isMobile = useSyncExternalStore(
+        subscribeToViewport,
+        getIsMobile,
+        () => false
+    )
+
+    const handleOpenChange = (open: boolean) => {
+        if (!open && !isLoading) onClose()
+    }
+
+    if (isMobile) {
+        return (
+            <Drawer
+                open={isOpen}
+                onOpenChange={handleOpenChange}
+                dismissible={!isLoading}
+            >
+                <DrawerContent role="alertdialog" aria-busy={isLoading} className="max-h-[90dvh]">
+                    <div className="mx-auto flex w-full max-w-sm min-h-0 flex-col">
+                        <DrawerHeader className="px-5 pt-5 text-center">
+                            <WarningIcon />
+                            <DrawerTitle className="text-foreground text-center text-lg font-semibold tracking-tight">
+                                {title}
+                            </DrawerTitle>
+                            <DrawerDescription className="text-muted-foreground mt-2 text-center text-sm leading-relaxed">
+                                {message}
+                            </DrawerDescription>
+                        </DrawerHeader>
+
+                        <DrawerFooter className="px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                            <ConfirmationActions
+                                onClose={onClose}
+                                onConfirm={onConfirm}
+                                isLoading={isLoading}
+                            />
+                        </DrawerFooter>
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        )
+    }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-[2px]">
-            <div
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+            <DialogContent
                 role="alertdialog"
-                aria-modal="true"
-                aria-labelledby="confirm-delete-title"
-                aria-describedby="confirm-delete-description"
                 aria-busy={isLoading}
-                className="border-border bg-card text-card-foreground w-full max-w-sm rounded-2xl border p-5 shadow-2xl sm:p-6"
+                className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+                onEscapeKeyDown={(event) => {
+                    if (isLoading) event.preventDefault()
+                }}
+                onInteractOutside={(event) => {
+                    if (isLoading) event.preventDefault()
+                }}
             >
-                {/* Ícone */}
-                <div className="bg-destructive/10 text-destructive mb-5 flex size-12 items-center justify-center rounded-xl">
-                    <AlertTriangle
-                        size={23}
-                        strokeWidth={1.8}
-                        aria-hidden="true"
+                <DialogHeader className="text-center sm:text-center">
+                    <WarningIcon />
+                    <DialogTitle className="text-foreground text-center text-lg font-semibold tracking-tight">
+                        {title}
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground mt-2 text-center text-sm leading-relaxed">
+                        {message}
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-2">
+                    <ConfirmationActions
+                        onClose={onClose}
+                        onConfirm={onConfirm}
+                        isLoading={isLoading}
                     />
                 </div>
-
-                {/* Conteúdo */}
-                <div className="mb-6">
-                    <h2
-                        id="confirm-delete-title"
-                        className="text-foreground text-lg font-semibold tracking-tight"
-                    >
-                        {title}
-                    </h2>
-
-                    <p
-                        id="confirm-delete-description"
-                        className="text-muted-foreground mt-2 text-sm leading-relaxed"
-                    >
-                        {message}
-                    </p>
-                </div>
-
-                {/* Ações */}
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="border-border bg-muted text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <X size={16} strokeWidth={2} />
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={onConfirm}
-                        disabled={isLoading}
-                        className="bg-destructive hover:bg-destructive/90 focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-white transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {isLoading ? (
-                            <>
-                                <LoaderCircle
-                                    size={17}
-                                    className="animate-spin"
-                                    aria-hidden="true"
-                                />
-                                Excluindo...
-                            </>
-                        ) : (
-                            <>
-                                <Trash2
-                                    size={17}
-                                    strokeWidth={1.8}
-                                    aria-hidden="true"
-                                />
-                                Excluir
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     )
 }
