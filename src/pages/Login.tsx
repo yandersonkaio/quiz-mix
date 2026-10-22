@@ -44,10 +44,10 @@ export default function Login() {
     }
 
     return (
-        <div className="bg-background text-foreground flex min-h-dvh flex-col">
+        <div className="bg-background text-foreground flex min-h-0 w-full flex-1 flex-col">
             <Header minimal />
 
-            <main className="flex w-full flex-1 items-center justify-center px-4 py-8 sm:px-6">
+            <main className="flex min-h-0 w-full flex-1 items-center justify-center px-4 py-8 sm:px-6">
                 <div className="w-full max-w-md">
                     <div className="border-border bg-card text-card-foreground rounded-2xl border p-6 sm:p-10">
                         <div className="mb-8 flex flex-col items-center gap-3">
@@ -66,9 +66,15 @@ export default function Login() {
                                 }}
                             />
 
-                            <span className="text-foreground text-2xl font-bold tracking-tight">
-                                QuizMix
-                            </span>
+                            <div className="text-center">
+                                <span className="text-foreground block text-2xl font-bold tracking-tight">
+                                    QuizMix
+                                </span>
+
+                                <p className="text-muted-foreground mt-1 text-sm">
+                                    Crie, compartilhe e aprenda
+                                </p>
+                            </div>
                         </div>
 
                         <div className="mb-8 text-center">
@@ -119,10 +125,6 @@ export default function Login() {
                             <span>Continuar com o Google</span>
                         </button>
                     </div>
-
-                    <p className="text-muted-foreground mt-6 text-center text-xs">
-                        QuizMix — Crie, compartilhe e aprenda.
-                    </p>
                 </div>
             </main>
         </div>

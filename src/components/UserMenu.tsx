@@ -96,15 +96,6 @@ export function UserMenu() {
                         Sair
                     </button>
                 </div>
-
-                <div className="border-border border-t px-3 pt-3 pb-2 text-center">
-                    <p className="text-muted-foreground text-xs">
-                        Desenvolvido por{' '}
-                        <span className="text-foreground font-medium">
-                            Yanderson Kaio
-                        </span>
-                    </p>
-                </div>
             </div>
         </details>
     )
