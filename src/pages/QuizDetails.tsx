@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import {
     BookOpen,
     ChartNoAxesColumnIncreasing,
+    ChevronRight,
     CircleHelp,
     Clock3,
     Eye,
@@ -29,7 +30,7 @@ import type { Question, Quiz } from '../types/quiz'
 import { DifficultyBadge } from '@/components/quiz/DifficultyBadge'
 
 const managementButtonClass =
-    'border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+    'group/action flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
 const iconButtonClass =
     'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground inline-flex size-10 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50'
@@ -422,37 +423,64 @@ export default function QuizDetails() {
                                     type="button"
                                     onClick={() => setIsSettingsModalOpen(true)}
                                     disabled={operationLoading}
-                                    className={managementButtonClass}
+                                    className={`${managementButtonClass} border-primary/25 bg-primary/10 hover:bg-primary/15`}
                                 >
-                                    <span>Editar configurações</span>
-                                    <Pencil size={17} />
+                                    <span className="bg-primary/15 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+                                        <Pencil size={19} />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="text-foreground block text-sm font-semibold">Editar configurações</span>
+                                        <span className="text-muted-foreground mt-0.5 block text-xs">Nome, dificuldade e regras</span>
+                                    </span>
+                                    <ChevronRight size={17} className="text-muted-foreground/70 shrink-0 transition-transform group-hover/action:translate-x-0.5" />
                                 </button>
+
                                 <button
                                     type="button"
                                     onClick={openModalForAdd}
                                     disabled={operationLoading}
-                                    className={managementButtonClass}
+                                    className={`${managementButtonClass} border-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/15`}
                                 >
-                                    <span>Adicionar pergunta</span>
-                                    <Plus size={18} />
+                                    <span className="bg-emerald-500/15 text-emerald-500 flex size-10 shrink-0 items-center justify-center rounded-lg">
+                                        <Plus size={21} />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="text-foreground block text-sm font-semibold">Adicionar pergunta</span>
+                                        <span className="text-muted-foreground mt-0.5 block text-xs">Criar uma questão manualmente</span>
+                                    </span>
+                                    <ChevronRight size={17} className="text-muted-foreground/70 shrink-0 transition-transform group-hover/action:translate-x-0.5" />
                                 </button>
+
                                 <button
                                     type="button"
                                     onClick={() => setIsImportModalOpen(true)}
                                     disabled={operationLoading}
-                                    className={managementButtonClass}
+                                    className={`${managementButtonClass} border-sky-500/25 bg-sky-500/10 hover:bg-sky-500/15`}
                                 >
-                                    <span>Importar perguntas</span>
-                                    <FileUp size={18} />
+                                    <span className="bg-sky-500/15 text-sky-500 flex size-10 shrink-0 items-center justify-center rounded-lg">
+                                        <FileUp size={19} />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="text-foreground block text-sm font-semibold">Importar perguntas</span>
+                                        <span className="text-muted-foreground mt-0.5 block text-xs">Adicionar questões por JSON</span>
+                                    </span>
+                                    <ChevronRight size={17} className="text-muted-foreground/70 shrink-0 transition-transform group-hover/action:translate-x-0.5" />
                                 </button>
+
                                 <button
                                     type="button"
                                     onClick={handleDeleteQuiz}
                                     disabled={operationLoading}
-                                    className="border-destructive/25 text-destructive hover:bg-destructive/10 flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                    className={`${managementButtonClass} border-destructive/25 bg-destructive/10 hover:bg-destructive/15`}
                                 >
-                                    <span>Excluir quiz</span>
-                                    <Trash2 size={17} />
+                                    <span className="bg-destructive/15 text-destructive flex size-10 shrink-0 items-center justify-center rounded-lg">
+                                        <Trash2 size={19} />
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="text-destructive block text-sm font-semibold">Excluir quiz</span>
+                                        <span className="text-muted-foreground mt-0.5 block text-xs">Remover o quiz permanentemente</span>
+                                    </span>
+                                    <ChevronRight size={17} className="text-destructive/70 shrink-0 transition-transform group-hover/action:translate-x-0.5" />
                                 </button>
                             </div>
                         </section>
