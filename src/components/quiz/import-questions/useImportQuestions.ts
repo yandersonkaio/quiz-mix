@@ -20,6 +20,7 @@ export function useImportQuestions({
     onSaveImportedQuestions,
 }: UseImportQuestionsProps) {
     const [fileName, setFileName] = useState<string | null>(null)
+    const [fileSizeLabel, setFileSizeLabel] = useState<string | null>(null)
     const [previewQuestions, setPreviewQuestions] = useState<PreviewQuestion[]>([])
     const [fileError, setFileError] = useState<string | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
@@ -47,6 +48,7 @@ export function useImportQuestions({
         if (!file) return
 
         setFileName(null)
+        setFileSizeLabel(null)
         setFileError(null)
         setPreviewQuestions([])
 
@@ -56,6 +58,11 @@ export function useImportQuestions({
         }
 
         setFileName(file.name)
+        setFileSizeLabel(
+            file.size < 1024 * 1024
+                ? `${(file.size / 1024).toFixed(1)} KB`
+                : `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        )
         setIsProcessing(true)
 
         try {
@@ -132,6 +139,7 @@ export function useImportQuestions({
 
     return {
         fileName,
+        fileSizeLabel,
         previewQuestions,
         fileError,
         isProcessing,

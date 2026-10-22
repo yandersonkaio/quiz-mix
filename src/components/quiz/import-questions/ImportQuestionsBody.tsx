@@ -12,7 +12,7 @@ export function ImportQuestionsBody({ importer }: ImportQuestionsBodyProps) {
     return (
         <div
             data-vaul-no-drag=""
-            className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 sm:py-6"
+            className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6"
         >
             <ImportQuestionsUpload importer={importer} />
 
