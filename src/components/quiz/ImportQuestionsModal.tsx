@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import {
     CheckCircle2,
@@ -8,13 +8,28 @@ import {
     FileJson,
     FileUp,
     LoaderCircle,
-    X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { validateQuestionData } from '../../utils/validation'
 import type { Question } from '../../types/quiz'
 import { CodeBlock } from '../CodeBlock'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import {
+    Drawer,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+} from '@/components/ui/drawer'
 
 type QuestionData = Omit<Question, 'id'>
 
@@ -82,6 +97,21 @@ function ImportQuestionsContent({
 
     const isBusy = isProcessing || isSaving
 
+    const [isMobile, setIsMobile] = useState(() =>
+        typeof window !== 'undefined' &&
+        window.matchMedia('(max-width: 767px)').matches
+    )
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 767px)')
+        const onChange = (event: MediaQueryListEvent) => {
+            setIsMobile(event.matches)
+        }
+
+        mediaQuery.addEventListener('change', onChange)
+        return () => mediaQuery.removeEventListener('change', onChange)
+    }, [])
+
     const validCount = previewQuestions.filter(
         (question) => question.isValid
     ).length
@@ -94,6 +124,10 @@ function ImportQuestionsContent({
         }
     }
 
+    const handleOpenChange = (open: boolean) => {
+        if (!open) handleClose()
+    }
+
     const handleFileChange = async (
         event: ChangeEvent<HTMLInputElement>
     ) => {
@@ -101,7 +135,6 @@ function ImportQuestionsContent({
 
         const file = event.target.files?.[0]
 
-        // Permite selecionar o mesmo arquivo novamente.
         event.target.value = ''
 
         if (!file) return
@@ -223,357 +256,370 @@ function ImportQuestionsContent({
         }
     }
 
-    return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 backdrop-blur-[2px] sm:p-6"
-            onClick={handleClose}
-        >
-            <div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="import-questions-title"
-                aria-describedby="import-questions-description"
-                aria-busy={isBusy}
-                className="border-border bg-card text-card-foreground flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[calc(100dvh-3rem)]"
-                onClick={(event) => event.stopPropagation()}
-            >
-                {/* Cabeçalho */}
-                <div className="border-border flex shrink-0 items-start justify-between gap-4 border-b px-5 py-4 sm:px-6">
-                    <div className="flex min-w-0 items-center gap-3">
-                        <div className="bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
-                            <FileJson
-                                size={20}
-                                strokeWidth={1.8}
-                                aria-hidden="true"
-                            />
-                        </div>
+    const scrollContent = (
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+            <section>
+                <label
+                    htmlFor="questions-json-file"
+                    className="text-foreground mb-2 block text-sm font-medium"
+                >
+                    Arquivo JSON
+                </label>
 
-                        <div className="min-w-0">
-                            <h2
-                                id="import-questions-title"
-                                className="text-foreground text-lg font-semibold tracking-tight sm:text-xl"
-                            >
-                                Importar perguntas
-                            </h2>
+                <input
+                    id="questions-json-file"
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={handleFileChange}
+                    disabled={isBusy}
+                    className="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/30 block w-full cursor-pointer rounded-xl border p-2 text-sm outline-none transition-colors focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent"
+                />
 
-                            <p
-                                id="import-questions-description"
-                                className="text-muted-foreground mt-1 text-xs leading-relaxed sm:text-sm"
-                            >
-                                Importe perguntas de um arquivo JSON para
-                                o seu quiz.
-                            </p>
-                        </div>
-                    </div>
+                <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                    Selecione um arquivo .json contendo uma lista
+                    de perguntas.
+                </p>
 
-                    <button
-                        type="button"
-                        onClick={handleClose}
-                        disabled={isBusy}
-                        aria-label="Fechar modal"
-                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {/* Conteúdo */}
-                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
-                    {/* Seleção do arquivo */}
-                    <section>
-                        <label
-                            htmlFor="questions-json-file"
-                            className="text-foreground mb-2 block text-sm font-medium"
-                        >
-                            Arquivo JSON
-                        </label>
-
-                        <input
-                            id="questions-json-file"
-                            type="file"
-                            accept=".json,application/json"
-                            onChange={handleFileChange}
-                            disabled={isBusy}
-                            className="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/30 block w-full cursor-pointer rounded-xl border p-2 text-sm outline-none transition-colors focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent"
+                {fileName && (
+                    <div className="text-muted-foreground mt-3 flex min-w-0 items-center gap-2 text-xs">
+                        <FileJson
+                            size={15}
+                            className="shrink-0"
+                            aria-hidden="true"
                         />
 
-                        <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
-                            Selecione um arquivo .json contendo uma lista
-                            de perguntas.
-                        </p>
+                        <span className="truncate">
+                            {fileName}
+                        </span>
+                    </div>
+                )}
+            </section>
 
-                        {fileName && (
-                            <div className="text-muted-foreground mt-3 flex min-w-0 items-center gap-2 text-xs">
-                                <FileJson
-                                    size={15}
-                                    className="shrink-0"
+            <section>
+                <button
+                    type="button"
+                    onClick={() =>
+                        setShowFormatExample((prev) => !prev)
+                    }
+                    aria-expanded={showFormatExample}
+                    className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
+                >
+                    <FileJson
+                        size={16}
+                        aria-hidden="true"
+                    />
+
+                    {showFormatExample
+                        ? 'Ocultar formato de exemplo'
+                        : 'Mostrar formato de exemplo'}
+
+                    <ChevronDown
+                        size={16}
+                        className={`transition-transform duration-200 ${showFormatExample ? 'rotate-180' : ''
+                            }`}
+                        aria-hidden="true"
+                    />
+                </button>
+
+                {showFormatExample && (
+                    <div className="mt-3 min-w-0">
+                        <CodeBlock
+                            language="json"
+                            code={exampleJson}
+                        />
+                    </div>
+                )}
+            </section>
+
+            {isProcessing && (
+                <div
+                    role="status"
+                    className="border-border bg-muted/40 flex items-center gap-3 rounded-xl border p-4"
+                >
+                    <LoaderCircle
+                        size={20}
+                        className="text-primary shrink-0 animate-spin"
+                        aria-hidden="true"
+                    />
+
+                    <span className="text-muted-foreground text-sm">
+                        Processando arquivo JSON...
+                    </span>
+                </div>
+            )}
+
+            {fileError && (
+                <div
+                    role="alert"
+                    className="border-destructive/30 bg-destructive/5 flex items-start gap-3 rounded-xl border p-4"
+                >
+                    <CircleAlert
+                        size={19}
+                        className="text-destructive mt-0.5 shrink-0"
+                        aria-hidden="true"
+                    />
+
+                    <p className="text-foreground min-w-0 text-sm leading-relaxed wrap-break-word">
+                        {fileError}
+                    </p>
+                </div>
+            )}
+
+            {previewQuestions.length > 0 && (
+                <section className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 className="text-foreground text-base font-semibold">
+                                Pré-visualização
+                            </h3>
+
+                            <p className="text-muted-foreground mt-1 text-xs">
+                                Confira as perguntas antes de importar.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="bg-answer-correct text-answer-correct-foreground inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium">
+                                <CheckCircle2
+                                    size={13}
                                     aria-hidden="true"
                                 />
 
-                                <span className="truncate">
-                                    {fileName}
-                                </span>
-                            </div>
-                        )}
-                    </section>
-
-                    {/* Formato de exemplo */}
-                    <section>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowFormatExample((prev) => !prev)
-                            }
-                            aria-expanded={showFormatExample}
-                            className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
-                        >
-                            <FileJson
-                                size={16}
-                                aria-hidden="true"
-                            />
-
-                            {showFormatExample
-                                ? 'Ocultar formato de exemplo'
-                                : 'Mostrar formato de exemplo'}
-
-                            <ChevronDown
-                                size={16}
-                                className={`transition-transform duration-200 ${showFormatExample ? 'rotate-180' : ''
-                                    }`}
-                                aria-hidden="true"
-                            />
-                        </button>
-
-                        {showFormatExample && (
-                            <div className="mt-3 min-w-0">
-                                <CodeBlock
-                                    language="json"
-                                    code={exampleJson}
-                                />
-                            </div>
-                        )}
-                    </section>
-
-                    {/* Processamento */}
-                    {isProcessing && (
-                        <div
-                            role="status"
-                            className="border-border bg-muted/40 flex items-center gap-3 rounded-xl border p-4"
-                        >
-                            <LoaderCircle
-                                size={20}
-                                className="text-primary shrink-0 animate-spin"
-                                aria-hidden="true"
-                            />
-
-                            <span className="text-muted-foreground text-sm">
-                                Processando arquivo JSON...
+                                {validCount} válidas
                             </span>
-                        </div>
-                    )}
 
-                    {/* Mensagem de erro */}
-                    {fileError && (
-                        <div
-                            role="alert"
-                            className="border-destructive/30 bg-destructive/5 flex items-start gap-3 rounded-xl border p-4"
-                        >
-                            <CircleAlert
-                                size={19}
-                                className="text-destructive mt-0.5 shrink-0"
-                                aria-hidden="true"
-                            />
-
-                            <p className="text-foreground min-w-0 text-sm leading-relaxed wrap-break-word">
-                                {fileError}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Pré-visualização */}
-                    {previewQuestions.length > 0 && (
-                        <section className="space-y-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <h3 className="text-foreground text-base font-semibold">
-                                        Pré-visualização
-                                    </h3>
-
-                                    <p className="text-muted-foreground mt-1 text-xs">
-                                        Confira as perguntas antes de importar.
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="bg-answer-correct text-answer-correct-foreground inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium">
-                                        <CheckCircle2
-                                            size={13}
-                                            aria-hidden="true"
-                                        />
-
-                                        {validCount} válidas
-                                    </span>
-
-                                    {invalidCount > 0 && (
-                                        <span className="bg-answer-incorrect text-answer-incorrect-foreground inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium">
-                                            <CircleAlert
-                                                size={13}
-                                                aria-hidden="true"
-                                            />
-
-                                            {invalidCount} inválidas
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Lista */}
-                            <div className="space-y-3">
-                                {previewQuestions.map((preview, index) => {
-                                    const questionText =
-                                        typeof preview.data.question === 'string' &&
-                                            preview.data.question.trim()
-                                            ? preview.data.question
-                                            : 'Pergunta em branco'
-
-                                    const questionType =
-                                        typeof preview.data.type === 'string'
-                                            ? preview.data.type
-                                            : 'Tipo inválido'
-
-                                    return (
-                                        <div
-                                            key={index}
-                                            className="border-border bg-muted/30 min-w-0 rounded-xl border p-4"
-                                        >
-                                            <div className="flex min-w-0 items-start gap-3">
-                                                <div
-                                                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${preview.isValid
-                                                            ? 'bg-answer-correct text-answer-correct-foreground'
-                                                            : 'bg-answer-incorrect text-answer-incorrect-foreground'
-                                                        }`}
-                                                >
-                                                    {index + 1}
-                                                </div>
-
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-foreground text-sm leading-relaxed font-medium wrap-break-word">
-                                                        {questionText}
-                                                    </p>
-
-                                                    <p className="text-muted-foreground mt-1 text-xs">
-                                                        {questionType}
-                                                    </p>
-
-                                                    {/* Erros da pergunta */}
-                                                    {!preview.isValid &&
-                                                        preview.errors.length > 0 && (
-                                                            <div className="border-destructive/20 mt-3 border-t pt-3">
-                                                                <div className="text-destructive mb-2 flex items-center gap-2">
-                                                                    <CircleAlert
-                                                                        size={15}
-                                                                        aria-hidden="true"
-                                                                    />
-
-                                                                    <span className="text-xs font-medium">
-                                                                        Problemas encontrados
-                                                                    </span>
-                                                                </div>
-
-                                                                <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs leading-relaxed">
-                                                                    {preview.errors.map(
-                                                                        (error, errorIndex) => (
-                                                                            <li key={errorIndex}>
-                                                                                {error}
-                                                                            </li>
-                                                                        )
-                                                                    )}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                </div>
-
-                                                {/* Indicador */}
-                                                {preview.isValid && (
-                                                    <CheckCircle2
-                                                        size={18}
-                                                        className="text-muted-foreground shrink-0"
-                                                        aria-label="Pergunta válida"
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-
-                            {/* Aviso de importação parcial */}
-                            {invalidCount > 0 && validCount > 0 && (
-                                <div className="border-border bg-muted/30 flex items-start gap-3 rounded-xl border p-4">
+                            {invalidCount > 0 && (
+                                <span className="bg-answer-incorrect text-answer-incorrect-foreground inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium">
                                     <CircleAlert
-                                        size={18}
-                                        className="text-muted-foreground mt-0.5 shrink-0"
+                                        size={13}
                                         aria-hidden="true"
                                     />
 
-                                    <p className="text-muted-foreground text-xs leading-relaxed">
-                                        Apenas as {validCount} perguntas válidas
-                                        serão importadas. As {invalidCount} perguntas
-                                        inválidas serão ignoradas.
-                                    </p>
-                                </div>
-                            )}
-                        </section>
-                    )}
-                </div>
-
-                {/* Rodapé */}
-                <div className="border-border bg-card flex shrink-0 items-center justify-end gap-3 border-t px-5 py-4 sm:px-6">
-                    <button
-                        type="button"
-                        onClick={handleClose}
-                        disabled={isBusy}
-                        className="border-border bg-muted text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-lg border px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={isBusy || validCount === 0}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-                    >
-                        {isSaving ? (
-                            <>
-                                <LoaderCircle
-                                    size={17}
-                                    className="animate-spin"
-                                    aria-hidden="true"
-                                />
-
-                                Salvando...
-                            </>
-                        ) : (
-                            <>
-                                <FileUp
-                                    size={17}
-                                    strokeWidth={1.8}
-                                    aria-hidden="true"
-                                />
-
-                                Importar {validCount}
-                                <span className="hidden sm:inline">
-                                    {validCount === 1
-                                        ? ' pergunta'
-                                        : ' perguntas'}
+                                    {invalidCount} inválidas
                                 </span>
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {previewQuestions.map((preview, index) => {
+                            const questionText =
+                                typeof preview.data.question === 'string' &&
+                                    preview.data.question.trim()
+                                    ? preview.data.question
+                                    : 'Pergunta em branco'
+
+                            const questionType =
+                                typeof preview.data.type === 'string'
+                                    ? preview.data.type
+                                    : 'Tipo inválido'
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="border-border bg-muted/30 min-w-0 rounded-xl border p-4"
+                                >
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div
+                                            className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${preview.isValid
+                                                ? 'bg-answer-correct text-answer-correct-foreground'
+                                                : 'bg-answer-incorrect text-answer-incorrect-foreground'
+                                                }`}
+                                        >
+                                            {index + 1}
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-foreground text-sm leading-relaxed font-medium wrap-break-word">
+                                                {questionText}
+                                            </p>
+
+                                            <p className="text-muted-foreground mt-1 text-xs">
+                                                {questionType}
+                                            </p>
+
+                                            {/* Erros da pergunta */}
+                                            {!preview.isValid &&
+                                                preview.errors.length > 0 && (
+                                                    <div className="border-destructive/20 mt-3 border-t pt-3">
+                                                        <div className="text-destructive mb-2 flex items-center gap-2">
+                                                            <CircleAlert
+                                                                size={15}
+                                                                aria-hidden="true"
+                                                            />
+
+                                                            <span className="text-xs font-medium">
+                                                                Problemas encontrados
+                                                            </span>
+                                                        </div>
+
+                                                        <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs leading-relaxed">
+                                                            {preview.errors.map(
+                                                                (error, errorIndex) => (
+                                                                    <li key={errorIndex}>
+                                                                        {error}
+                                                                    </li>
+                                                                )
+                                                            )}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                        </div>
+
+                                        {/* Indicador */}
+                                        {preview.isValid && (
+                                            <CheckCircle2
+                                                size={18}
+                                                className="text-muted-foreground shrink-0"
+                                                aria-label="Pergunta válida"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    {invalidCount > 0 && validCount > 0 && (
+                        <div className="border-border bg-muted/30 flex items-start gap-3 rounded-xl border p-4">
+                            <CircleAlert
+                                size={18}
+                                className="text-muted-foreground mt-0.5 shrink-0"
+                                aria-hidden="true"
+                            />
+
+                            <p className="text-muted-foreground text-xs leading-relaxed">
+                                Apenas as {validCount} perguntas válidas
+                                serão importadas. As {invalidCount} perguntas
+                                inválidas serão ignoradas.
+                            </p>
+                        </div>
+                    )}
+                </section>
+            )}
         </div>
+
+    )
+
+    const footerActions = (
+        <>
+            <button
+                type="button"
+                onClick={handleClose}
+                disabled={isBusy}
+                className="border-border bg-muted text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-lg border px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="button"
+                onClick={handleSave}
+                disabled={isBusy || validCount === 0}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+            >
+                {isSaving ? (
+                    <>
+                        <LoaderCircle
+                            size={17}
+                            className="animate-spin"
+                            aria-hidden="true"
+                        />
+
+                        Salvando...
+                    </>
+                ) : (
+                    <>
+                        <FileUp
+                            size={17}
+                            strokeWidth={1.8}
+                            aria-hidden="true"
+                        />
+
+                        Importar {validCount}
+                        <span className="hidden sm:inline">
+                            {validCount === 1
+                                ? ' pergunta'
+                                : ' perguntas'}
+                        </span>
+                    </>
+                )}
+            </button>
+        </>
+    )
+
+    if (isMobile) {
+        return (
+            <Drawer
+                open
+                onOpenChange={handleOpenChange}
+                dismissible={!isBusy}
+            >
+                <DrawerContent
+                    aria-busy={isBusy}
+                    className="bg-card text-card-foreground flex max-h-[92dvh] min-h-0 flex-col gap-0 overflow-hidden rounded-t-2xl p-0"
+                >
+                    <DrawerHeader className="border-border shrink-0 border-b px-5 pt-5 pb-4 text-left">
+                        <div className="flex min-w-0 items-start gap-3">
+                            <div className="bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
+                                <FileJson size={20} strokeWidth={1.8} aria-hidden="true" />
+                            </div>
+                            <div className="min-w-0">
+                                <DrawerTitle className="text-foreground text-lg font-semibold tracking-tight">
+                                    Importar perguntas
+                                </DrawerTitle>
+                                <DrawerDescription className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                                    Importe perguntas de um arquivo JSON para o seu quiz.
+                                </DrawerDescription>
+                            </div>
+                        </div>
+                    </DrawerHeader>
+
+                    {scrollContent}
+
+                    <DrawerFooter className="border-border bg-card flex shrink-0 flex-row items-center justify-end gap-3 border-t px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                        {footerActions}
+                    </DrawerFooter>
+                </DrawerContent>
+            </Drawer>
+        )
+    }
+
+    return (
+        <Dialog open onOpenChange={handleOpenChange}>
+            <DialogContent
+                aria-busy={isBusy}
+                onEscapeKeyDown={(event) => {
+                    if (isBusy) event.preventDefault()
+                }}
+                onInteractOutside={(event) => {
+                    if (isBusy) event.preventDefault()
+                }}
+                className="border-border bg-card text-card-foreground flex max-h-[calc(100dvh-3rem)] w-full max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl p-0 shadow-2xl"
+            >
+                <DialogHeader className="border-border shrink-0 border-b px-5 py-4 pr-12 text-left sm:px-6 sm:pr-14">
+                    <div className="flex min-w-0 items-start gap-3">
+                        <div className="bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
+                            <FileJson size={20} strokeWidth={1.8} aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0">
+                            <DialogTitle className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
+                                Importar perguntas
+                            </DialogTitle>
+                            <DialogDescription className="text-muted-foreground mt-1 text-xs leading-relaxed sm:text-sm">
+                                Importe perguntas de um arquivo JSON para o seu quiz.
+                            </DialogDescription>
+                        </div>
+                    </div>
+                </DialogHeader>
+
+                {scrollContent}
+
+                <DialogFooter className="border-border bg-card flex shrink-0 flex-row items-center justify-end gap-3 border-t px-5 py-4 sm:px-6">
+                    {footerActions}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }
 
