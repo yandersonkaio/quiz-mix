@@ -2,27 +2,16 @@
 import { Link } from 'react-router'
 
 import type { Quiz } from '@/types/quiz'
-import { getDifficultyConfig } from '@/utils/quis'
+import { DifficultyBadge } from '@/components/quiz/DifficultyBadge'
 
 interface QuizListItemProps {
     quiz: Quiz
 }
 
 export function QuizListItem({ quiz }: QuizListItemProps) {
-    const difficultyConfig = getDifficultyConfig(quiz.difficulty)
-
     const formattedDate = quiz.createdAt?.toDate
         ? quiz.createdAt.toDate().toLocaleDateString('pt-BR')
         : 'Data desconhecida'
-
-    const difficultyColors =
-        quiz.difficulty === 'easy'
-            ? 'border-answer-correct-foreground/20 bg-answer-correct text-answer-correct-foreground'
-            : quiz.difficulty === 'medium'
-                ? 'border-answer-selected-foreground/20 bg-answer-selected text-answer-selected-foreground'
-                : quiz.difficulty === 'hard'
-                    ? 'border-answer-incorrect-foreground/20 bg-answer-incorrect text-answer-incorrect-foreground'
-                    : 'border-border bg-muted text-muted-foreground'
 
     return (
         <Link
@@ -44,12 +33,7 @@ export function QuizListItem({ quiz }: QuizListItemProps) {
                 </div>
 
                 {/* Dificuldade */}
-                <span
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap ${difficultyColors}`}
-                >
-                    {difficultyConfig.icon}
-                    {difficultyConfig.label}
-                </span>
+                <DifficultyBadge difficulty={quiz.difficulty} />
             </div>
 
             {/* Informações */}

@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 
 import { useQuizData } from '@/hooks/useQuizData'
 import type { Quiz, QuizDifficulty } from '@/types/quiz'
-import { getDifficultyConfig } from '@/utils/quis'
+import { DifficultyBadge } from '@/components/quiz/DifficultyBadge'
 
 type QuizMode = 'challenge' | 'study'
 
@@ -72,18 +72,8 @@ function QuizSettingsContent({
     const { user, createQuiz, operationLoading } = useQuizData()
     const navigate = useNavigate()
     const isBusy = isSaving || operationLoading
-    const difficultyConfig = getDifficultyConfig(formData.difficulty)
     const challengeAnswerMode =
         formData.settings?.showAnswersAfter === 'immediately' ? 'immediately' : 'end'
-
-    const difficultyColors =
-        formData.difficulty === 'easy'
-            ? 'border-answer-correct-foreground/20 bg-answer-correct text-answer-correct-foreground'
-            : formData.difficulty === 'medium'
-                ? 'border-answer-selected-foreground/20 bg-answer-selected text-answer-selected-foreground'
-                : formData.difficulty === 'hard'
-                    ? 'border-answer-incorrect-foreground/20 bg-answer-incorrect text-answer-incorrect-foreground'
-                    : 'border-border bg-muted text-muted-foreground'
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -227,10 +217,10 @@ function QuizSettingsContent({
                                 </select>
 
                                 {formData.difficulty && (
-                                    <span className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${difficultyColors}`}>
-                                        {difficultyConfig.icon}
-                                        {difficultyConfig.label}
-                                    </span>
+                                    <DifficultyBadge
+                                        difficulty={formData.difficulty}
+                                        className="mt-2"
+                                    />
                                 )}
                             </div>
                         </div>

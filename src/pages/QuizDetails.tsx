@@ -26,7 +26,7 @@ import QuestionModal from '../components/quiz/QuestionModal'
 import ImportQuestionsModal from '../components/quiz/ImportQuestionsModal'
 import { useQuizData, type QuestionData } from '../hooks/useQuizData'
 import type { Question, Quiz } from '../types/quiz'
-import { getDifficultyConfig } from '@/utils/quis'
+import { DifficultyBadge } from '@/components/quiz/DifficultyBadge'
 
 const managementButtonClass =
     'border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
@@ -230,17 +230,6 @@ export default function QuizDetails() {
     }
 
     const isCreator = quiz.userId === user?.uid
-    const difficultyConfig = getDifficultyConfig(quiz.difficulty)
-
-    const difficultyColors =
-        quiz.difficulty === 'easy'
-            ? 'border-answer-correct-foreground/20 bg-answer-correct text-answer-correct-foreground'
-            : quiz.difficulty === 'medium'
-                ? 'border-answer-selected-foreground/20 bg-answer-selected text-answer-selected-foreground'
-                : quiz.difficulty === 'hard'
-                    ? 'border-answer-incorrect-foreground/20 bg-answer-incorrect text-answer-incorrect-foreground'
-                    : 'border-border bg-muted text-muted-foreground'
-
     const modeConfig = isUntilCorrectMode
         ? {
             icon: BookOpen,
@@ -315,10 +304,7 @@ export default function QuizDetails() {
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <dt className="text-muted-foreground">Dificuldade</dt>
                                 <dd>
-                                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${difficultyColors}`}>
-                                        {difficultyConfig.icon}
-                                        {difficultyConfig.label}
-                                    </span>
+                                    <DifficultyBadge difficulty={quiz.difficulty} />
                                 </dd>
                             </div>
 
