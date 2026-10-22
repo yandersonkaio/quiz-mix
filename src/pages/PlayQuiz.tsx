@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
@@ -14,8 +13,6 @@ import Loading from '../components/Loading'
 import ErrorMessage from '../components/ErrorMessage'
 
 import type { Question, UserAnswer } from '../types/quiz'
-
-const DEFAULT_TIME_LIMIT = 0
 
 const checkAnswer = (
     question: Question,
@@ -38,62 +35,6 @@ const checkAnswer = (
     return false
 }
 
-const goToNextQuestion = (
-    currentIndex: number,
-    questionsLength: number,
-    userAnswers: UserAnswer[],
-    saveAttempt: (
-        correctCount: number,
-        total: number,
-        answers: UserAnswer[],
-        totalAttempts?: number,
-        mode?: 'challenge' | 'study'
-    ) => Promise<void>,
-    setIndex: (index: number) => void,
-    setAttempt: (attempt: (number | string)[]) => void,
-    setShowResult: (show: boolean) => void,
-    isUntilCorrectMode: boolean,
-    resetTimer: () => void,
-    currentAttemptCount?: number
-) => {
-    if (currentIndex + 1 < questionsLength) {
-        setIndex(currentIndex + 1)
-        setAttempt([])
-
-        if (!isUntilCorrectMode) {
-            resetTimer()
-        }
-    } else {
-        if (!isUntilCorrectMode) {
-            const correctCount = userAnswers.filter(
-                (answer) => answer.isCorrect
-            ).length
-
-            saveAttempt(
-                correctCount,
-                questionsLength,
-                userAnswers,
-                undefined,
-                'challenge'
-            ).then(() => setShowResult(true))
-        } else {
-            const totalAttempts =
-                userAnswers.reduce(
-                    (sum, answer) => sum + (answer.attempts || 0),
-                    0
-                ) + (currentAttemptCount || 0)
-
-            saveAttempt(
-                questionsLength,
-                questionsLength,
-                userAnswers,
-                totalAttempts,
-                'study'
-            ).then(() => setShowResult(true))
-        }
-    }
-}
-
 export default function PlayQuiz() {
     const {
         quiz,
@@ -106,85 +47,131 @@ export default function PlayQuiz() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
     const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([])
     const [showResult, setShowResult] = useState(false)
-    const [currentAttempt, setCurrentAttempt] = useState<
-        (number | string)[]
-    >([])
+    const [currentAttempt, setCurrentAttempt] = useState<(number | string)[]>([])
     const [questionAttemptCount, setQuestionAttemptCount] = useState(0)
 
-    const navigate = useNavigate()
+    const answersRef = useRef<UserAnswer[]>([])
+    const completedQuestionsRef = useRef<Set<string>>(new Set())
+    const isFinalizingRef = useRef(false)
+    const hasFetchedRankingRef = useRef(false)
 
-    const isUntilCorrectMode =
-        quiz?.settings.showAnswersAfter === 'untilCorrect'
+    const navigate = useNavigate()
+    const currentQuestion = questions[currentQuestionIndex]
+    const isUntilCorrectMode = quiz?.settings.showAnswersAfter === 'untilCorrect'
+    const timeLimit = quiz?.settings.timeLimitPerQuestion ?? 0
+
+    const isTimerActive =
+        !loading &&
+        !!quiz &&
+        !!currentQuestion &&
+        timeLimit > 0 &&
+        !isUntilCorrectMode &&
+        !showResult
+
+    const appendAnswer = useCallback((answer: UserAnswer) => {
+        const nextAnswers = [...answersRef.current, answer]
+        answersRef.current = nextAnswers
+        setUserAnswers(nextAnswers)
+        return nextAnswers
+    }, [])
+
+    const goToNextQuestion = useCallback(() => {
+        if (isFinalizingRef.current) return
+
+        if (currentQuestionIndex + 1 < questions.length) {
+            setCurrentQuestionIndex(currentQuestionIndex + 1)
+            setCurrentAttempt([])
+            return
+        }
+
+        isFinalizingRef.current = true
+
+        const answers = answersRef.current
+        const mode = isUntilCorrectMode ? 'study' : 'challenge'
+        const correctCount = isUntilCorrectMode
+            ? questions.length
+            : answers.filter((answer) => answer.isCorrect).length
+        const totalAttempts = isUntilCorrectMode
+            ? answers.reduce(
+                  (sum, answer) => sum + (answer.attempts || 0),
+                  0
+              ) + questionAttemptCount
+            : undefined
+
+        void saveAttempt(
+            correctCount,
+            questions.length,
+            answers,
+            totalAttempts,
+            mode
+        )
+            .catch((error) => {
+                console.error('Erro ao salvar resultado do quiz:', error)
+                toast.error('Não foi possível salvar seu resultado.')
+            })
+            .finally(() => {
+                setShowResult(true)
+            })
+    }, [
+        currentQuestionIndex,
+        questions.length,
+        isUntilCorrectMode,
+        questionAttemptCount,
+        saveAttempt,
+    ])
 
     const { timeLeft, pauseTimer, resetTimer } = useTimer({
-        initialTime:
-            quiz?.settings.timeLimitPerQuestion || DEFAULT_TIME_LIMIT,
-
+        initialTime: timeLimit,
+        isActive: isTimerActive,
         onTimeUp: () => {
-            if (!isUntilCorrectMode) {
-                const currentQuestion = questions[currentQuestionIndex]
-
-                setUserAnswers((prev) => [
-                    ...prev,
-                    {
-                        questionId: currentQuestion.id,
-                        selectedAnswer: -1,
-                        isCorrect: false,
-                        attempts: 1,
-                    },
-                ])
-
-                toast.info('Tempo esgotado!')
-
-                goToNextQuestion(
-                    currentQuestionIndex,
-                    questions.length,
-                    userAnswers,
-                    saveAttempt,
-                    setCurrentQuestionIndex,
-                    setCurrentAttempt,
-                    setShowResult,
-                    isUntilCorrectMode,
-                    resetTimer,
-                    0
-                )
+            if (
+                !isTimerActive ||
+                !currentQuestion ||
+                isFinalizingRef.current ||
+                completedQuestionsRef.current.has(currentQuestion.id)
+            ) {
+                return
             }
-        },
 
-        isActive:
-            !!quiz?.settings.timeLimitPerQuestion &&
-            !isUntilCorrectMode &&
-            !showResult,
+            completedQuestionsRef.current.add(currentQuestion.id)
+
+            appendAnswer({
+                questionId: currentQuestion.id,
+                selectedAnswer: -1,
+                isCorrect: false,
+                attempts: 1,
+            })
+
+            toast.info('Tempo esgotado!')
+            goToNextQuestion()
+        },
     })
 
     useEffect(() => {
-        if (
-            quiz?.settings.timeLimitPerQuestion &&
-            !showResult &&
-            !isUntilCorrectMode
-        ) {
+        if (isTimerActive) {
             resetTimer()
         }
-    }, [
-        quiz,
-        showResult,
-        currentQuestionIndex,
-        resetTimer,
-        isUntilCorrectMode,
-    ])
+    }, [currentQuestionIndex, isTimerActive, resetTimer])
 
     useEffect(() => {
-        if (showResult) {
+        if (showResult && !hasFetchedRankingRef.current) {
+            hasFetchedRankingRef.current = true
             const mode = isUntilCorrectMode ? 'study' : 'challenge'
-            fetchRanking(mode)
+
+            void fetchRanking(mode).catch((error) => {
+                console.error('Erro ao carregar ranking:', error)
+            })
         }
     }, [showResult, fetchRanking, isUntilCorrectMode])
 
     const handleAnswer = useCallback(
         (answer: number | string) => {
-            if (!quiz) return
+            if (!quiz || !currentQuestion || showResult || isFinalizingRef.current) {
+                return
+            }
 
-            const currentQuestion = questions[currentQuestionIndex]
+            if (completedQuestionsRef.current.has(currentQuestion.id)) return
+
             const isCorrect = checkAnswer(currentQuestion, answer)
 
             if (isUntilCorrectMode) {
@@ -194,75 +181,64 @@ export default function PlayQuiz() {
                 setQuestionAttemptCount(newAttemptCount)
 
                 if (isCorrect) {
-                    setUserAnswers((prev) => [
-                        ...prev,
-                        {
-                            questionId: currentQuestion.id,
-                            selectedAnswer: answer,
-                            isCorrect: true,
-                            attempts: newAttemptCount,
-                        },
-                    ])
+                    completedQuestionsRef.current.add(currentQuestion.id)
+
+                    appendAnswer({
+                        questionId: currentQuestion.id,
+                        selectedAnswer: answer,
+                        isCorrect: true,
+                        attempts: newAttemptCount,
+                    })
 
                     setQuestionAttemptCount(0)
                 }
-            } else {
-                if (quiz.settings.timeLimitPerQuestion) {
-                    pauseTimer()
-                }
 
-                const newAnswer: UserAnswer = {
-                    questionId: currentQuestion.id,
-                    selectedAnswer: answer,
-                    isCorrect,
-                    attempts: 1,
-                }
+                return
+            }
 
-                setUserAnswers((prev) => [...prev, newAnswer])
+            completedQuestionsRef.current.add(currentQuestion.id)
 
-                if (quiz.settings.showAnswersAfter === 'end') {
-                    goToNextQuestion(
-                        currentQuestionIndex,
-                        questions.length,
-                        [...userAnswers, newAnswer],
-                        saveAttempt,
-                        setCurrentQuestionIndex,
-                        setCurrentAttempt,
-                        setShowResult,
-                        isUntilCorrectMode,
-                        resetTimer,
-                        0
-                    )
-                }
+            if (timeLimit > 0) {
+                pauseTimer()
+            }
+
+            appendAnswer({
+                questionId: currentQuestion.id,
+                selectedAnswer: answer,
+                isCorrect,
+                attempts: 1,
+            })
+
+            if (quiz.settings.showAnswersAfter === 'end') {
+                goToNextQuestion()
             }
         },
         [
             quiz,
-            questions,
-            currentQuestionIndex,
+            currentQuestion,
+            showResult,
             isUntilCorrectMode,
             questionAttemptCount,
-            userAnswers,
+            timeLimit,
             pauseTimer,
-            resetTimer,
-            saveAttempt,
+            appendAnswer,
+            goToNextQuestion,
         ]
     )
 
     const handleRestart = useCallback(() => {
+        answersRef.current = []
+        completedQuestionsRef.current = new Set()
+        isFinalizingRef.current = false
+        hasFetchedRankingRef.current = false
+
         setCurrentQuestionIndex(0)
         setUserAnswers([])
         setCurrentAttempt([])
         setQuestionAttemptCount(0)
         setShowResult(false)
-
-        if (
-            !isUntilCorrectMode &&
-            quiz?.settings.timeLimitPerQuestion
-        ) {
-            resetTimer()
-        }
-    }, [isUntilCorrectMode, quiz, resetTimer])
+        resetTimer()
+    }, [resetTimer])
 
     if (loading) {
         return <Loading />
@@ -273,15 +249,17 @@ export default function PlayQuiz() {
     }
 
     if (questions.length === 0) {
-        return (
-            <ErrorMessage message="Nenhuma pergunta disponível no quiz." />
-        )
+        return <ErrorMessage message="Nenhuma pergunta disponível no quiz." />
+    }
+
+    if (!showResult && !currentQuestion) {
+        return <ErrorMessage message="Não foi possível carregar a pergunta atual." />
     }
 
     return (
         <div className="bg-background text-foreground flex min-h-dvh w-full items-center justify-center px-4 py-6 transition-colors duration-200 sm:px-6 sm:py-10">
             <div className="mx-auto w-full min-w-0 max-w-2xl">
-                {!showResult ? (
+                {!showResult && currentQuestion ? (
                     <>
                         <QuizHeader
                             quiz={quiz}
@@ -291,23 +269,10 @@ export default function PlayQuiz() {
                         />
 
                         <QuestionDisplay
-                            question={questions[currentQuestionIndex]}
+                            question={currentQuestion}
                             onAnswer={handleAnswer}
                             showAnswersAfter={quiz.settings.showAnswersAfter}
-                            onNext={() =>
-                                goToNextQuestion(
-                                    currentQuestionIndex,
-                                    questions.length,
-                                    userAnswers,
-                                    saveAttempt,
-                                    setCurrentQuestionIndex,
-                                    setCurrentAttempt,
-                                    setShowResult,
-                                    isUntilCorrectMode,
-                                    resetTimer,
-                                    questionAttemptCount
-                                )
-                            }
+                            onNext={goToNextQuestion}
                             currentAttempt={
                                 isUntilCorrectMode ? currentAttempt : undefined
                             }
@@ -322,9 +287,7 @@ export default function PlayQuiz() {
                         questions={questions}
                         userAnswers={userAnswers}
                         onRestart={handleRestart}
-                        onBack={() =>
-                            navigate(`/quiz/details/${quiz.id}`)
-                        }
+                        onBack={() => navigate(`/quiz/details/${quiz.id}`)}
                         mode={isUntilCorrectMode ? 'study' : 'challenge'}
                     />
                 )}

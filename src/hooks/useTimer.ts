@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface UseTimerProps {
@@ -7,37 +6,59 @@ interface UseTimerProps {
     isActive: boolean
 }
 
+interface TimerState {
+    initialTime: number
+    previousIsActive: boolean
+    timeLeft: number
+    isPaused: boolean
+}
+
 export const useTimer = ({
     initialTime,
     onTimeUp,
     isActive,
 }: UseTimerProps) => {
-    const [timeLeft, setTimeLeft] = useState(initialTime)
+    const duration = Math.max(0, initialTime)
 
-    const [pauseState, setPauseState] = useState({
+    const [timerState, setTimerState] = useState<TimerState>(() => ({
+        initialTime: duration,
         previousIsActive: isActive,
+        timeLeft: duration,
         isPaused: false,
-    })
+    }))
 
     const hasNotifiedRef = useRef(false)
 
-    if (pauseState.previousIsActive !== isActive) {
-        setPauseState({
+    if (
+        timerState.initialTime !== duration ||
+        timerState.previousIsActive !== isActive
+    ) {
+        setTimerState({
+            initialTime: duration,
             previousIsActive: isActive,
+            timeLeft:
+                timerState.initialTime !== duration
+                    ? duration
+                    : timerState.timeLeft,
             isPaused: false,
         })
     }
 
-    const isRunning =
-        isActive &&
-        !pauseState.isPaused &&
-        timeLeft > 0
+    const { timeLeft, isPaused } = timerState
+    const isRunning = isActive && !isPaused && timeLeft > 0
+
+    useEffect(() => {
+        hasNotifiedRef.current = false
+    }, [duration])
 
     useEffect(() => {
         if (!isRunning) return
 
         const timer = setInterval(() => {
-            setTimeLeft((prev) => Math.max(0, prev - 1))
+            setTimerState((prev) => ({
+                ...prev,
+                timeLeft: Math.max(0, prev.timeLeft - 1),
+            }))
         }, 1000)
 
         return () => clearInterval(timer)
@@ -45,8 +66,10 @@ export const useTimer = ({
 
     useEffect(() => {
         if (
+            !isActive ||
+            isPaused ||
             timeLeft !== 0 ||
-            initialTime <= 0 ||
+            duration <= 0 ||
             hasNotifiedRef.current
         ) {
             return
@@ -54,34 +77,33 @@ export const useTimer = ({
 
         hasNotifiedRef.current = true
         onTimeUp()
-    }, [timeLeft, initialTime, onTimeUp])
+    }, [timeLeft, duration, isActive, isPaused, onTimeUp])
 
     const resetTimer = useCallback(() => {
         hasNotifiedRef.current = false
 
-        setTimeLeft(initialTime)
-
-        setPauseState({
+        setTimerState({
+            initialTime: duration,
             previousIsActive: isActive,
+            timeLeft: duration,
             isPaused: false,
         })
-    }, [initialTime, isActive])
+    }, [duration, isActive])
 
     const pauseTimer = useCallback(() => {
-        setPauseState({
-            previousIsActive: isActive,
+        setTimerState((prev) => ({
+            ...prev,
             isPaused: true,
-        })
-    }, [isActive])
+        }))
+    }, [])
 
     const resumeTimer = useCallback(() => {
-        if (timeLeft <= 0) return
-
-        setPauseState({
-            previousIsActive: isActive,
-            isPaused: false,
-        })
-    }, [isActive, timeLeft])
+        setTimerState((prev) =>
+            prev.timeLeft > 0
+                ? { ...prev, isPaused: false }
+                : prev
+        )
+    }, [])
 
     return {
         timeLeft,
