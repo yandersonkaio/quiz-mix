@@ -1,28 +1,26 @@
-import React, { useState } from "react";
-import Sidebar from "../components/SideBar";
-import { Outlet } from "react-router-dom";
 
-const PrivateLayout: React.FC = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+import { Outlet, useMatch } from 'react-router'
 
-    const toggleSidebar = () => setSidebarOpen(prev => !prev);
-    const closeSidebar = () => setSidebarOpen(false);
+import { Header } from '../components/Header'
+import { BottomBar } from '@/components/BottomBar'
+
+export default function PrivateLayout() {
+    const isPlayingQuiz = useMatch('/play-quiz/:quizId')
 
     return (
-        <div className="flex min-h-screen">
-            <Sidebar
-                isOpen={sidebarOpen}
-                toggleSidebar={toggleSidebar}
-                closeSidebar={closeSidebar}
-            />
+        <div className="bg-background text-foreground flex min-h-dvh flex-col">
+            {!isPlayingQuiz && <Header />}
 
             <main
-                className="flex-1 h-screen overflow-y-auto bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white duration-300 ease-in-out md:ml-20 lg:ml-72"
+                className={`mx-auto w-full max-w-7xl min-w-0 flex-1 ${isPlayingQuiz
+                    ? ''
+                    : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0'
+                    }`}
             >
                 <Outlet />
             </main>
-        </div>
-    );
-};
 
-export default PrivateLayout;
+            {!isPlayingQuiz && <BottomBar />}
+        </div>
+    )
+}

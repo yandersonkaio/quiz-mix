@@ -1,22 +1,204 @@
-import { useState } from "react";
-import { IoMdArrowDropdown, IoMdArrowDropup, IoMdEye, IoMdTrash } from "react-icons/io";
-import { FaTrashAlt } from "react-icons/fa";
-import { FiTarget, FiBookOpen } from "react-icons/fi";
-import AnswersModal from "./AnswersModal";
-import { Attempt, Question, RankingEntry } from "../../types/quiz";
-import { ConfirmDeleteModal } from "../ConfirmDeleteModal";
-import { toast } from "sonner";
+import { useState } from 'react'
+import {
+    BookOpen,
+    ChevronDown,
+    ChevronUp,
+    Eye,
+    Target,
+    Trash2,
+    Trophy,
+    UserRound,
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+import AnswersModal from './AnswersModal'
+import { ConfirmDeleteModal } from '../ConfirmDeleteModal'
+import type { Attempt, Question, RankingEntry } from '../../types/quiz'
 
 interface RankingDisplayProps {
-    ranking: Attempt[];
-    studyRanking?: RankingEntry[];
-    allUserAttempts: { [userId: string]: Attempt[] };
-    questions: Question[];
-    operationLoading: boolean;
-    onDeleteAllAttempts: () => Promise<void>;
-    onDeleteAttempt: (attemptId: string) => Promise<void>;
-    isCreator?: boolean;
-    currentUserId?: string;
+    ranking: Attempt[]
+    studyRanking?: RankingEntry[]
+    allUserAttempts: { [userId: string]: Attempt[] }
+    questions: Question[]
+    operationLoading: boolean
+    onDeleteAllAttempts: () => Promise<void>
+    onDeleteAttempt: (attemptId: string) => Promise<void>
+    isCreator?: boolean
+    currentUserId?: string
+}
+
+type RankingTab = 'challenge' | 'study'
+
+interface AttemptActionsProps {
+    attempt: Attempt
+    isCreator: boolean
+    currentUserId?: string
+    operationLoading: boolean
+    onView: (attempt: Attempt) => void
+    onDelete: (attemptId: string) => void
+    label: string
+}
+
+function AttemptActions({
+    attempt,
+    isCreator,
+    currentUserId,
+    operationLoading,
+    onView,
+    onDelete,
+    label,
+}: AttemptActionsProps) {
+    const canViewAnswers = isCreator || currentUserId === attempt.userId
+
+    if (!canViewAnswers) return null
+
+    return (
+        <div className="flex shrink-0 items-center gap-1">
+            <button
+                type="button"
+                onClick={() => onView(attempt)}
+                aria-label={`Ver respostas de ${label}`}
+                title="Visualizar respostas"
+                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+                <Eye size={18} strokeWidth={1.8} aria-hidden="true" />
+            </button>
+
+            {isCreator && (
+                <button
+                    type="button"
+                    onClick={() => onDelete(attempt.id)}
+                    disabled={operationLoading}
+                    aria-label={`Excluir tentativa de ${label}`}
+                    title="Excluir tentativa"
+                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring inline-flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <Trash2 size={18} strokeWidth={1.8} aria-hidden="true" />
+                </button>
+            )}
+        </div>
+    )
+}
+
+interface AttemptHistoryProps {
+    attempts: Attempt[]
+    mode: RankingTab
+    isCreator: boolean
+    currentUserId?: string
+    operationLoading: boolean
+    onView: (attempt: Attempt) => void
+    onDelete: (attemptId: string) => void
+}
+
+function AttemptHistory({
+    attempts,
+    mode,
+    isCreator,
+    currentUserId,
+    operationLoading,
+    onView,
+    onDelete,
+}: AttemptHistoryProps) {
+    const orderedAttempts = [...attempts].sort(
+        (a, b) => a.completedAt.toMillis() - b.completedAt.toMillis()
+    )
+
+    return (
+        <div className="border-border mt-2 space-y-2 border-l-2 pl-3 sm:ml-5 sm:pl-4">
+            {orderedAttempts.map((attempt, index) => (
+                <div
+                    key={attempt.id}
+                    className="border-border bg-background/60 flex min-w-0 items-start justify-between gap-3 rounded-lg border p-3 sm:p-4"
+                >
+                    <div className="min-w-0 space-y-1">
+                        <p className="text-foreground text-sm font-medium">
+                            Tentativa {index + 1}
+                        </p>
+
+                        {mode === 'study' ? (
+                            <>
+                                <p className="text-muted-foreground text-xs sm:text-sm">
+                                    Respostas nesta rodada:{' '}
+                                    {attempt.totalAttempts || attempt.totalQuestions}
+                                </p>
+                                <p className="text-muted-foreground text-xs sm:text-sm">
+                                    Eficiência:{' '}
+                                    {attempt.totalQuestions && attempt.totalAttempts
+                                        ? (
+                                            (attempt.totalQuestions / attempt.totalAttempts) *
+                                            100
+                                        ).toFixed(1)
+                                        : '0.0'}
+                                    %
+                                </p>
+                            </>
+                        ) : (
+                            <p className="text-muted-foreground text-xs sm:text-sm">
+                                {attempt.correctAnswers}/{attempt.totalQuestions} acertos (
+                                {attempt.percentage}%)
+                            </p>
+                        )}
+
+                        <p className="text-muted-foreground text-xs">
+                            Concluída em:{' '}
+                            {attempt.completedAt.toDate().toLocaleString('pt-BR')}
+                        </p>
+                    </div>
+
+                    <AttemptActions
+                        attempt={attempt}
+                        isCreator={isCreator}
+                        currentUserId={currentUserId}
+                        operationLoading={operationLoading}
+                        onView={onView}
+                        onDelete={onDelete}
+                        label={`tentativa ${index + 1}`}
+                    />
+                </div>
+            ))}
+        </div>
+    )
+}
+
+function RankPosition({ index }: { index: number }) {
+    const firstPlace = index === 0
+
+    return (
+        <div
+            className={`flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-semibold sm:size-10 ${firstPlace
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+            title={`${index + 1}º lugar`}
+        >
+            {firstPlace ? (
+                <Trophy size={19} strokeWidth={1.8} aria-label="1º lugar" />
+            ) : (
+                `${index + 1}º`
+            )}
+        </div>
+    )
+}
+
+function RankingEmptyState({ mode }: { mode: RankingTab }) {
+    const isStudy = mode === 'study'
+    const Icon = isStudy ? BookOpen : Target
+
+    return (
+        <div className="border-border bg-muted/30 flex flex-col items-center justify-center rounded-xl border border-dashed px-4 py-10 text-center">
+            <div className="bg-muted text-muted-foreground mb-4 flex size-14 items-center justify-center rounded-xl">
+                <Icon size={26} strokeWidth={1.6} aria-hidden="true" />
+            </div>
+            <h4 className="text-foreground text-sm font-semibold">
+                {isStudy ? 'Nenhum resultado de estudo' : 'Nenhum resultado de desafio'}
+            </h4>
+            <p className="text-muted-foreground mt-2 max-w-sm text-sm">
+                {isStudy
+                    ? 'Ainda não há participantes no ranking de estudo.'
+                    : 'Ainda não há participantes no ranking de desafio.'}
+            </p>
+        </div>
+    )
 }
 
 export const RankingDisplay = ({
@@ -30,411 +212,353 @@ export const RankingDisplay = ({
     isCreator = false,
     currentUserId,
 }: RankingDisplayProps) => {
-    const [expandedUser, setExpandedUser] = useState<string | null>(null);
-    const [expandedStudyUser, setExpandedStudyUser] = useState<string | null>(null);
-    const [selectedAttempt, setSelectedAttempt] = useState<Attempt | null>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState<"all" | "single" | null>(null);
-    const [attemptIdToDelete, setAttemptIdToDelete] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"challenge" | "study">("challenge");
+    const [expandedUser, setExpandedUser] = useState<string | null>(null)
+    const [expandedStudyUser, setExpandedStudyUser] = useState<string | null>(null)
+    const [selectedAttempt, setSelectedAttempt] = useState<Attempt | null>(null)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState<'all' | 'single' | null>(null)
+    const [attemptIdToDelete, setAttemptIdToDelete] = useState<string | null>(null)
+    const [activeTab, setActiveTab] = useState<RankingTab>('challenge')
 
-    const toggleExpand = (userId: string) => {
-        setExpandedUser(expandedUser === userId ? null : userId);
-    };
-
-    const toggleExpandStudy = (userId: string) => {
-        setExpandedStudyUser(expandedStudyUser === userId ? null : userId);
-    };
-
-    const openAnswersModal = (attempt: Attempt) => {
-        setSelectedAttempt(attempt);
-    };
-
-    const closeAnswersModal = () => {
-        setSelectedAttempt(null);
-    };
+    const hasAnyRanking = ranking.length > 0 || studyRanking.length > 0
 
     const handleDeleteAllAttempts = () => {
-        setDeleteTarget("all");
-        setIsDeleteModalOpen(true);
-    };
+        if (operationLoading) return
+        setDeleteTarget('all')
+        setAttemptIdToDelete(null)
+        setIsDeleteModalOpen(true)
+    }
 
     const handleDeleteAttempt = (attemptId: string) => {
-        setDeleteTarget("single");
-        setAttemptIdToDelete(attemptId);
-        setIsDeleteModalOpen(true);
-    };
+        if (operationLoading) return
+        setDeleteTarget('single')
+        setAttemptIdToDelete(attemptId)
+        setIsDeleteModalOpen(true)
+    }
+
+    const closeDeleteModal = () => {
+        setIsDeleteModalOpen(false)
+        setDeleteTarget(null)
+        setAttemptIdToDelete(null)
+    }
 
     const confirmDelete = async () => {
         try {
-            if (deleteTarget === "all") {
-                await onDeleteAllAttempts();
-            } else if (deleteTarget === "single" && attemptIdToDelete) {
-                await onDeleteAttempt(attemptIdToDelete);
+            if (deleteTarget === 'all') {
+                await onDeleteAllAttempts()
+            } else if (deleteTarget === 'single' && attemptIdToDelete) {
+                await onDeleteAttempt(attemptIdToDelete)
             }
-            setIsDeleteModalOpen(false);
-            setDeleteTarget(null);
-            setAttemptIdToDelete(null);
+
+            closeDeleteModal()
         } catch (error) {
-            console.error("Erro ao excluir:", error);
-            toast.error("Erro ao realizar a exclusão.");
+            console.error('Erro ao excluir:', error)
+            toast.error('Erro ao realizar a exclusão.')
         }
-    };
-
-    const renderChallengeRanking = () => (
-        <div className="space-y-4">
-            {ranking.length > 0 ? (
-                ranking.map((attempt, index) => {
-                    const userAttempts = allUserAttempts[attempt.userId] || [attempt];
-                    const hasMultipleAttempts = userAttempts.length > 1;
-                    const uniqueKey = `${attempt.userId}-${attempt.completedAt.toMillis()}`;
-
-                    return (
-                        <div key={uniqueKey}>
-                            <div
-                                className={`flex items-center p-3 sm:p-4 rounded-lg transition-colors duration-200 overflow-hidden ${index === 0
-                                    ? "bg-yellow-200 dark:bg-yellow-600 text-gray-900 dark:text-white"
-                                    : index === 1
-                                        ? "bg-gray-200 dark:bg-gray-400 text-gray-900 dark:text-white"
-                                        : index === 2
-                                            ? "bg-yellow-200 dark:bg-yellow-800 text-gray-900 dark:text-white"
-                                            : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    }`}
-                            >
-                                <span className="mr-2 sm:mr-4 text-base sm:text-lg font-bold flex-shrink-0">
-                                    {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}º`}
-                                </span>
-                                {attempt.photoURL && (
-                                    <img
-                                        src={attempt.photoURL}
-                                        alt={attempt.displayName}
-                                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-4 flex-shrink-0"
-                                    />
-                                )}
-                                <div className="flex-1 min-w-0 mr-2">
-                                    <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">
-                                        {attempt.displayName}
-                                    </p>
-                                    <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-                                        Acertos: {attempt.correctAnswers}/{attempt.totalQuestions} ({attempt.percentage}%)
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                                    {(isCreator || currentUserId === attempt.userId) && (
-                                        <button
-                                            onClick={() => openAnswersModal(attempt)}
-                                            className="text-gray-600 cursor-pointer dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200 p-1"
-                                            aria-label={`Ver respostas de ${attempt.displayName}`}
-                                            title="Visualizar respostas"
-                                        >
-                                            <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
-                                        </button>
-                                    )}
-
-                                    {isCreator && (
-                                        <button
-                                            onClick={() => handleDeleteAttempt(attempt.id)}
-                                            className="text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors duration-200 p-1"
-                                            aria-label={`Excluir tentativa de ${attempt.displayName}`}
-                                            title="Excluir tentativa"
-                                        >
-                                            <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
-                                        </button>
-                                    )}
-                                    {hasMultipleAttempts && (
-                                        <button
-                                            onClick={() => toggleExpand(attempt.userId)}
-                                            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200 p-1"
-                                            aria-label={
-                                                expandedUser === attempt.userId
-                                                    ? "Ocultar tentativas"
-                                                    : "Mostrar tentativas"
-                                            }
-                                        >
-                                            {expandedUser === attempt.userId ? (
-                                                <IoMdArrowDropup className="w-6 h-6 sm:w-8 sm:h-8 cursor-pointer" />
-                                            ) : (
-                                                <IoMdArrowDropdown className="w-6 h-6 sm:w-8 sm:h-8 cursor-pointer" />
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {hasMultipleAttempts && expandedUser === attempt.userId && (
-                                <div className="mt-2 pl-4 sm:pl-12 space-y-2">
-                                    {[...userAttempts]
-                                        .sort((a, b) => a.completedAt.toMillis() - b.completedAt.toMillis())
-                                        .map((extraAttempt, idx) => (
-                                            <div
-                                                key={`${extraAttempt.userId}-${extraAttempt.completedAt.toMillis()}`}
-                                                className="p-2 sm:p-3 bg-gray-50 dark:bg-gray-600 rounded-lg text-xs sm:text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-none transition-colors duration-200"
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1">
-                                                        <p className="font-medium text-gray-900 dark:text-white">
-                                                            Tentativa {idx + 1}
-                                                        </p>
-                                                        <p>
-                                                            {extraAttempt.correctAnswers}/{extraAttempt.totalQuestions} ({extraAttempt.percentage}%)
-                                                        </p>
-                                                        <p className="text-gray-500 dark:text-gray-400 mt-1">
-                                                            Concluída em: {extraAttempt.completedAt.toDate().toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                    {(isCreator || currentUserId === extraAttempt.userId) && (
-                                                        <div className="flex gap-1 flex-shrink-0">
-                                                            <button
-                                                                onClick={() => openAnswersModal(extraAttempt)}
-                                                                className="p-1.5 rounded-md cursor-pointer bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
-                                                                aria-label={`Ver respostas da tentativa ${idx + 1}`}
-                                                                title="Visualizar respostas"
-                                                            >
-                                                                <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            </button>
-                                                            {isCreator && (
-                                                                <button
-                                                                    onClick={() => handleDeleteAttempt(extraAttempt.id)}
-                                                                    className="p-1.5 rounded-md cursor-pointer bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
-                                                                    aria-label={`Excluir tentativa ${idx + 1}`}
-                                                                    title="Excluir tentativa"
-                                                                >
-                                                                    <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })
-            ) : (
-                <p className="text-gray-600 dark:text-gray-400">Nenhum jogador no ranking de desafio ainda.</p>
-            )}
-        </div>
-    );
-
-    const renderStudyRanking = () => (
-        <div className="space-y-4">
-            {studyRanking.length > 0 ? (
-                studyRanking.map((entry, index) => {
-                    const userAttempts = allUserAttempts[entry.userId] || [];
-                    const hasMultipleAttempts = userAttempts.length > 1;
-
-                    return (
-                        <div key={`${entry.userId}-${entry.completedAt?.toMillis?.() || Date.now()}`}>
-                            <div
-                                className={`flex items-center p-3 sm:p-4 rounded-lg transition-colors duration-200 overflow-hidden ${index === 0
-                                    ? "bg-yellow-200 dark:bg-yellow-600 text-gray-900 dark:text-white"
-                                    : index === 1
-                                        ? "bg-gray-200 dark:bg-gray-400 text-gray-900 dark:text-white"
-                                        : index === 2
-                                            ? "bg-yellow-200 dark:bg-yellow-800 text-gray-900 dark:text-white"
-                                            : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-                                    }`}
-                            >
-                                <span className="mr-2 sm:mr-4 text-base sm:text-lg font-bold flex-shrink-0">
-                                    {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}º`}
-                                </span>
-                                {entry.photoURL && (
-                                    <img
-                                        src={entry.photoURL}
-                                        alt={entry.userName}
-                                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-4 flex-shrink-0"
-                                    />
-                                )}
-                                <div className="flex-1 min-w-0 mr-2">
-                                    <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">
-                                        {entry.userName}
-                                    </p>
-                                    <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-                                        Total de respostas: {entry.totalAttempts} | Eficiência: {entry.score}%
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                                    {(isCreator || currentUserId === entry.userId) && userAttempts.length > 0 && (
-                                        <button
-                                            onClick={() => openAnswersModal(userAttempts[0])}
-                                            className="text-gray-600 cursor-pointer dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200 p-1"
-                                            aria-label={`Ver respostas de ${entry.userName}`}
-                                            title="Visualizar respostas"
-                                        >
-                                            <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
-                                        </button>
-                                    )}
-
-                                    {isCreator && userAttempts.length > 0 && (
-                                        <button
-                                            onClick={() => handleDeleteAttempt(userAttempts[0].id)}
-                                            className="text-gray-600 cursor-pointer dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 focus:outline-none transition-colors duration-200 p-1"
-                                            aria-label={`Excluir tentativa de ${entry.userName}`}
-                                            title="Excluir tentativa"
-                                        >
-                                            <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" />
-                                        </button>
-                                    )}
-
-                                    {hasMultipleAttempts && (
-                                        <button
-                                            onClick={() => toggleExpandStudy(entry.userId)}
-                                            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors duration-200 p-1"
-                                            aria-label={
-                                                expandedStudyUser === entry.userId
-                                                    ? "Ocultar tentativas"
-                                                    : "Mostrar tentativas"
-                                            }
-                                        >
-                                            {expandedStudyUser === entry.userId ? (
-                                                <IoMdArrowDropup className="w-6 h-6 sm:w-8 sm:h-8 cursor-pointer" />
-                                            ) : (
-                                                <IoMdArrowDropdown className="w-6 h-6 sm:w-8 sm:h-8 cursor-pointer" />
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {hasMultipleAttempts && expandedStudyUser === entry.userId && (
-                                <div className="mt-2 pl-4 sm:pl-12 space-y-2">
-                                    {[...userAttempts]
-                                        .filter(a => a.mode === 'study')
-                                        .sort((a, b) => a.completedAt.toMillis() - b.completedAt.toMillis())
-                                        .map((extraAttempt, idx) => (
-                                            <div
-                                                key={`${extraAttempt.userId}-${extraAttempt.completedAt.toMillis()}`}
-                                                className="p-2 sm:p-3 bg-gray-50 dark:bg-gray-600 rounded-lg text-xs sm:text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-none transition-colors duration-200"
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1">
-                                                        <p className="font-medium text-gray-900 dark:text-white">
-                                                            Tentativa {idx + 1}
-                                                        </p>
-                                                        <p>
-                                                            Respostas nesta rodada: {extraAttempt.totalAttempts || extraAttempt.totalQuestions}
-                                                        </p>
-                                                        <p>
-                                                            Eficiência: {extraAttempt.totalQuestions && extraAttempt.totalAttempts
-                                                                ? ((extraAttempt.totalQuestions / extraAttempt.totalAttempts) * 100).toFixed(1)
-                                                                : "0.0"}%
-                                                        </p>
-                                                        <p className="text-gray-500 dark:text-gray-400 mt-1">
-                                                            Concluída em: {extraAttempt.completedAt.toDate().toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                    {(isCreator || currentUserId === extraAttempt.userId) && (
-                                                        <div className="flex gap-1 flex-shrink-0">
-                                                            <button
-                                                                onClick={() => openAnswersModal(extraAttempt)}
-                                                                className="p-1.5 cursor-pointer rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
-                                                                aria-label={`Ver respostas da rodada ${idx + 1}`}
-                                                                title="Visualizar respostas"
-                                                            >
-                                                                <IoMdEye className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                            </button>
-                                                            {isCreator && (
-                                                                <button
-                                                                    onClick={() => handleDeleteAttempt(extraAttempt.id)}
-                                                                    className="p-1.5 rounded-md bg-white cursor-pointer dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-200 border border-gray-200 dark:border-gray-500"
-                                                                    aria-label={`Excluir rodada ${idx + 1}`}
-                                                                    title="Excluir tentativa"
-                                                                >
-                                                                    <IoMdTrash className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })
-            ) : (
-                <p className="text-gray-600 dark:text-gray-400">Nenhum jogador no ranking de estudo ainda.</p>
-            )}
-        </div>
-    );
-
-    const hasAnyRanking = ranking.length > 0 || studyRanking.length > 0;
+    }
 
     return (
-        <div className="mt-8 bg-transparent dark:bg-transparent p-4 sm:p-6 rounded-lg transition-colors duration-200">
-            <div className="flex flex-row justify-between items-center mb-4 gap-2">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Ranking</h3>
+        <section className="text-card-foreground min-w-0 space-y-5">
+            {/* Cabeçalho */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
+                        Ranking
+                    </h2>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        Acompanhe os resultados dos participantes.
+                    </p>
+                </div>
+
                 {hasAnyRanking && isCreator && (
                     <button
+                        type="button"
                         onClick={handleDeleteAllAttempts}
-                        className="flex items-center gap-2 px-3 sm:px-4 py-2 cursor-pointer bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-colors duration-200 text-sm sm:text-base whitespace-nowrap"
+                        disabled={operationLoading}
+                        className="border-destructive/20 text-destructive hover:bg-destructive/10 focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                         title="Excluir todas as tentativas"
                     >
-                        <FaTrashAlt className="w-4 h-4 flex-shrink-0" />
-                        <span className="hidden sm:inline">Limpar Ranking</span>
+                        <Trash2 size={16} strokeWidth={1.8} aria-hidden="true" />
+                        <span className="hidden sm:inline">Limpar ranking</span>
                         <span className="sm:hidden">Limpar</span>
                     </button>
                 )}
             </div>
-            <div className="flex mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+
+            {/* Alternância entre modos */}
+            <div
+                role="group"
+                aria-label="Tipo de ranking"
+                className="bg-muted grid grid-cols-2 gap-1 rounded-xl p-1"
+            >
                 <button
-                    onClick={() => setActiveTab("challenge")}
-                    className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md transition-colors duration-200 ${activeTab === "challenge"
-                        ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
-                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    type="button"
+                    onClick={() => setActiveTab('challenge')}
+                    aria-pressed={activeTab === 'challenge'}
+                    className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:px-4 ${activeTab === 'challenge'
+                            ? 'bg-card text-card-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
                         }`}
                 >
-                    <FiTarget className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <span className="text-sm sm:text-base whitespace-nowrap">Desafio</span>
+                    <Target size={17} strokeWidth={1.8} aria-hidden="true" />
+                    <span>Desafio</span>
                     {ranking.length > 0 && (
-                        <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 px-1.5 sm:px-2 py-0.5 rounded-full text-xs flex-shrink-0">
+                        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs tabular-nums">
                             {ranking.length}
                         </span>
                     )}
                 </button>
+
                 <button
-                    onClick={() => setActiveTab("study")}
-                    className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md transition-colors duration-200 ${activeTab === "study"
-                        ? "bg-white dark:bg-gray-600 text-green-600 dark:text-green-400 shadow-sm"
-                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    type="button"
+                    onClick={() => setActiveTab('study')}
+                    aria-pressed={activeTab === 'study'}
+                    className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors sm:px-4 ${activeTab === 'study'
+                            ? 'bg-card text-card-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
                         }`}
                 >
-                    <FiBookOpen className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                    <span className="text-sm sm:text-base whitespace-nowrap">Estudo</span>
+                    <BookOpen size={17} strokeWidth={1.8} aria-hidden="true" />
+                    <span>Estudo</span>
                     {studyRanking.length > 0 && (
-                        <span className="bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 px-1.5 sm:px-2 py-0.5 rounded-full text-xs flex-shrink-0">
+                        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs tabular-nums">
                             {studyRanking.length}
                         </span>
                     )}
                 </button>
             </div>
 
-            {activeTab === "challenge" ? renderChallengeRanking() : renderStudyRanking()}
+            {/* Ranking de desafio */}
+            {activeTab === 'challenge' && (
+                <div className="space-y-3">
+                    {ranking.length === 0 ? (
+                        <RankingEmptyState mode="challenge" />
+                    ) : (
+                        ranking.map((attempt, index) => {
+                            // Tentativas antigas podem não ter o campo mode.
+                            const challengeAttempts = (
+                                allUserAttempts[attempt.userId] || [attempt]
+                            ).filter((item) => item.mode !== 'study')
+                            const hasMultipleAttempts = challengeAttempts.length > 1
+                            const isExpanded = expandedUser === attempt.userId
 
+                            return (
+                                <div key={attempt.id} className="min-w-0">
+                                    <div
+                                        className={`border-border flex min-w-0 items-center gap-2 rounded-xl border p-3 transition-colors sm:gap-3 sm:p-4 ${index === 0
+                                                ? 'border-primary/30 bg-primary/5'
+                                                : 'bg-muted/30 hover:bg-muted/50'
+                                            }`}
+                                    >
+                                        <RankPosition index={index} />
+
+                                        {attempt.photoURL ? (
+                                            <img
+                                                src={attempt.photoURL}
+                                                alt=""
+                                                className="size-8 shrink-0 rounded-full object-cover sm:size-10"
+                                            />
+                                        ) : (
+                                            <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full sm:size-10">
+                                                <UserRound size={18} aria-hidden="true" />
+                                            </div>
+                                        )}
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-foreground truncate text-sm font-semibold sm:text-base">
+                                                {attempt.displayName}
+                                            </p>
+                                            <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed sm:text-sm">
+                                                {attempt.correctAnswers}/{attempt.totalQuestions} acertos ·{' '}
+                                                {attempt.percentage}%
+                                            </p>
+                                        </div>
+
+                                        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+                                            <AttemptActions
+                                                attempt={attempt}
+                                                isCreator={isCreator}
+                                                currentUserId={currentUserId}
+                                                operationLoading={operationLoading}
+                                                onView={setSelectedAttempt}
+                                                onDelete={handleDeleteAttempt}
+                                                label={attempt.displayName}
+                                            />
+
+                                            {hasMultipleAttempts && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setExpandedUser(isExpanded ? null : attempt.userId)
+                                                    }
+                                                    aria-expanded={isExpanded}
+                                                    aria-label={
+                                                        isExpanded ? 'Ocultar tentativas' : 'Mostrar tentativas'
+                                                    }
+                                                    title={
+                                                        isExpanded ? 'Ocultar tentativas' : 'Mostrar tentativas'
+                                                    }
+                                                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                                                >
+                                                    {isExpanded ? (
+                                                        <ChevronUp size={19} aria-hidden="true" />
+                                                    ) : (
+                                                        <ChevronDown size={19} aria-hidden="true" />
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {hasMultipleAttempts && isExpanded && (
+                                        <AttemptHistory
+                                            attempts={challengeAttempts}
+                                            mode="challenge"
+                                            isCreator={isCreator}
+                                            currentUserId={currentUserId}
+                                            operationLoading={operationLoading}
+                                            onView={setSelectedAttempt}
+                                            onDelete={handleDeleteAttempt}
+                                        />
+                                    )}
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+            )}
+
+            {/* Ranking de estudo */}
+            {activeTab === 'study' && (
+                <div className="space-y-3">
+                    {studyRanking.length === 0 ? (
+                        <RankingEmptyState mode="study" />
+                    ) : (
+                        studyRanking.map((entry, index) => {
+                            const studyAttempts = (allUserAttempts[entry.userId] || []).filter(
+                                (attempt) => attempt.mode === 'study'
+                            )
+                            const primaryAttempt = studyAttempts[0]
+                            const hasMultipleAttempts = studyAttempts.length > 1
+                            const isExpanded = expandedStudyUser === entry.userId
+
+                            return (
+                                <div
+                                    key={`${entry.userId}-${entry.completedAt?.toMillis?.() ?? index}`}
+                                    className="min-w-0"
+                                >
+                                    <div
+                                        className={`border-border flex min-w-0 items-center gap-2 rounded-xl border p-3 transition-colors sm:gap-3 sm:p-4 ${index === 0
+                                                ? 'border-primary/30 bg-primary/5'
+                                                : 'bg-muted/30 hover:bg-muted/50'
+                                            }`}
+                                    >
+                                        <RankPosition index={index} />
+
+                                        {entry.photoURL ? (
+                                            <img
+                                                src={entry.photoURL}
+                                                alt=""
+                                                className="size-8 shrink-0 rounded-full object-cover sm:size-10"
+                                            />
+                                        ) : (
+                                            <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full sm:size-10">
+                                                <UserRound size={18} aria-hidden="true" />
+                                            </div>
+                                        )}
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-foreground truncate text-sm font-semibold sm:text-base">
+                                                {entry.userName}
+                                            </p>
+                                            <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed sm:text-sm">
+                                                {entry.totalAttempts} respostas · Eficiência: {entry.score}%
+                                            </p>
+                                        </div>
+
+                                        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+                                            {primaryAttempt && (
+                                                <AttemptActions
+                                                    attempt={primaryAttempt}
+                                                    isCreator={isCreator}
+                                                    currentUserId={currentUserId}
+                                                    operationLoading={operationLoading}
+                                                    onView={setSelectedAttempt}
+                                                    onDelete={handleDeleteAttempt}
+                                                    label={entry.userName}
+                                                />
+                                            )}
+
+                                            {hasMultipleAttempts && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setExpandedStudyUser(isExpanded ? null : entry.userId)
+                                                    }
+                                                    aria-expanded={isExpanded}
+                                                    aria-label={
+                                                        isExpanded ? 'Ocultar tentativas' : 'Mostrar tentativas'
+                                                    }
+                                                    title={
+                                                        isExpanded ? 'Ocultar tentativas' : 'Mostrar tentativas'
+                                                    }
+                                                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex size-9 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                                                >
+                                                    {isExpanded ? (
+                                                        <ChevronUp size={19} aria-hidden="true" />
+                                                    ) : (
+                                                        <ChevronDown size={19} aria-hidden="true" />
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {hasMultipleAttempts && isExpanded && (
+                                        <AttemptHistory
+                                            attempts={studyAttempts}
+                                            mode="study"
+                                            isCreator={isCreator}
+                                            currentUserId={currentUserId}
+                                            operationLoading={operationLoading}
+                                            onView={setSelectedAttempt}
+                                            onDelete={handleDeleteAttempt}
+                                        />
+                                    )}
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+            )}
+
+            {/* Visualização das respostas */}
             {selectedAttempt && (
                 <AnswersModal
                     isOpen={!!selectedAttempt}
-                    onClose={closeAnswersModal}
+                    onClose={() => setSelectedAttempt(null)}
                     attempt={selectedAttempt}
                     questions={questions}
                 />
             )}
 
+            {/* Confirmação de exclusão */}
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
+                onClose={closeDeleteModal}
                 onConfirm={confirmDelete}
-                title={deleteTarget === "all" ? "Excluir Todas as Tentativas" : "Excluir Tentativa"}
+                title={
+                    deleteTarget === 'all'
+                        ? 'Excluir Todas as Tentativas'
+                        : 'Excluir Tentativa'
+                }
                 message={
-                    deleteTarget === "all"
-                        ? "Tem certeza que deseja excluir TODAS as tentativas deste quiz? Esta ação não pode ser desfeita."
-                        : "Tem certeza que deseja excluir esta tentativa? Esta ação não pode ser desfeita."
+                    deleteTarget === 'all'
+                        ? 'Tem certeza que deseja excluir TODAS as tentativas deste quiz? Esta ação não pode ser desfeita.'
+                        : 'Tem certeza que deseja excluir esta tentativa? Esta ação não pode ser desfeita.'
                 }
                 isLoading={operationLoading}
             />
-        </div>
-    );
-};
+        </section>
+    )
+}

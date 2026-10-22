@@ -1,14 +1,12 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
 
-const PublicLayout: React.FC = () => {
+import { Outlet } from 'react-router'
+
+export default function PublicLayout() {
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
-            <main>
+        <div className="bg-background text-foreground min-h-dvh w-full">
+            <main className="min-h-dvh">
                 <Outlet />
             </main>
         </div>
-    );
-};
-
-export default PublicLayout;
+    )
+}

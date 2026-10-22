@@ -1,79 +1,95 @@
-import React from "react";
-import { MdCancel } from "react-icons/md";
-import { FaTrashAlt } from "react-icons/fa";
+
+import { AlertTriangle, LoaderCircle, Trash2, X } from 'lucide-react'
 
 interface ConfirmDeleteModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    title?: string;
-    message?: string;
-    isLoading?: boolean;
+    isOpen: boolean
+    onClose: () => void
+    onConfirm: () => void
+    title?: string
+    message?: string
+    isLoading?: boolean
 }
 
-export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
+export function ConfirmDeleteModal({
     isOpen,
     onClose,
     onConfirm,
-    title = "Confirmar Exclusão",
-    message = "Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.",
+    title = 'Confirmar Exclusão',
+    message = 'Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.',
     isLoading = false,
-}) => {
-    if (!isOpen) return null;
+}: ConfirmDeleteModalProps) {
+    if (!isOpen) return null
 
     return (
-        <div
-            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-[2px]">
             <div
-                className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full border border-gray-200 dark:border-none transition-colors duration-200 animate-fadeIn"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="confirm-delete-title"
+                aria-describedby="confirm-delete-description"
+                aria-busy={isLoading}
+                className="border-border bg-card text-card-foreground w-full max-w-sm rounded-2xl border p-5 shadow-2xl sm:p-6"
             >
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{title}</h2>
-                <p className="text-gray-700 dark:text-gray-300 mb-6">{message}</p>
-                <div className="flex justify-end gap-4">
+                {/* Ícone */}
+                <div className="bg-destructive/10 text-destructive mb-5 flex size-12 items-center justify-center rounded-xl">
+                    <AlertTriangle
+                        size={23}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                    />
+                </div>
+
+                {/* Conteúdo */}
+                <div className="mb-6">
+                    <h2
+                        id="confirm-delete-title"
+                        className="text-foreground text-lg font-semibold tracking-tight"
+                    >
+                        {title}
+                    </h2>
+
+                    <p
+                        id="confirm-delete-description"
+                        className="text-muted-foreground mt-2 text-sm leading-relaxed"
+                    >
+                        {message}
+                    </p>
+                </div>
+
+                {/* Ações */}
+                <div className="flex items-center gap-3">
                     <button
+                        type="button"
                         onClick={onClose}
                         disabled={isLoading}
-                        className="flex items-center px-6 py-4 cursor-pointer bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 disabled:opacity-50 transition-colors duration-200"
+                        className="border-border bg-muted text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        <MdCancel className="mr-2" />
+                        <X size={16} strokeWidth={2} />
                         Cancelar
                     </button>
+
                     <button
+                        type="button"
                         onClick={onConfirm}
                         disabled={isLoading}
-                        className={`px-6 py-4 rounded-lg text-white flex items-center justify-center gap-2 transition-colors duration-200 ${isLoading
-                            ? "bg-red-400 dark:bg-red-400 cursor-not-allowed"
-                            : "bg-red-600 dark:bg-red-600 hover:bg-red-700 dark:hover:bg-red-700 cursor-pointer"
-                            }`}
+                        className="bg-destructive hover:bg-destructive/90 focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-white transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {isLoading ? (
                             <>
-                                <svg
-                                    className="animate-spin h-5 w-5 text-white"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        className="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                        className="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                    ></path>
-                                </svg>
+                                <LoaderCircle
+                                    size={17}
+                                    className="animate-spin"
+                                    aria-hidden="true"
+                                />
                                 Excluindo...
                             </>
                         ) : (
                             <>
-                                <FaTrashAlt className="mr-2" />
+                                <Trash2
+                                    size={17}
+                                    strokeWidth={1.8}
+                                    aria-hidden="true"
+                                />
                                 Excluir
                             </>
                         )}
@@ -81,5 +97,5 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}

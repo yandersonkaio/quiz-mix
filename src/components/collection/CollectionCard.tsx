@@ -1,110 +1,118 @@
-import { Link } from "react-router-dom";
-import { QuizCollection } from "@/types/quiz";
+
+import { FolderOpen, Globe2, Star } from 'lucide-react'
+import { Link } from 'react-router'
+
+import type { QuizCollection } from '@/types/quiz'
 
 interface CollectionCardProps {
-    collection: QuizCollection;
+    collection: QuizCollection
 }
 
 export function CollectionCard({ collection }: CollectionCardProps) {
     const formattedDate = collection.createdAt?.toDate
-        ? new Date(collection.createdAt.toDate()).toLocaleDateString("pt-BR")
-        : "Data desconhecida";
+        ? new Date(collection.createdAt.toDate()).toLocaleDateString('pt-BR')
+        : 'Data desconhecida'
 
     const label = collection.isOwner
-        ? "Minha coleção"
+        ? 'Minha coleção'
         : collection.isFavorite
-            ? "Favorita"
-            : "Coleção pública";
+            ? 'Favorita'
+            : 'Coleção pública'
 
-    const icon = collection.isOwner
-        ? "📁"
+    const Icon = collection.isOwner
+        ? FolderOpen
         : collection.isFavorite
-            ? "⭐"
-            : "🌎";
+            ? Star
+            : Globe2
+
+    const statusColors = collection.isOwner
+        ? 'border-answer-selected-foreground/20 bg-answer-selected text-answer-selected-foreground'
+        : collection.isFavorite
+            ? 'border-answer-correct-foreground/20 bg-answer-correct text-answer-correct-foreground'
+            : 'border-border bg-muted text-muted-foreground'
 
     return (
         <Link
             to={`/collections/${collection.id}`}
-            className="flex flex-col bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md hover:shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-gray-700 transition-all duration-200 h-full"
+            className="group border-border bg-card text-card-foreground hover:border-ring/50 flex h-full min-w-0 flex-col rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:p-6"
         >
-            <div className="flex-grow">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">
-                        {icon}
-                    </span>
+            {/* Cabeçalho */}
+            <div className="flex-1">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-start gap-2.5">
+                        <Icon
+                            size={21}
+                            strokeWidth={1.8}
+                            aria-hidden="true"
+                            className="text-muted-foreground mt-0.5 shrink-0"
+                        />
 
-                    <div className="flex-1 min-n-w-0">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                        <h2 className="min-w-0 flex-1 text-lg leading-snug font-semibold tracking-tight wrap-break-word sm:text-xl">
                             {collection.name}
                         </h2>
-
-                        <span
-                            className={`inline-flex mt-2 px-2 py-1 rounded-full text-xs font-medium ${collection.isOwner
-                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                    : collection.isFavorite
-                                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                        : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-                                }`}
-                        >
-                            {label}
-                        </span>
                     </div>
+
+                    <span
+                        className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap ${statusColors}`}
+                    >
+                        {label}
+                    </span>
                 </div>
 
-                <p className="text-gray-600 dark:text-gray-400 text-sm mt-3 line-clamp-2">
-                    {collection.description || "Sem descrição"}
+                <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
+                    {collection.description || 'Sem descrição'}
                 </p>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">
+            {/* Informações */}
+            <div className="border-border mt-6 border-t pt-4">
+                <div className="mb-5 grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">
                             Quizzes
-                        </span>
+                        </p>
 
-                        <span className="block font-semibold text-blue-600 dark:text-blue-400">
+                        <p className="text-foreground text-sm font-semibold">
                             {collection.quizCount ?? 0}
-                        </span>
+                        </p>
                     </div>
 
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">
+                    <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">
                             Seções
-                        </span>
+                        </p>
 
-                        <span className="block font-semibold text-green-600 dark:text-green-400">
+                        <p className="text-foreground text-sm font-semibold">
                             {collection.sectionCount ?? 0}
-                        </span>
+                        </p>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                {/* Rodapé */}
+                <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs">
                     <span>
                         Criada em {formattedDate}
                     </span>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex min-w-0 max-w-full items-center gap-2">
                         {collection.creator?.photoURL ? (
                             <img
                                 src={collection.creator.photoURL}
-                                alt={collection.creator.name}
-                                className="w-5 h-5 rounded-full object-cover"
+                                alt=""
+                                className="size-6 shrink-0 rounded-full object-cover"
                             />
                         ) : (
-                            <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                                <span className="text-xs text-gray-500 dark:text-gray-300">
-                                    {collection.creator?.name?.charAt(0)?.toUpperCase() || "U"}
-                                </span>
+                            <div className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+                                {collection.creator?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
                         )}
 
-                        <span className="font-medium">
-                            {collection.creator?.name || "Usuário"}
+                        <span className="max-w-32 truncate font-medium sm:max-w-40">
+                            {collection.creator?.name || 'Usuário'}
                         </span>
                     </div>
                 </div>
             </div>
         </Link>
-    );
+    )
 }

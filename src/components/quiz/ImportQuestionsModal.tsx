@@ -1,22 +1,580 @@
-import React, { useState } from 'react';
-import { validateQuestionData } from '../../utils/validation';
-import { Question } from '../../types/quiz';
-import { toast } from 'sonner';
-import { CodeBlock } from '../CodeBlock';
 
-type QuestionData = Omit<Question, 'id'>;
+import { useState } from 'react'
+import type { ChangeEvent } from 'react'
+import {
+    CheckCircle2,
+    ChevronDown,
+    CircleAlert,
+    FileJson,
+    FileUp,
+    LoaderCircle,
+    X,
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+import { validateQuestionData } from '../../utils/validation'
+import type { Question } from '../../types/quiz'
+import { CodeBlock } from '../CodeBlock'
+
+type QuestionData = Omit<Question, 'id'>
 
 interface ImportQuestionsModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSaveImportedQuestions: (questions: QuestionData[]) => Promise<void>;
-    quizId: string;
+    isOpen: boolean
+    onClose: () => void
+    onSaveImportedQuestions: (
+        questions: QuestionData[]
+    ) => Promise<void>
+    quizId: string
 }
 
 interface PreviewQuestion {
-    data: Partial<Question>;
-    errors: string[];
-    isValid: boolean;
+    data: Partial<Question>
+    errors: string[]
+    isValid: boolean
+}
+
+interface ImportQuestionsContentProps {
+    onClose: () => void
+    onSaveImportedQuestions: (
+        questions: QuestionData[]
+    ) => Promise<void>
+}
+
+const exampleJson = `[
+  {
+    "type": "multiple-choice",
+    "question": "Sua pergunta?",
+    "options": [
+      "Opção A",
+      "Opção B",
+      "Opção C",
+      "Opção D"
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "type": "multiple-choice",
+    "question": "Sua pergunta 2?",
+    "options": [
+      "Opção A",
+      "Opção B",
+      "Opção C",
+      "Opção D"
+    ],
+    "correctAnswer": 2
+  }
+]`
+
+function ImportQuestionsContent({
+    onClose,
+    onSaveImportedQuestions,
+}: ImportQuestionsContentProps) {
+    const [fileName, setFileName] = useState<string | null>(null)
+
+    const [previewQuestions, setPreviewQuestions] = useState<
+        PreviewQuestion[]
+    >([])
+
+    const [fileError, setFileError] = useState<string | null>(null)
+    const [isProcessing, setIsProcessing] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [showFormatExample, setShowFormatExample] = useState(false)
+
+    const isBusy = isProcessing || isSaving
+
+    const validCount = previewQuestions.filter(
+        (question) => question.isValid
+    ).length
+
+    const invalidCount = previewQuestions.length - validCount
+
+    const handleClose = () => {
+        if (!isBusy) {
+            onClose()
+        }
+    }
+
+    const handleFileChange = async (
+        event: ChangeEvent<HTMLInputElement>
+    ) => {
+        if (isBusy) return
+
+        const file = event.target.files?.[0]
+
+        // Permite selecionar o mesmo arquivo novamente.
+        event.target.value = ''
+
+        if (!file) return
+
+        setFileName(null)
+        setFileError(null)
+        setPreviewQuestions([])
+
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            setFileError(
+                'Formato de arquivo inválido. Selecione um arquivo .json.'
+            )
+            return
+        }
+
+        setFileName(file.name)
+        setIsProcessing(true)
+
+        try {
+            const text = await file.text()
+            const json: unknown = JSON.parse(text)
+
+            if (!Array.isArray(json)) {
+                throw new Error(
+                    'O arquivo JSON deve conter um array de perguntas.'
+                )
+            }
+
+            if (json.length === 0) {
+                throw new Error(
+                    'O arquivo JSON não contém perguntas.'
+                )
+            }
+
+            const previews: PreviewQuestion[] = json.map(
+                (item: unknown, index: number) => {
+                    if (
+                        typeof item !== 'object' ||
+                        item === null ||
+                        Array.isArray(item)
+                    ) {
+                        return {
+                            data: {},
+                            errors: [
+                                `Item ${index + 1} não é um objeto de pergunta válido.`,
+                            ],
+                            isValid: false,
+                        }
+                    }
+
+                    const questionData = item as Partial<Question>
+                    const errors = validateQuestionData(questionData)
+
+                    return {
+                        data: questionData,
+                        errors,
+                        isValid: errors.length === 0,
+                    }
+                }
+            )
+
+            setPreviewQuestions(previews)
+        } catch (error) {
+            console.error('Erro ao processar JSON:', error)
+
+            setFileError(
+                `Erro ao processar o arquivo: ${error instanceof Error
+                    ? error.message
+                    : String(error)
+                }`
+            )
+
+            setPreviewQuestions([])
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
+    const handleSave = async () => {
+        if (isBusy) return
+
+        const validQuestionsToSave: QuestionData[] =
+            previewQuestions
+                .filter((question) => question.isValid)
+                .map((question) => question.data as QuestionData)
+
+        if (validQuestionsToSave.length === 0) {
+            toast.error(
+                'Nenhuma pergunta válida encontrada no arquivo para importar.'
+            )
+            return
+        }
+
+        setIsSaving(true)
+        setFileError(null)
+
+        try {
+            await onSaveImportedQuestions(validQuestionsToSave)
+
+            toast.success(
+                `${validQuestionsToSave.length} perguntas importadas com sucesso.`
+            )
+
+            onClose()
+        } catch (error) {
+            console.error(
+                'Erro ao salvar perguntas importadas:',
+                error
+            )
+
+            setFileError(
+                `Erro ao salvar perguntas: ${error instanceof Error
+                    ? error.message
+                    : 'Erro desconhecido'
+                }`
+            )
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 backdrop-blur-[2px] sm:p-6"
+            onClick={handleClose}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="import-questions-title"
+                aria-describedby="import-questions-description"
+                aria-busy={isBusy}
+                className="border-border bg-card text-card-foreground flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[calc(100dvh-3rem)]"
+                onClick={(event) => event.stopPropagation()}
+            >
+                {/* Cabeçalho */}
+                <div className="border-border flex shrink-0 items-start justify-between gap-4 border-b px-5 py-4 sm:px-6">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <div className="bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
+                            <FileJson
+                                size={20}
+                                strokeWidth={1.8}
+                                aria-hidden="true"
+                            />
+                        </div>
+
+                        <div className="min-w-0">
+                            <h2
+                                id="import-questions-title"
+                                className="text-foreground text-lg font-semibold tracking-tight sm:text-xl"
+                            >
+                                Importar perguntas
+                            </h2>
+
+                            <p
+                                id="import-questions-description"
+                                className="text-muted-foreground mt-1 text-xs leading-relaxed sm:text-sm"
+                            >
+                                Importe perguntas de um arquivo JSON para
+                                o seu quiz.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        disabled={isBusy}
+                        aria-label="Fechar modal"
+                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Conteúdo */}
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+                    {/* Seleção do arquivo */}
+                    <section>
+                        <label
+                            htmlFor="questions-json-file"
+                            className="text-foreground mb-2 block text-sm font-medium"
+                        >
+                            Arquivo JSON
+                        </label>
+
+                        <input
+                            id="questions-json-file"
+                            type="file"
+                            accept=".json,application/json"
+                            onChange={handleFileChange}
+                            disabled={isBusy}
+                            className="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/30 block w-full cursor-pointer rounded-xl border p-2 text-sm outline-none transition-colors focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent"
+                        />
+
+                        <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                            Selecione um arquivo .json contendo uma lista
+                            de perguntas.
+                        </p>
+
+                        {fileName && (
+                            <div className="text-muted-foreground mt-3 flex min-w-0 items-center gap-2 text-xs">
+                                <FileJson
+                                    size={15}
+                                    className="shrink-0"
+                                    aria-hidden="true"
+                                />
+
+                                <span className="truncate">
+                                    {fileName}
+                                </span>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Formato de exemplo */}
+                    <section>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowFormatExample((prev) => !prev)
+                            }
+                            aria-expanded={showFormatExample}
+                            className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
+                        >
+                            <FileJson
+                                size={16}
+                                aria-hidden="true"
+                            />
+
+                            {showFormatExample
+                                ? 'Ocultar formato de exemplo'
+                                : 'Mostrar formato de exemplo'}
+
+                            <ChevronDown
+                                size={16}
+                                className={`transition-transform duration-200 ${showFormatExample ? 'rotate-180' : ''
+                                    }`}
+                                aria-hidden="true"
+                            />
+                        </button>
+
+                        {showFormatExample && (
+                            <div className="mt-3 min-w-0">
+                                <CodeBlock
+                                    language="json"
+                                    code={exampleJson}
+                                />
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Processamento */}
+                    {isProcessing && (
+                        <div
+                            role="status"
+                            className="border-border bg-muted/40 flex items-center gap-3 rounded-xl border p-4"
+                        >
+                            <LoaderCircle
+                                size={20}
+                                className="text-primary shrink-0 animate-spin"
+                                aria-hidden="true"
+                            />
+
+                            <span className="text-muted-foreground text-sm">
+                                Processando arquivo JSON...
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Mensagem de erro */}
+                    {fileError && (
+                        <div
+                            role="alert"
+                            className="border-destructive/30 bg-destructive/5 flex items-start gap-3 rounded-xl border p-4"
+                        >
+                            <CircleAlert
+                                size={19}
+                                className="text-destructive mt-0.5 shrink-0"
+                                aria-hidden="true"
+                            />
+
+                            <p className="text-foreground min-w-0 text-sm leading-relaxed wrap-break-word">
+                                {fileError}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Pré-visualização */}
+                    {previewQuestions.length > 0 && (
+                        <section className="space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-foreground text-base font-semibold">
+                                        Pré-visualização
+                                    </h3>
+
+                                    <p className="text-muted-foreground mt-1 text-xs">
+                                        Confira as perguntas antes de importar.
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="bg-answer-correct text-answer-correct-foreground inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium">
+                                        <CheckCircle2
+                                            size={13}
+                                            aria-hidden="true"
+                                        />
+
+                                        {validCount} válidas
+                                    </span>
+
+                                    {invalidCount > 0 && (
+                                        <span className="bg-answer-incorrect text-answer-incorrect-foreground inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium">
+                                            <CircleAlert
+                                                size={13}
+                                                aria-hidden="true"
+                                            />
+
+                                            {invalidCount} inválidas
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Lista */}
+                            <div className="space-y-3">
+                                {previewQuestions.map((preview, index) => {
+                                    const questionText =
+                                        typeof preview.data.question === 'string' &&
+                                            preview.data.question.trim()
+                                            ? preview.data.question
+                                            : 'Pergunta em branco'
+
+                                    const questionType =
+                                        typeof preview.data.type === 'string'
+                                            ? preview.data.type
+                                            : 'Tipo inválido'
+
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="border-border bg-muted/30 min-w-0 rounded-xl border p-4"
+                                        >
+                                            <div className="flex min-w-0 items-start gap-3">
+                                                <div
+                                                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${preview.isValid
+                                                            ? 'bg-answer-correct text-answer-correct-foreground'
+                                                            : 'bg-answer-incorrect text-answer-incorrect-foreground'
+                                                        }`}
+                                                >
+                                                    {index + 1}
+                                                </div>
+
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-foreground text-sm leading-relaxed font-medium wrap-break-word">
+                                                        {questionText}
+                                                    </p>
+
+                                                    <p className="text-muted-foreground mt-1 text-xs">
+                                                        {questionType}
+                                                    </p>
+
+                                                    {/* Erros da pergunta */}
+                                                    {!preview.isValid &&
+                                                        preview.errors.length > 0 && (
+                                                            <div className="border-destructive/20 mt-3 border-t pt-3">
+                                                                <div className="text-destructive mb-2 flex items-center gap-2">
+                                                                    <CircleAlert
+                                                                        size={15}
+                                                                        aria-hidden="true"
+                                                                    />
+
+                                                                    <span className="text-xs font-medium">
+                                                                        Problemas encontrados
+                                                                    </span>
+                                                                </div>
+
+                                                                <ul className="text-muted-foreground list-inside list-disc space-y-1 text-xs leading-relaxed">
+                                                                    {preview.errors.map(
+                                                                        (error, errorIndex) => (
+                                                                            <li key={errorIndex}>
+                                                                                {error}
+                                                                            </li>
+                                                                        )
+                                                                    )}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                </div>
+
+                                                {/* Indicador */}
+                                                {preview.isValid && (
+                                                    <CheckCircle2
+                                                        size={18}
+                                                        className="text-muted-foreground shrink-0"
+                                                        aria-label="Pergunta válida"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            {/* Aviso de importação parcial */}
+                            {invalidCount > 0 && validCount > 0 && (
+                                <div className="border-border bg-muted/30 flex items-start gap-3 rounded-xl border p-4">
+                                    <CircleAlert
+                                        size={18}
+                                        className="text-muted-foreground mt-0.5 shrink-0"
+                                        aria-hidden="true"
+                                    />
+
+                                    <p className="text-muted-foreground text-xs leading-relaxed">
+                                        Apenas as {validCount} perguntas válidas
+                                        serão importadas. As {invalidCount} perguntas
+                                        inválidas serão ignoradas.
+                                    </p>
+                                </div>
+                            )}
+                        </section>
+                    )}
+                </div>
+
+                {/* Rodapé */}
+                <div className="border-border bg-card flex shrink-0 items-center justify-end gap-3 border-t px-5 py-4 sm:px-6">
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        disabled={isBusy}
+                        className="border-border bg-muted text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-lg border px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={isBusy || validCount === 0}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                    >
+                        {isSaving ? (
+                            <>
+                                <LoaderCircle
+                                    size={17}
+                                    className="animate-spin"
+                                    aria-hidden="true"
+                                />
+
+                                Salvando...
+                            </>
+                        ) : (
+                            <>
+                                <FileUp
+                                    size={17}
+                                    strokeWidth={1.8}
+                                    aria-hidden="true"
+                                />
+
+                                Importar {validCount}
+                                <span className="hidden sm:inline">
+                                    {validCount === 1
+                                        ? ' pergunta'
+                                        : ' perguntas'}
+                                </span>
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
 }
 
 export default function ImportQuestionsModal({
@@ -24,278 +582,12 @@ export default function ImportQuestionsModal({
     onClose,
     onSaveImportedQuestions,
 }: ImportQuestionsModalProps) {
-    const [_, setSelectedFile] = useState<File | null>(null);
-    const [previewQuestions, setPreviewQuestions] = useState<PreviewQuestion[]>([]);
-    const [fileError, setFileError] = useState<string | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [showFormatExample, setShowFormatExample] = useState(false);
-
-    const resetState = () => {
-        setSelectedFile(null);
-        setPreviewQuestions([]);
-        setFileError(null);
-        setIsProcessing(false);
-        setIsSaving(false);
-    };
-
-    const handleClose = () => {
-        resetState();
-        onClose();
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            resetState();
-            return;
-        }
-
-        if (file.type !== 'application/json') {
-            setFileError('Formato de arquivo inválido. Por favor, selecione um arquivo .json.');
-            setSelectedFile(null);
-            setPreviewQuestions([]);
-            return;
-        }
-
-        setSelectedFile(file);
-        setFileError(null);
-        setPreviewQuestions([]);
-        setIsProcessing(true);
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const text = e.target?.result;
-                if (typeof text !== 'string') {
-                    throw new Error("Não foi possível ler o conteúdo do arquivo.");
-                }
-                const json = JSON.parse(text);
-
-                if (!Array.isArray(json)) {
-                    throw new Error("O arquivo JSON deve conter um array de perguntas.");
-                }
-
-                const previews: PreviewQuestion[] = json.map((qData: any, index: number): PreviewQuestion => {
-                    if (typeof qData !== 'object' || qData === null) {
-                        return { data: {}, errors: [`Item ${index + 1} não é um objeto de pergunta válido.`], isValid: false };
-                    }
-                    const errors = validateQuestionData(qData as Partial<Question>);
-                    return {
-                        data: qData,
-                        errors: errors,
-                        isValid: errors.length === 0,
-                    };
-                });
-
-                setPreviewQuestions(previews);
-
-            } catch (error: any) {
-                console.error("Erro ao processar JSON:", error);
-                setFileError(`Erro ao processar o arquivo: ${error.message}`);
-                setPreviewQuestions([]);
-            } finally {
-                setIsProcessing(false);
-            }
-        };
-
-        reader.onerror = () => {
-            console.error("Erro ao ler arquivo:", reader.error);
-            setFileError("Ocorreu um erro ao ler o arquivo.");
-            setIsProcessing(false);
-        };
-
-        reader.readAsText(file);
-    };
-
-    const handleSave = async () => {
-        const validQuestionsToSave: QuestionData[] = previewQuestions
-            .filter(pq => pq.isValid)
-            .map(pq => pq.data as QuestionData);
-
-        if (validQuestionsToSave.length === 0) {
-            toast.error("Nenhuma pergunta válida encontrada no arquivo para importar.");
-            return;
-        }
-
-        setIsSaving(true);
-        setFileError(null);
-
-        try {
-            await onSaveImportedQuestions(validQuestionsToSave);
-            toast.success(`Sucesso! ${validQuestionsToSave.length} perguntas importadas.`);
-            handleClose();
-        } catch (error: any) {
-            console.error("Erro ao salvar perguntas importadas:", error);
-            setFileError(`Erro ao salvar perguntas: ${error.message || 'Erro desconhecido'}`);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const validCount = previewQuestions.filter(pq => pq.isValid).length;
-    const invalidCount = previewQuestions.length - validCount;
-
-    if (!isOpen) return null;
+    if (!isOpen) return null
 
     return (
-        <div
-            className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300"
-            onClick={handleClose}
-        >
-            <div
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-3xl max-h-[90vh] flex flex-col border border-gray-200 dark:border-none shadow-lg dark:shadow-lg transition-colors duration-200 animate-fadeIn"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex justify-between items-center mb-6 text-gray-900 dark:text-white">
-                    <h2 className="text-xl font-semibold">Importar Perguntas de Arquivo JSON</h2>
-                    <button
-                        onClick={handleClose}
-                        className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
-                        aria-label="Fechar modal"
-                    >
-                        ✕
-                    </button>
-                </div>
-
-                <div className="mb-4">
-                    <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="file_input">
-                        Selecione o arquivo JSON
-                    </label>
-                    <input
-                        className="block w-full text-sm text-gray-900 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 placeholder-gray-500 p-2.5 transition-colors duration-200"
-                        id="file_input"
-                        type="file"
-                        accept=".json"
-                        onChange={handleFileChange}
-                        disabled={isProcessing || isSaving}
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                        O arquivo deve ser .json contendo um array de objetos de perguntas.
-                        <a
-                            href="#"
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline ml-1 transition-colors duration-200"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setShowFormatExample((prev) => !prev);
-                            }}
-                        >
-                            {showFormatExample ? 'Ocultar formato de exemplo' : 'Mostrar formato de exemplo'}
-                        </a>
-                        {showFormatExample && (
-                            <div className="mt-2">
-                                <CodeBlock
-                                    language='json'
-                                    code={`[
-    {
-        "type": "multiple-choice",
-        "question": "Sua pergunta?",
-        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
-        "correctAnswer": 0
-    },
-    {
-        "type": "multiple-choice",
-        "question": "Sua pergunta 2?",
-        "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
-        "correctAnswer": 2                                
-    }
-]`}
-                                />
-                            </div>
-                        )}
-                    </p>
-                    {isProcessing && <p className="text-yellow-600 dark:text-yellow-400 mt-2">Processando arquivo...</p>}
-                    {fileError && <p className="text-red-600 dark:text-red-500 text-sm mt-2">{fileError}</p>}
-                </div>
-
-                {previewQuestions.length > 0 && (
-                    <div className="flex-grow overflow-y-auto mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-100 dark:bg-gray-900/50 transition-colors duration-200">
-                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                            Pré-visualização ({validCount} válidas, {invalidCount} inválidas)
-                        </h3>
-                        <div className="space-y-3">
-                            {previewQuestions.map((pq, index) => (
-                                <div
-                                    key={index}
-                                    className={`p-3 rounded transition-colors duration-200 ${pq.isValid
-                                        ? 'bg-green-100 border border-green-200'
-                                        : 'bg-red-100 border border-red-200'
-                                        } dark:${pq.isValid ? 'bg-green-900/50 border-green-700/50' : 'bg-red-900/50 border-red-700/50'
-                                        }`}
-                                >
-                                    <p className="text-gray-900 dark:text-gray-300 font-medium">
-                                        <span
-                                            className={`font-bold mr-2 ${pq.isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                                                }`}
-                                        >
-                                            {index + 1}.
-                                        </span>
-                                        {pq.data.question || <span className="text-gray-500 italic">Pergunta em branco</span>}
-                                        <span className="text-xs text-gray-500 ml-2">
-                                            ({pq.data.type || 'Tipo inválido'})
-                                        </span>
-                                    </p>
-                                    {!pq.isValid && pq.errors.length > 0 && (
-                                        <ul className="list-disc list-inside mt-1 ml-4 text-red-600 dark:text-red-400 text-xs">
-                                            {pq.errors.map((err, i) => (
-                                                <li key={i}>{err}</li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <div className="flex space-x-4 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
-                    <button
-                        type="button"
-                        onClick={handleClose}
-                        className="flex-1 py-2 px-4 cursor-pointer bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 disabled:opacity-50 transition-colors duration-200"
-                        disabled={isProcessing || isSaving}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={isProcessing || isSaving || validCount === 0}
-                        className={`flex-1 py-2 px-4 rounded-lg text-white flex items-center justify-center gap-2 transition-colors duration-200 ${isSaving || validCount === 0 || isProcessing
-                            ? 'bg-blue-400 dark:bg-blue-400 cursor-not-allowed opacity-70'
-                            : 'bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-700 cursor-pointer'
-                            }`}
-                    >
-                        {isSaving ? (
-                            <>
-                                <svg
-                                    className="animate-spin h-5 w-5 text-white"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        className="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                    ></circle>
-                                    <path
-                                        className="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                    ></path>
-                                </svg>
-                                Salvando...
-                            </>
-                        ) : (
-                            `Salvar ${validCount > 0 ? validCount : ''} Perguntas Válidas`
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+        <ImportQuestionsContent
+            onClose={onClose}
+            onSaveImportedQuestions={onSaveImportedQuestions}
+        />
+    )
 }

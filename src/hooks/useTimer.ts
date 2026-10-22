@@ -1,55 +1,87 @@
-import { useState, useEffect, useCallback } from "react";
+
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface UseTimerProps {
-    initialTime: number;
-    onTimeUp: () => void;
-    isActive: boolean;
+    initialTime: number
+    onTimeUp: () => void
+    isActive: boolean
 }
 
-export const useTimer = ({ initialTime, onTimeUp, isActive }: UseTimerProps) => {
-    const [timeLeft, setTimeLeft] = useState<number>(initialTime);
-    const [isRunning, setIsRunning] = useState<boolean>(isActive);
+export const useTimer = ({
+    initialTime,
+    onTimeUp,
+    isActive,
+}: UseTimerProps) => {
+    const [timeLeft, setTimeLeft] = useState(initialTime)
+
+    const [pauseState, setPauseState] = useState({
+        previousIsActive: isActive,
+        isPaused: false,
+    })
+
+    const hasNotifiedRef = useRef(false)
+
+    if (pauseState.previousIsActive !== isActive) {
+        setPauseState({
+            previousIsActive: isActive,
+            isPaused: false,
+        })
+    }
+
+    const isRunning =
+        isActive &&
+        !pauseState.isPaused &&
+        timeLeft > 0
 
     useEffect(() => {
-        setIsRunning(isActive);
-    }, [isActive]);
+        if (!isRunning) return
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => Math.max(0, prev - 1))
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [isRunning])
+
+    useEffect(() => {
+        if (
+            timeLeft !== 0 ||
+            initialTime <= 0 ||
+            hasNotifiedRef.current
+        ) {
+            return
+        }
+
+        hasNotifiedRef.current = true
+        onTimeUp()
+    }, [timeLeft, initialTime, onTimeUp])
 
     const resetTimer = useCallback(() => {
-        setTimeLeft(initialTime);
-        setIsRunning(isActive);
-    }, [initialTime, isActive]);
+        hasNotifiedRef.current = false
 
-    useEffect(() => {
-        let timer: NodeJS.Timeout | null = null;
+        setTimeLeft(initialTime)
 
-        if (isRunning && timeLeft > 0) {
-            timer = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timer!);
-                        setIsRunning(false);
-                        onTimeUp();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
+        setPauseState({
+            previousIsActive: isActive,
+            isPaused: false,
+        })
+    }, [initialTime, isActive])
 
-        return () => {
-            if (timer) clearInterval(timer);
-        };
-    }, [isRunning, timeLeft, onTimeUp]);
+    const pauseTimer = useCallback(() => {
+        setPauseState({
+            previousIsActive: isActive,
+            isPaused: true,
+        })
+    }, [isActive])
 
-    const pauseTimer = () => {
-        setIsRunning(false);
-    };
+    const resumeTimer = useCallback(() => {
+        if (timeLeft <= 0) return
 
-    const resumeTimer = () => {
-        if (timeLeft > 0) {
-            setIsRunning(true);
-        }
-    };
+        setPauseState({
+            previousIsActive: isActive,
+            isPaused: false,
+        })
+    }, [isActive, timeLeft])
 
     return {
         timeLeft,
@@ -57,5 +89,5 @@ export const useTimer = ({ initialTime, onTimeUp, isActive }: UseTimerProps) => 
         pauseTimer,
         resumeTimer,
         isRunning,
-    };
-};
+    }
+}

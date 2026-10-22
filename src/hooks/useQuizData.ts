@@ -14,7 +14,7 @@ import {
     deleteDoc,
     writeBatch,
 } from "firebase/firestore";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
 import { Quiz, Question, UserAnswer, Attempt, RankingEntry } from "../types/quiz";
@@ -43,26 +43,32 @@ export const useQuizData = () => {
     const [studyRanking, setStudyRanking] = useState<RankingEntry[]>([]);
     const [allUserAttempts, setAllUserAttempts] = useState<{ [userId: string]: Attempt[] }>({});
     const [statistics, setStatistics] = useState<QuizStatistics | null>(null);
-    const [loading, setLoading] = useState(!!quizId);
+    const [loadedRequestKey, setLoadedRequestKey] = useState<string | null>(null);
     const [operationLoading, setOperationLoading] = useState(false);
 
-    useEffect(() => {
-        if (!quizId) {
-            setLoading(false);
-            return;
-        }
+    const userId = user?.uid;
+    const requestKey = quizId && userId ? `${userId}:${quizId}` : null;
+    const loading = requestKey !== null && loadedRequestKey !== requestKey;
 
-        if (!user) {
-            setLoading(false);
+    useEffect(() => {
+        if (!quizId) return;
+
+        if (!userId) {
             navigate("/login");
             return;
         }
+
+        let cancelled = false;
+        let unsubscribeQuestions: (() => void) | undefined;
 
         const fetchQuizAndCheckAttempts = async () => {
             try {
                 const quizDoc = await getDoc(doc(db, "quizzes", quizId));
 
+                if (cancelled) return;
+
                 if (!quizDoc.exists()) {
+                    setLoadedRequestKey(requestKey);
                     toast.error("Quiz não encontrado.");
                     navigate("/my-quizzes");
                     return;
@@ -83,32 +89,41 @@ export const useQuizData = () => {
                     settings: quizSettings,
                 });
 
-                const unsubscribe = onSnapshot(
+                unsubscribeQuestions = onSnapshot(
                     collection(db, "quizzes", quizId, "questions"),
                     (snapshot) => {
+                        if (cancelled) return;
+
                         const fetchedQuestions = snapshot.docs.map((doc) => ({
                             id: doc.id,
                             ...doc.data(),
                         })) as Question[];
                         setQuestions(fetchedQuestions);
-                        setLoading(false);
+                        setLoadedRequestKey(requestKey);
                     },
                     (error) => {
+                        if (cancelled) return;
+
                         console.error("useQuizData: Erro ao carregar perguntas:", error);
-                        setLoading(false);
+                        setLoadedRequestKey(requestKey);
                     }
                 );
-
-                return () => unsubscribe();
             } catch (error) {
+                if (cancelled) return;
+
                 console.error("useQuizData: Erro ao carregar quiz:", error);
                 toast.error("Erro ao carregar quiz.");
-                setLoading(false);
+                setLoadedRequestKey(requestKey);
             }
         };
 
-        fetchQuizAndCheckAttempts();
-    }, [quizId, navigate, user]);
+        void fetchQuizAndCheckAttempts();
+
+        return () => {
+            cancelled = true;
+            unsubscribeQuestions?.();
+        };
+    }, [quizId, navigate, userId, requestKey]);
 
     const calculateQuizStatistics = (
         allAttempts: Attempt[],
@@ -321,7 +336,7 @@ export const useQuizData = () => {
                 : (correctAnswers / totalQuestions) * 100
             : 0;
 
-        const attemptData: any = {
+        const attemptData = {
             userId: user.uid,
             quizId,
             completedAt: Timestamp.now(),
@@ -332,11 +347,8 @@ export const useQuizData = () => {
             photoURL: user.photoURL || undefined,
             answers,
             mode,
+            ...(mode === 'study' && totalAttempts !== undefined ? { totalAttempts } : {}),
         };
-
-        if (mode === 'study' && totalAttempts !== undefined) {
-            attemptData.totalAttempts = totalAttempts;
-        }
 
         await addDoc(collection(db, "attempts"), attemptData);
 
@@ -347,7 +359,7 @@ export const useQuizData = () => {
         if (!quizId || !quiz) return;
 
         try {
-            const cleanedSettings: any = {
+            const cleanedSettings: Quiz["settings"] = {
                 ...quiz.settings,
                 ...updatedQuiz.settings,
             };
@@ -356,15 +368,14 @@ export const useQuizData = () => {
                 delete cleanedSettings.timeLimitPerQuestion;
             }
 
-            const updatedData: any = {
+            const updatedData = {
                 name: updatedQuiz.name ?? quiz.name,
                 description: updatedQuiz.description ?? quiz.description,
                 settings: cleanedSettings,
+                ...(updatedQuiz.difficulty !== undefined
+                    ? { difficulty: updatedQuiz.difficulty }
+                    : {}),
             };
-
-            if (updatedQuiz.difficulty !== undefined) {
-                updatedData.difficulty = updatedQuiz.difficulty;
-            }
 
             await updateDoc(doc(db, "quizzes", quizId), updatedData);
 
@@ -414,7 +425,7 @@ export const useQuizData = () => {
         if (!quizId) return;
         setOperationLoading(true);
         try {
-            const cleanedQuestion: any = {
+            const cleanedQuestion: Record<string, unknown> = {
                 type: questionData.type,
                 question: questionData.question,
             };
@@ -464,7 +475,7 @@ export const useQuizData = () => {
             const questionsRef = collection(db, "quizzes", quizId, "questions");
 
             questionsData.forEach((questionData) => {
-                const cleanedQuestion: any = {
+                const cleanedQuestion: Record<string, unknown> = {
                     type: questionData.type,
                     question: questionData.question,
                 };
@@ -514,7 +525,7 @@ export const useQuizData = () => {
         if (!quizId || !questionId) return;
         setOperationLoading(true);
         try {
-            const cleanedQuestion: any = {
+            const cleanedQuestion: Record<string, unknown> = {
                 ...questionData,
             };
 

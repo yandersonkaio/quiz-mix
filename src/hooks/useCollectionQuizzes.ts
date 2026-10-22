@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState } from 'react'
 import {
     collection,
     doc,
@@ -11,185 +12,199 @@ import {
     deleteDoc,
     serverTimestamp,
     updateDoc,
-} from "firebase/firestore";
+} from 'firebase/firestore'
 
-import { db } from "../db/firebase";
-import { CollectionQuiz } from "../types/quiz";
+import { db } from '../db/firebase'
+import type { CollectionQuiz } from '../types/quiz'
+
+interface CollectionQuizzesState {
+    collectionId: string
+    quizzes: CollectionQuiz[]
+}
+
+const EMPTY_QUIZZES: CollectionQuiz[] = []
+
+const fetchUserData = async (userId: string) => {
+    try {
+        const userRef = doc(db, 'users', userId)
+        const userSnap = await getDoc(userRef)
+
+        if (userSnap.exists()) {
+            return {
+                id: userSnap.id,
+                name:
+                    userSnap.data().displayName ||
+                    'Usuário desconhecido',
+                photoUrl: userSnap.data().photoURL || null,
+            }
+        }
+
+        return {
+            id: userId,
+            name: 'Usuário desconhecido',
+            photoUrl: null,
+        }
+    } catch (error) {
+        console.error('Error fetching user data:', error)
+
+        return {
+            id: userId,
+            name: 'Usuário',
+            photoUrl: null,
+        }
+    }
+}
 
 export function useCollectionQuizzes(collectionId?: string) {
-    const [quizzes, setQuizzes] = useState<CollectionQuiz[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [operationLoading, setOperationLoading] = useState(false);
+    const [state, setState] = useState<CollectionQuizzesState | null>(
+        null
+    )
 
-    const fetchUserData = async (userId: string) => {
-        try {
-            const userRef = doc(db, "users", userId);
-            const userSnap = await getDoc(userRef);
-
-            if (userSnap.exists()) {
-                return {
-                    id: userSnap.id,
-                    name:
-                        userSnap.data().displayName ||
-                        "Usuário desconhecido",
-                    photoUrl:
-                        userSnap.data().photoURL || null,
-                };
-            }
-
-            return {
-                id: userId,
-                name: "Usuário desconhecido",
-                photoUrl: null,
-            };
-        } catch (error) {
-            console.error(
-                "Error fetching user data:",
-                error
-            );
-
-            return {
-                id: userId,
-                name: "Usuário",
-                photoUrl: null,
-            };
-        }
-    };
+    const [operationLoading, setOperationLoading] = useState(false)
 
     useEffect(() => {
-        if (!collectionId) {
-            setQuizzes([]);
-            setLoading(false);
-            return;
-        }
+        if (!collectionId) return
 
-        setLoading(true);
+        let active = true
+        let snapshotVersion = 0
 
-        const q = query(
-            collection(
-                db,
-                "collections",
-                collectionId,
-                "quizItems"
-            ),
-            orderBy("order")
-        );
+        const quizzesQuery = query(
+            collection(db, 'collections', collectionId, 'quizItems'),
+            orderBy('order')
+        )
 
         const unsubscribe = onSnapshot(
-            q,
+            quizzesQuery,
             async (snapshot) => {
+                const currentVersion = ++snapshotVersion
+
                 try {
                     const quizList = await Promise.all(
                         snapshot.docs.map(async (item) => {
-                            const data = item.data();
+                            const data = item.data()
 
                             const quizSnap = await getDoc(
-                                doc(
-                                    db,
-                                    "quizzes",
-                                    data.quizId
-                                )
-                            );
+                                doc(db, 'quizzes', data.quizId)
+                            )
 
                             if (!quizSnap.exists()) {
-                                return null;
+                                return null
                             }
 
-                            const quizData =
-                                quizSnap.data();
+                            const quizData = quizSnap.data()
 
-                            const questionsSnapshot =
-                                await getDocs(
-                                    collection(
-                                        db,
-                                        "quizzes",
-                                        data.quizId,
-                                        "questions"
-                                    )
-                                );
+                            const questionsSnapshot = await getDocs(
+                                collection(
+                                    db,
+                                    'quizzes',
+                                    data.quizId,
+                                    'questions'
+                                )
+                            )
 
-                            const questionCount =
-                                questionsSnapshot.size;
+                            const questionCount = questionsSnapshot.size
 
-                            let creator =
-                                quizData.creator || null;
+                            let creator = quizData.creator || null
 
-                            if (
-                                !creator &&
-                                quizData.userId
-                            ) {
-                                creator =
-                                    await fetchUserData(
-                                        quizData.userId
-                                    );
+                            if (!creator && quizData.userId) {
+                                creator = await fetchUserData(quizData.userId)
                             }
 
                             return {
                                 id: quizSnap.id,
                                 collectionItemId: item.id,
-                                sectionId:
-                                    data.sectionId ?? null,
+                                sectionId: data.sectionId ?? null,
                                 order: data.order ?? 0,
                                 ...quizData,
                                 questionCount,
                                 creator,
-                            } as CollectionQuiz;
+                            } as CollectionQuiz
                         })
-                    );
+                    )
 
-                    setQuizzes(
-                        quizList.filter(
-                            (
-                                quiz
-                            ): quiz is CollectionQuiz =>
-                                quiz !== null
-                        )
-                    );
+                    if (!active || currentVersion !== snapshotVersion) {
+                        return
+                    }
 
-                    setLoading(false);
+                    const validQuizzes = quizList.filter(
+                        (quiz): quiz is CollectionQuiz => quiz !== null
+                    )
+
+                    setState({
+                        collectionId,
+                        quizzes: validQuizzes,
+                    })
                 } catch (error) {
+                    if (!active || currentVersion !== snapshotVersion) {
+                        return
+                    }
+
                     console.error(
-                        "Erro ao carregar quizzes da coleção:",
+                        'Erro ao carregar quizzes da coleção:',
                         error
-                    );
-                    setLoading(false);
+                    )
+
+                    setState({
+                        collectionId,
+                        quizzes: [],
+                    })
                 }
             },
             (error) => {
-                console.error(
-                    "Erro ao carregar quizzes da coleção:",
-                    error
-                );
-                setLoading(false);
-            }
-        );
+                if (!active) return
 
-        return unsubscribe;
-    }, [collectionId]);
+                snapshotVersion++
+
+                console.error(
+                    'Erro ao carregar quizzes da coleção:',
+                    error
+                )
+
+                setState({
+                    collectionId,
+                    quizzes: [],
+                })
+            }
+        )
+
+        return () => {
+            active = false
+            unsubscribe()
+        }
+    }, [collectionId])
+
+    const isCurrentCollection =
+        !!collectionId && state?.collectionId === collectionId
+
+    const quizzes = isCurrentCollection
+        ? state.quizzes
+        : EMPTY_QUIZZES
+
+    const loading = Boolean(collectionId && !isCurrentCollection)
 
     async function updateQuizSection(
         itemId: string,
         sectionId: string | null
     ) {
-        if (!collectionId) return;
+        if (!collectionId) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             await updateDoc(
                 doc(
                     db,
-                    "collections",
+                    'collections',
                     collectionId,
-                    "quizItems",
+                    'quizItems',
                     itemId
                 ),
                 {
                     sectionId,
                 }
-            );
+            )
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
     }
 
@@ -197,50 +212,43 @@ export function useCollectionQuizzes(collectionId?: string) {
         quizId: string,
         sectionId: string | null = null
     ) {
-        if (!collectionId) return;
+        if (!collectionId) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             const ref = doc(
-                collection(
-                    db,
-                    "collections",
-                    collectionId,
-                    "quizItems"
-                )
-            );
+                collection(db, 'collections', collectionId, 'quizItems')
+            )
 
             await setDoc(ref, {
                 quizId,
                 sectionId,
                 order: quizzes.length,
                 addedAt: serverTimestamp(),
-            });
+            })
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
     }
 
-    async function removeQuizFromCollection(
-        itemId: string
-    ) {
-        if (!collectionId) return;
+    async function removeQuizFromCollection(itemId: string) {
+        if (!collectionId) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             await deleteDoc(
                 doc(
                     db,
-                    "collections",
+                    'collections',
                     collectionId,
-                    "quizItems",
+                    'quizItems',
                     itemId
                 )
-            );
+            )
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
     }
 
@@ -251,5 +259,5 @@ export function useCollectionQuizzes(collectionId?: string) {
         updateQuizSection,
         addQuizToCollection,
         removeQuizFromCollection,
-    };
+    }
 }

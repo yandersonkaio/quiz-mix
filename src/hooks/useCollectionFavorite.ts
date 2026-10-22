@@ -1,103 +1,161 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useRef, useState } from 'react'
 import {
     doc,
     getDoc,
     setDoc,
     deleteDoc,
     serverTimestamp,
-} from "firebase/firestore";
+} from 'firebase/firestore'
 
-import { db } from "../db/firebase";
-import { useAuth } from "../contexts/AuthContext";
+import { db } from '../db/firebase'
+import { useAuth } from '../contexts/AuthContext'
+
+interface FavoriteState {
+    collectionId: string
+    userId: string
+    isFavorite: boolean
+}
 
 export function useCollectionFavorite(collectionId?: string) {
-    const { user } = useAuth();
+    const { user } = useAuth()
+    const userId = user?.uid
 
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [operationLoading, setOperationLoading] = useState(false);
+    const [favoriteState, setFavoriteState] =
+        useState<FavoriteState | null>(null)
+
+    const [operationLoading, setOperationLoading] = useState(false)
+
+    const requestVersionRef = useRef(0)
 
     useEffect(() => {
-        if (!collectionId || !user) {
-            setIsFavorite(false);
-            setLoading(false);
-            return;
-        }
+        if (!collectionId || !userId) return
+
+        let active = true
+        const currentVersion = ++requestVersionRef.current
 
         const loadFavorite = async () => {
             try {
                 const favoriteRef = doc(
                     db,
-                    "collections",
+                    'collections',
                     collectionId,
-                    "favorites",
-                    user.uid
-                );
+                    'favorites',
+                    userId
+                )
 
-                const snap = await getDoc(favoriteRef);
+                const snap = await getDoc(favoriteRef)
 
-                setIsFavorite(snap.exists());
-            } finally {
-                setLoading(false);
+                if (!active || currentVersion !== requestVersionRef.current) {
+                    return
+                }
+
+                setFavoriteState({
+                    collectionId,
+                    userId,
+                    isFavorite: snap.exists(),
+                })
+            } catch (error) {
+                if (!active || currentVersion !== requestVersionRef.current) {
+                    return
+                }
+
+                console.error('Erro ao carregar favorito:', error)
+
+                setFavoriteState({
+                    collectionId,
+                    userId,
+                    isFavorite: false,
+                })
             }
-        };
+        }
 
-        loadFavorite();
-    }, [collectionId, user]);
+        void loadFavorite()
+
+        return () => {
+            active = false
+        }
+    }, [collectionId, userId])
+
+    const isCurrentFavorite =
+        favoriteState !== null &&
+        favoriteState.collectionId === collectionId &&
+        favoriteState.userId === userId
+
+    const isFavorite =
+        isCurrentFavorite && favoriteState?.isFavorite === true
+
+    const loading = Boolean(
+        collectionId && userId && !isCurrentFavorite
+    )
 
     async function favoriteCollection() {
-        if (!collectionId || !user) return;
+        if (!collectionId || !userId || operationLoading) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             await setDoc(
                 doc(
                     db,
-                    "collections",
+                    'collections',
                     collectionId,
-                    "favorites",
-                    user.uid
+                    'favorites',
+                    userId
                 ),
                 {
-                    userId: user.uid,
+                    userId,
                     createdAt: serverTimestamp(),
                 }
-            );
+            )
 
-            setIsFavorite(true);
+            requestVersionRef.current++
+
+            setFavoriteState({
+                collectionId,
+                userId,
+                isFavorite: true,
+            })
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
     }
 
     async function unfavoriteCollection() {
-        if (!collectionId || !user) return;
+        if (!collectionId || !userId || operationLoading) return
 
-        setOperationLoading(true);
+        setOperationLoading(true)
 
         try {
             await deleteDoc(
                 doc(
                     db,
-                    "collections",
+                    'collections',
                     collectionId,
-                    "favorites",
-                    user.uid
+                    'favorites',
+                    userId
                 )
-            );
+            )
 
-            setIsFavorite(false);
+            requestVersionRef.current++
+
+            setFavoriteState({
+                collectionId,
+                userId,
+                isFavorite: false,
+            })
         } finally {
-            setOperationLoading(false);
+            setOperationLoading(false)
         }
     }
 
     async function toggleFavorite() {
+        if (operationLoading) return
+
         if (isFavorite) {
-            await unfavoriteCollection();
+            await unfavoriteCollection()
         } else {
-            await favoriteCollection();
+            await favoriteCollection()
         }
     }
 
@@ -108,5 +166,5 @@ export function useCollectionFavorite(collectionId?: string) {
         favoriteCollection,
         unfavoriteCollection,
         toggleFavorite,
-    };
+    }
 }
