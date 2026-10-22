@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import {
     BookOpen,
     ChartNoAxesColumnIncreasing,
+    CheckCircle2,
     ChevronRight,
     CircleHelp,
     Clock3,
@@ -16,6 +17,7 @@ import {
     Settings2,
     Trash2,
     Trophy,
+    TextCursorInput,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -31,9 +33,6 @@ import { DifficultyBadge } from '@/components/quiz/DifficultyBadge'
 
 const managementButtonClass =
     'group/action flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
-
-const iconButtonClass =
-    'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground inline-flex size-10 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50'
 
 export default function QuizDetails() {
     const { quizId } = useParams<{ quizId: string }>()
@@ -488,57 +487,65 @@ export default function QuizDetails() {
                 </div>
 
                 {isCreator && (
-                    <section className="border-border bg-card text-card-foreground mb-8 rounded-xl border p-5 sm:p-6">
-                        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
-                                <div className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-lg">
-                                    <ListChecks size={19} />
+                    <section className="border-border bg-card text-card-foreground mb-8 rounded-2xl border p-4 sm:p-6">
+                        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <div className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-xl">
+                                    <ListChecks size={21} />
                                 </div>
-                                <h2 className="text-lg font-semibold tracking-tight">
-                                    Perguntas <span className="text-muted-foreground">({questions.length})</span>
-                                </h2>
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h2 className="text-lg font-semibold tracking-tight">Perguntas</h2>
+                                        <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums">
+                                            {questions.length}
+                                        </span>
+                                    </div>
+                                    <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed sm:text-sm">
+                                        Revise e gerencie as questões deste quiz.
+                                    </p>
+                                </div>
                             </div>
 
                             {questions.length > 0 && (
-                                <div className="flex items-center gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
                                     <button
                                         type="button"
                                         onClick={() => setIsImportModalOpen(true)}
                                         disabled={operationLoading}
                                         title="Importar perguntas de JSON"
-                                        aria-label="Importar perguntas de JSON"
-                                        className={iconButtonClass}
+                                        className="border-border bg-background text-foreground hover:bg-accent focus-visible:ring-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
                                     >
-                                        <FileUp size={18} />
+                                        <FileUp size={16} />
+                                        Importar
                                     </button>
                                     <button
                                         type="button"
                                         onClick={openModalForAdd}
                                         disabled={operationLoading}
                                         title="Adicionar pergunta manualmente"
-                                        aria-label="Adicionar pergunta manualmente"
-                                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
                                     >
-                                        <Plus size={20} />
+                                        <Plus size={17} />
+                                        Nova pergunta
                                     </button>
                                 </div>
                             )}
                         </div>
 
                         {questions.length === 0 ? (
-                            <div className="flex flex-col items-center rounded-lg border border-dashed border-border bg-muted/30 px-4 py-10 text-center">
-                                <div className="bg-muted text-muted-foreground mb-4 flex size-14 items-center justify-center rounded-xl">
-                                    <Plus size={26} />
+                            <div className="border-border bg-muted/20 flex flex-col items-center rounded-xl border border-dashed px-4 py-10 text-center">
+                                <div className="bg-primary/10 text-primary mb-4 flex size-14 items-center justify-center rounded-2xl">
+                                    <ListChecks size={26} />
                                 </div>
                                 <h3 className="text-foreground text-base font-semibold">Nenhuma pergunta ainda</h3>
-                                <p className="text-muted-foreground mt-2 max-w-sm text-sm">
-                                    Adicione perguntas para começar seu quiz.
+                                <p className="text-muted-foreground mt-2 max-w-sm text-sm leading-relaxed">
+                                    Adicione a primeira pergunta para começar a montar seu quiz.
                                 </p>
                                 <button
                                     type="button"
                                     onClick={openModalForAdd}
                                     disabled={operationLoading}
-                                    className="bg-primary text-primary-foreground hover:bg-primary/90 mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <Plus size={17} />
                                     Adicionar primeira pergunta
@@ -547,60 +554,69 @@ export default function QuizDetails() {
                         ) : (
                             <div className="space-y-3">
                                 {questions.map((question, index) => (
-                                    <div
+                                    <article
                                         key={question.id}
-                                        className="border-border bg-background hover:bg-accent/40 group rounded-lg border p-4 transition-colors sm:p-5"
+                                        className="group border-border bg-background hover:border-primary/30 flex min-w-0 flex-col gap-4 rounded-xl border p-4 transition-all duration-200 hover:shadow-sm sm:flex-row sm:items-start sm:justify-between sm:gap-5 sm:p-5"
                                     >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex min-w-0 flex-1 items-start gap-3">
-                                                <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold">
-                                                    {index + 1}
-                                                </span>
-                                                <div className="min-w-0 flex-1">
-                                                    <h3 className="text-foreground text-sm font-medium leading-relaxed wrap-break-word sm:text-base">
-                                                        {question.question}
-                                                    </h3>
-                                                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                                                        <span className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium">
-                                                            {question.type === 'multiple-choice'
-                                                                ? 'Múltipla escolha'
-                                                                : question.type === 'true-false'
-                                                                    ? 'Verdadeiro/Falso'
-                                                                    : 'Preenchimento'}
-                                                        </span>
-                                                        {question.type === 'multiple-choice' && (
-                                                            <span className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium">
-                                                                4 opções
-                                                            </span>
+                                        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                                            <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold tabular-nums">
+                                                {String(index + 1).padStart(2, '0')}
+                                            </span>
+
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="text-foreground text-sm leading-relaxed font-semibold wrap-break-word sm:text-base">
+                                                    {question.question}
+                                                </h3>
+
+                                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                    <span className="border-primary/15 bg-primary/5 text-primary inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium">
+                                                        {question.type === 'multiple-choice' ? (
+                                                            <ListChecks size={14} aria-hidden="true" />
+                                                        ) : question.type === 'true-false' ? (
+                                                            <CheckCircle2 size={14} aria-hidden="true" />
+                                                        ) : (
+                                                            <TextCursorInput size={14} aria-hidden="true" />
                                                         )}
-                                                    </div>
+                                                        {question.type === 'multiple-choice'
+                                                            ? 'Múltipla escolha'
+                                                            : question.type === 'true-false'
+                                                                ? 'Verdadeiro/Falso'
+                                                                : 'Preenchimento'}
+                                                    </span>
+                                                    {question.type === 'multiple-choice' && (
+                                                        <span className="border-border bg-muted/60 text-muted-foreground inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium">
+                                                            {question.options?.length ?? 0} opções
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
-
-                                            <div className="flex shrink-0 items-center gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openModalForEdit(question)}
-                                                    disabled={operationLoading}
-                                                    title="Editar pergunta"
-                                                    aria-label={`Editar pergunta ${index + 1}`}
-                                                    className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex size-9 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                                                >
-                                                    <Pencil size={17} />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => question.id && handleRemoveQuestion(question.id)}
-                                                    disabled={operationLoading}
-                                                    title="Excluir pergunta"
-                                                    aria-label={`Excluir pergunta ${index + 1}`}
-                                                    className="text-destructive hover:bg-destructive/10 inline-flex size-9 items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                                                >
-                                                    <Trash2 size={17} />
-                                                </button>
-                                            </div>
                                         </div>
-                                    </div>
+
+                                        <div className="border-border flex shrink-0 items-center justify-end gap-2 border-t pt-3 sm:border-0 sm:pt-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => openModalForEdit(question)}
+                                                disabled={operationLoading}
+                                                title="Editar pergunta"
+                                                aria-label={`Editar pergunta ${index + 1}`}
+                                                className="border-border bg-card text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary focus-visible:ring-ring inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <Pencil size={15} />
+                                                Editar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => question.id && handleRemoveQuestion(question.id)}
+                                                disabled={operationLoading}
+                                                title="Excluir pergunta"
+                                                aria-label={`Excluir pergunta ${index + 1}`}
+                                                className="border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/10 focus-visible:ring-ring inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <Trash2 size={15} />
+                                                Excluir
+                                            </button>
+                                        </div>
+                                    </article>
                                 ))}
                             </div>
                         )}
