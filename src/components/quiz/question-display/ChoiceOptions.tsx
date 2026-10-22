@@ -48,7 +48,7 @@ export function ChoiceOptions({
               ]
 
     return (
-        <div className="space-y-3">
+        <div className={question.type === 'true-false' ? 'grid gap-3 sm:grid-cols-2' : 'grid gap-3'}>
             {choices.map(({ value, option, label, feedback }) => {
                 const isIncorrect = incorrectAnswers.has(value)
                 const isSelected = selectedAnswer === value
@@ -81,9 +81,9 @@ export function ChoiceOptions({
                         label={label}
                         icon={
                             showCheck ? (
-                                <Check size={18} strokeWidth={2.5} />
+                                <Check size={16} strokeWidth={2.5} />
                             ) : showX ? (
-                                <X size={18} strokeWidth={2.5} />
+                                <X size={16} strokeWidth={2.5} />
                             ) : undefined
                         }
                         isCorrectAnswer={isCorrectAnswer}
