@@ -7,10 +7,8 @@ export default function Loading() {
             className="bg-background flex min-h-[60dvh] w-full items-center justify-center"
         >
             <div className="relative flex size-20 items-center justify-center">
-                {/* Indicador circular */}
                 <div className="border-border border-t-primary absolute inset-0 rounded-full border-[3px] motion-safe:animate-spin" />
 
-                {/* Logo do QuizMix */}
                 <svg
                     className="text-primary size-10 motion-safe:animate-pulse"
                     viewBox="0 0 48 48"

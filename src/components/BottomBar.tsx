@@ -1,5 +1,4 @@
-
-import { Compass, FolderTree, ListChecks } from 'lucide-react'
+import { Compass, FileQuestion, Library } from 'lucide-react'
 import { NavLink } from 'react-router'
 
 const navigation = [
@@ -11,12 +10,12 @@ const navigation = [
     {
         to: '/my-quizzes',
         label: 'Quizzes',
-        icon: ListChecks,
+        icon: FileQuestion,
     },
     {
         to: '/my-collections',
         label: 'Coleções',
-        icon: FolderTree,
+        icon: Library,
     },
 ]
 
@@ -33,7 +32,7 @@ export function BottomBar() {
                         to={to}
                         end={to === '/'}
                         className={({ isActive }) =>
-                            `flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 transition-colors ${isActive
+                            `group flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 transition-colors ${isActive
                                 ? 'text-primary'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`
@@ -42,17 +41,23 @@ export function BottomBar() {
                         {({ isActive }) => (
                             <>
                                 <div
-                                    className={`flex h-7 w-12 items-center justify-center rounded-lg transition-colors ${isActive ? 'bg-accent' : ''
+                                    className={`flex h-7 w-12 items-center justify-center rounded-full transition-all duration-200 ${isActive
+                                            ? 'bg-primary/10 ring-primary/20 ring-1'
+                                            : 'group-hover:bg-accent'
                                         }`}
                                 >
                                     <Icon
                                         size={21}
-                                        strokeWidth={isActive ? 2.4 : 1.8}
+                                        strokeWidth={isActive ? 2.5 : 1.8}
+                                        className={`transition-transform duration-200 ${isActive
+                                                ? 'scale-105'
+                                                : 'group-hover:scale-105'
+                                            }`}
                                     />
                                 </div>
 
                                 <span
-                                    className={`truncate text-[10px] leading-none ${isActive ? 'font-semibold' : 'font-medium'
+                                    className={`max-w-full truncate text-[10px] leading-none ${isActive ? 'font-semibold' : 'font-medium'
                                         }`}
                                 >
                                     {label}

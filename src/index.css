@@ -384,28 +384,6 @@
 }
 
 /* ========================================
-   SIDEBAR THEME TOKENS
-======================================== */
-
-:root,
-.dark,
-.mocha,
-.forest,
-.pink {
-  --sidebar: var(--card);
-  --sidebar-foreground: var(--card-foreground);
-
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-
-  --sidebar-accent: var(--accent);
-  --sidebar-accent-foreground: var(--accent-foreground);
-
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
-}
-
-/* ========================================
    PRISMJS - DARK THEMES
 ======================================== */
 

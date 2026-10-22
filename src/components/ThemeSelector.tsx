@@ -60,8 +60,8 @@ export function ThemeSelector() {
                 aria-controls="theme-options"
                 aria-haspopup="menu"
                 className={`text-foreground focus-visible:outline-ring flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${open
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-accent hover:text-accent-foreground'
+                    ? 'bg-accent text-accent-foreground'
+                    : 'hover:bg-accent hover:text-accent-foreground'
                     }`}
             >
                 <Palette className="h-5 w-5" />
@@ -74,13 +74,11 @@ export function ThemeSelector() {
                     aria-label="Aparência"
                     className="border-border bg-popover text-popover-foreground animate-in fade-in-0 zoom-in-95 absolute right-0 z-50 mt-2 w-52 origin-top-right overflow-hidden rounded-xl border shadow-lg motion-reduce:animate-none"
                 >
-                    {/* Cabeçalho */}
                     <div className="border-border text-muted-foreground flex items-center gap-1.5 border-b px-3 py-2 text-[10px] font-semibold tracking-wider uppercase">
                         <span className="bg-primary size-1.5 rounded-full" />
                         Aparência
                     </div>
 
-                    {/* Temas */}
                     <div className="p-1.5" role="none">
                         {themes.map((item) => {
                             const Icon = item.icon
@@ -94,15 +92,15 @@ export function ThemeSelector() {
                                     aria-checked={selected}
                                     onClick={() => selectTheme(item.id)}
                                     className={`flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors ${selected
-                                            ? 'bg-primary/10 text-foreground font-medium'
-                                            : 'hover:bg-accent hover:text-accent-foreground'
+                                        ? 'bg-primary/10 text-foreground font-medium'
+                                        : 'hover:bg-accent hover:text-accent-foreground'
                                         }`}
                                 >
                                     <span className="flex items-center gap-3">
                                         <Icon
                                             className={`h-4 w-4 ${selected
-                                                    ? 'text-primary'
-                                                    : 'text-muted-foreground'
+                                                ? 'text-primary'
+                                                : 'text-muted-foreground'
                                                 }`}
                                         />
 
