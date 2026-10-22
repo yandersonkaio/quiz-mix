@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 import Prism from 'prismjs'
 
@@ -17,17 +17,15 @@ export function CodeBlock({
 }: CodeBlockProps) {
     const [copied, setCopied] = useState(false)
 
-    const codeRef = useRef<HTMLElement>(null)
     const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
         null
     )
 
-    useEffect(() => {
-        if (!codeRef.current) return
+    const highlightedCode = useMemo(() => {
+        const grammar =
+            Prism.languages[language] ?? Prism.languages.plain
 
-        codeRef.current.textContent = code
-
-        Prism.highlightElement(codeRef.current)
+        return Prism.highlight(code, grammar, language)
     }, [code, language])
 
     useEffect(() => {
@@ -50,6 +48,7 @@ export function CodeBlock({
 
             copyTimeoutRef.current = setTimeout(() => {
                 setCopied(false)
+                copyTimeoutRef.current = null
             }, 2000)
         } catch (error) {
             console.error('Erro ao copiar código:', error)
@@ -59,27 +58,25 @@ export function CodeBlock({
     return (
         <div
             className="
-        border-border bg-muted/40
-        w-full min-w-0 overflow-hidden rounded-xl border
-        [&_code]:text-shadow-none!
-        [&_.token]:text-shadow-none!
-        [&_.token.comment]:text-muted-foreground!
-        [&_.token.prolog]:text-muted-foreground!
-        [&_.token.doctype]:text-muted-foreground!
-        [&_.token.cdata]:text-muted-foreground!
-        [&_.token.punctuation]:text-muted-foreground!
-        [&_.token.keyword]:text-primary!
-        [&_.token.boolean]:text-primary!
-        [&_.token.number]:text-primary!
-        [&_.token.property]:text-foreground!
-        [&_.token.string]:text-foreground!
-        [&_.token.function]:text-foreground!
-        [&_.token.operator]:text-foreground!
-        [&_.token.operator]:bg-transparent!
-        [&_.token.entity]:bg-transparent!
-      "
+                border-border bg-muted/40
+                w-full min-w-0 overflow-hidden rounded-xl border
+                [&_code]:text-shadow-none!
+                [&_.token]:text-shadow-none!
+                [&_.token.comment]:text-muted-foreground!
+                [&_.token.punctuation]:text-muted-foreground!
+                [&_.token.operator]:text-muted-foreground!
+                [&_.token.operator]:bg-transparent!
+                [&_.token.property]:text-primary!
+                [&_.token.keyword]:text-primary!
+                [&_.token.boolean]:text-amber-600!
+                [&_.token.boolean]:dark:text-amber-400!
+                [&_.token.number]:text-amber-600!
+                [&_.token.number]:dark:text-amber-400!
+                [&_.token.string]:text-emerald-600!
+                [&_.token.string]:dark:text-emerald-400!
+                [&_.token.function]:text-primary!
+            "
         >
-            {/* Cabeçalho */}
             <div className="border-border flex items-center justify-between gap-3 border-b px-4 py-2.5">
                 <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                     {language}
@@ -106,11 +103,12 @@ export function CodeBlock({
                 </button>
             </div>
 
-            {/* Código */}
             <pre className="m-0! max-w-full overflow-x-auto bg-transparent! p-4 text-sm leading-relaxed">
                 <code
-                    ref={codeRef}
                     className={`language-${language} bg-transparent! text-foreground!`}
+                    dangerouslySetInnerHTML={{
+                        __html: highlightedCode,
+                    }}
                 />
             </pre>
         </div>
