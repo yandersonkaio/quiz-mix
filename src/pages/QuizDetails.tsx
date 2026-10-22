@@ -78,15 +78,17 @@ export default function QuizDetails() {
     const isUntilCorrectMode = quiz?.settings.showAnswersAfter === 'untilCorrect'
     const isImmediatelyMode = quiz?.settings.showAnswersAfter === 'immediately'
 
-    const [quizDetails, setQuizDetails] = useState<Partial<Quiz>>({
-        name: '',
-        description: '',
-        difficulty: undefined,
-        settings: {
-            showAnswersAfter: 'end',
-            timeLimitPerQuestion: undefined,
-        },
-    })
+    const quizDetails: Partial<Quiz> | undefined = quiz
+        ? {
+            name: quiz.name,
+            description: quiz.description || '',
+            difficulty: quiz.difficulty,
+            settings: {
+                showAnswersAfter: quiz.settings.showAnswersAfter,
+                timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
+            },
+        }
+        : undefined
 
     useEffect(() => {
         if (!quizId) {
@@ -96,20 +98,6 @@ export default function QuizDetails() {
         fetchRanking('challenge')
         fetchRanking('study')
     }, [quizId, navigate, fetchRanking])
-
-    useEffect(() => {
-        if (quiz) {
-            setQuizDetails({
-                name: quiz.name,
-                description: quiz.description || '',
-                difficulty: quiz.difficulty,
-                settings: {
-                    showAnswersAfter: quiz.settings.showAnswersAfter,
-                    timeLimitPerQuestion: quiz.settings.timeLimitPerQuestion,
-                },
-            })
-        }
-    }, [quiz])
 
     const handleDeleteQuiz = async () => {
         if (!quiz || operationLoading) return
@@ -223,22 +211,6 @@ export default function QuizDetails() {
     const handleSaveQuizDetails = async (updatedDetails: Partial<Quiz>) => {
         try {
             await updateQuizDetails(updatedDetails)
-            setQuizDetails((prev) => {
-                const newSettings: Quiz['settings'] = {
-                    showAnswersAfter:
-                        updatedDetails.settings?.showAnswersAfter ??
-                        prev.settings?.showAnswersAfter ??
-                        'end',
-                    timeLimitPerQuestion:
-                        updatedDetails.settings?.timeLimitPerQuestion ??
-                        prev.settings?.timeLimitPerQuestion,
-                }
-                return {
-                    ...prev,
-                    ...updatedDetails,
-                    settings: newSettings,
-                }
-            })
             toast.success('Detalhes do quiz atualizados com sucesso!')
             setIsSettingsModalOpen(false)
         } catch (error) {
@@ -298,7 +270,6 @@ export default function QuizDetails() {
     return (
         <div className="bg-background text-foreground min-h-full w-full">
             <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-                {/* Título e ação principal */}
                 <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                         <h1 className="text-2xl font-bold tracking-tight wrap-break-word sm:text-3xl">
@@ -326,7 +297,6 @@ export default function QuizDetails() {
                     </button>
                 </div>
 
-                {/* Detalhes, estatísticas e gerenciamento */}
                 <div className={`mb-8 grid grid-cols-1 gap-4 lg:gap-5 ${isCreator ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2'}`}>
                     <section className="border-border bg-card text-card-foreground min-w-0 rounded-xl border p-5 sm:p-6">
                         <div className="mb-5 flex items-center gap-2.5">
@@ -503,7 +473,6 @@ export default function QuizDetails() {
                     )}
                 </div>
 
-                {/* Perguntas - apenas para o criador */}
                 {isCreator && (
                     <section className="border-border bg-card text-card-foreground mb-8 rounded-xl border p-5 sm:p-6">
                         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -624,7 +593,6 @@ export default function QuizDetails() {
                     </section>
                 )}
 
-                {/* Ranking e histórico de tentativas */}
                 <section className="border-border bg-card text-card-foreground rounded-xl border p-4 sm:p-6">
                     <RankingDisplay
                         ranking={ranking}
@@ -639,7 +607,6 @@ export default function QuizDetails() {
                     />
                 </section>
 
-                {/* Modais existentes */}
                 {isCreator && (
                     <>
                         <QuizSettingsModal

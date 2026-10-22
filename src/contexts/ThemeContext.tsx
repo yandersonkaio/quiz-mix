@@ -1,67 +1,15 @@
 
-import {
-    createContext,
-    type ReactNode,
-    useContext,
-    useEffect,
-    useState,
-} from 'react'
+import { createContext, useContext } from 'react'
 
 export type Theme = 'light' | 'dark' | 'mocha' | 'forest' | 'pink'
 
-interface ThemeContextData {
+export interface ThemeContextData {
     theme: Theme
     setTheme: (theme: Theme) => void
     toggleTheme: () => void
 }
 
-const ThemeContext = createContext<ThemeContextData | null>(null)
-
-const themes: Theme[] = ['light', 'dark', 'mocha', 'forest', 'pink']
-const darkThemes: Theme[] = ['dark', 'mocha', 'forest']
-
-function getInitialTheme(): Theme {
-    try {
-        const stored = localStorage.getItem('theme')
-
-        if (themes.includes(stored as Theme)) {
-            return stored as Theme
-        }
-    } catch {
-        // Usa o tema padrão se o armazenamento não estiver disponível.
-    }
-
-    return 'dark'
-}
-
-export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [theme, setTheme] = useState<Theme>(getInitialTheme)
-
-    useEffect(() => {
-        const root = document.documentElement
-
-        root.classList.remove(...themes)
-        root.classList.add(theme)
-
-        try {
-            localStorage.setItem('theme', theme)
-        } catch {
-            // A aplicação continua funcionando sem persistência.
-        }
-    }, [theme])
-
-    const toggleTheme = () => {
-        setTheme((current) =>
-            darkThemes.includes(current) ? 'light' : 'dark'
-        )
-    }
-
-    return (
-        <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
-            {children}
-        </ThemeContext.Provider>
-    )
-}
+export const ThemeContext = createContext<ThemeContextData | null>(null)
 
 export function useTheme() {
     const context = useContext(ThemeContext)

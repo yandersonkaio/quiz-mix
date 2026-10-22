@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { db } from "../db/firebase";
+
+import { useEffect, useState } from 'react'
 import {
     collection,
     query,
@@ -8,105 +8,167 @@ import {
     orderBy,
     getDocs,
     doc,
-    getDoc
-} from "firebase/firestore";
-import { useAuth } from "../contexts/AuthContext";
-import { Quiz, QuizUser } from "../types/quiz";
+    getDoc,
+} from 'firebase/firestore'
+
+import { db } from '../db/firebase'
+import { useAuth } from '../contexts/AuthContext'
+import type { Quiz, QuizUser } from '../types/quiz'
+
+interface UserQuizzesState {
+    userId: string | null
+    quizzes: Quiz[]
+    error: Error | null
+}
+
+const fetchUserData = async (userId: string): Promise<QuizUser> => {
+    try {
+        const userRef = doc(db, 'users', userId)
+        const userSnap = await getDoc(userRef)
+
+        if (userSnap.exists()) {
+            const userData = userSnap.data()
+
+            return {
+                id: userSnap.id,
+                name: userData.displayName || 'Usuário desconhecido',
+                photoUrl: userData.photoURL || null,
+            }
+        }
+
+        return {
+            id: userId,
+            name: 'Usuário desconhecido',
+            photoUrl: undefined,
+        }
+    } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error)
+
+        return {
+            id: userId,
+            name: 'Usuário desconhecido',
+            photoUrl: undefined,
+        }
+    }
+}
 
 export const useUserQuizzes = () => {
-    const { user } = useAuth();
+    const { user } = useAuth()
+    const userId = user?.uid ?? null
 
-    const [userQuizzes, setUserQuizzes] = useState<Quiz[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    const fetchUserData = async (userId: string): Promise<QuizUser> => {
-        try {
-            const userRef = doc(db, "users", userId);
-            const userSnap = await getDoc(userRef);
-
-            if (userSnap.exists()) {
-                const userData = userSnap.data();
-
-                return {
-                    id: userSnap.id,
-                    name: userData.displayName || 'Usuário desconhecido',
-                    photoUrl: userData.photoURL || null
-                };
-            }
-            return {
-                id: userId,
-                name: 'Usuário desconhecido',
-                photoUrl: undefined
-            };
-        } catch (error) {
-            console.error("Erro ao buscar dados do usuário:", error);
-            return {
-                id: userId,
-                name: 'Usuário desconhecido',
-                photoUrl: undefined
-            };
-        }
-    };
+    const [state, setState] = useState<UserQuizzesState>({
+        userId: null,
+        quizzes: [],
+        error: null,
+    })
 
     useEffect(() => {
-        if (!user) {
-            setUserQuizzes([]);
-            setLoading(false);
-            setError(null);
-            return;
-        }
+        if (!userId) return
 
-        setLoading(true);
-        setError(null);
+        let active = true
+        let snapshotVersion = 0
 
         const quizzesQuery = query(
-            collection(db, "quizzes"),
-            where("userId", "==", user.uid),
-            orderBy("createdAt", "desc")
-        );
+            collection(db, 'quizzes'),
+            where('userId', '==', userId),
+            orderBy('createdAt', 'desc')
+        )
 
         const unsubscribe = onSnapshot(
             quizzesQuery,
             async (querySnapshot) => {
+                const currentVersion = ++snapshotVersion
+
                 try {
                     const quizzesData = await Promise.all(
-                        querySnapshot.docs.map(async (doc) => {
+                        querySnapshot.docs.map(async (quizDoc) => {
                             const questionsQuery = collection(
                                 db,
-                                `quizzes/${doc.id}/questions`
-                            );
-                            const questionsSnapshot = await getDocs(questionsQuery);
-                            const questionCount = questionsSnapshot.size;
+                                `quizzes/${quizDoc.id}/questions`
+                            )
 
-                            const creator = await fetchUserData(doc.data().userId);
+                            const questionsSnapshot = await getDocs(
+                                questionsQuery
+                            )
+
+                            const questionCount = questionsSnapshot.size
+
+                            const creator = await fetchUserData(
+                                quizDoc.data().userId
+                            )
 
                             return {
-                                id: doc.id,
-                                ...doc.data(),
+                                id: quizDoc.id,
+                                ...quizDoc.data(),
                                 questionCount,
-                                creator
-                            } as Quiz;
+                                creator,
+                            } as Quiz
                         })
-                    );
+                    )
 
-                    setUserQuizzes(quizzesData);
-                    setLoading(false);
-                } catch (err) {
-                    console.error("Erro ao buscar dados:", err);
-                    setError(err as Error);
-                    setLoading(false);
+                    if (!active || currentVersion !== snapshotVersion) {
+                        return
+                    }
+
+                    setState({
+                        userId,
+                        quizzes: quizzesData,
+                        error: null,
+                    })
+                } catch (error) {
+                    if (!active || currentVersion !== snapshotVersion) {
+                        return
+                    }
+
+                    console.error('Erro ao buscar dados:', error)
+
+                    setState({
+                        userId,
+                        quizzes: [],
+                        error:
+                            error instanceof Error
+                                ? error
+                                : new Error('Erro ao buscar quizzes.'),
+                    })
                 }
             },
-            (err) => {
-                console.error("Erro ao buscar quizzes do usuário:", err);
-                setError(err);
-                setLoading(false);
+            (error) => {
+                if (!active) return
+
+                snapshotVersion++
+
+                console.error(
+                    'Erro ao buscar quizzes do usuário:',
+                    error
+                )
+
+                setState({
+                    userId,
+                    quizzes: [],
+                    error,
+                })
             }
-        );
+        )
 
-        return () => unsubscribe();
-    }, [user]);
+        return () => {
+            active = false
+            unsubscribe()
+        }
+    }, [userId])
 
-    return { userQuizzes, loading, error, user };
-};
+    const isCurrentUser = state.userId === userId
+
+    const userQuizzes =
+        userId && isCurrentUser ? state.quizzes : []
+
+    const loading = Boolean(userId && !isCurrentUser)
+
+    const error = isCurrentUser ? state.error : null
+
+    return {
+        userQuizzes,
+        loading,
+        error,
+        user,
+    }
+}

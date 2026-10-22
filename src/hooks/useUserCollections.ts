@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState } from 'react'
 import {
     collection,
     collectionGroup,
@@ -9,80 +10,86 @@ import {
     orderBy,
     query,
     where,
-} from "firebase/firestore";
+} from 'firebase/firestore'
 
-import { db } from "../db/firebase";
-import { useAuth } from "../contexts/AuthContext";
-import { QuizCollection } from "../types/quiz";
+import { db } from '../db/firebase'
+import { useAuth } from '../contexts/AuthContext'
+import type { QuizCollection } from '../types/quiz'
+
+interface UserCollectionsState {
+    userId: string | null
+    collections: QuizCollection[]
+    error: Error | null
+}
 
 export const useUserCollections = () => {
-    const { user } = useAuth();
+    const { user } = useAuth()
+    const userId = user?.uid ?? null
 
-    const [collections, setCollections] = useState<QuizCollection[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
+    const [state, setState] = useState<UserCollectionsState>({
+        userId: null,
+        collections: [],
+        error: null,
+    })
 
     useEffect(() => {
-        if (!user) {
-            setCollections([]);
-            setLoading(false);
-            setError(null);
-            return;
-        }
+        if (!userId) return
 
-        setLoading(true);
-        setError(null);
+        let active = true
+        let snapshotVersion = 0
 
         const createdQuery = query(
-            collection(db, "collections"),
-            where("userId", "==", user.uid),
-            orderBy("createdAt", "desc")
-        );
+            collection(db, 'collections'),
+            where('userId', '==', userId),
+            orderBy('createdAt', 'desc')
+        )
 
         const unsubscribe = onSnapshot(
             createdQuery,
             async (snapshot) => {
+                const currentVersion = ++snapshotVersion
+
                 try {
                     const created = await Promise.all(
                         snapshot.docs.map(async (collectionDoc) => {
-                            const collectionData = collectionDoc.data();
+                            const collectionData = collectionDoc.data()
 
                             const quizzesSnap = await getDocs(
                                 collection(
                                     db,
-                                    "collections",
+                                    'collections',
                                     collectionDoc.id,
-                                    "quizItems"
+                                    'quizItems'
                                 )
-                            );
+                            )
 
                             const sectionsSnap = await getDocs(
                                 collection(
                                     db,
-                                    "collections",
+                                    'collections',
                                     collectionDoc.id,
-                                    "sections"
+                                    'sections'
                                 )
-                            );
+                            )
 
-                            let creator = null;
+                            let creator = null
 
                             if (collectionData.userId) {
                                 const userSnap = await getDoc(
                                     doc(
                                         db,
-                                        "users",
+                                        'users',
                                         collectionData.userId
                                     )
-                                );
+                                )
 
                                 if (userSnap.exists()) {
-                                    const userData = userSnap.data();
+                                    const userData = userSnap.data()
 
                                     creator = {
                                         name: userData.displayName,
                                         photoURL: userData.photoURL,
-                                    };
+                                    }
                                 }
                             }
 
@@ -94,78 +101,76 @@ export const useUserCollections = () => {
                                 sectionCount: sectionsSnap.size,
                                 isOwner: true,
                                 isFavorite: false,
-                            } as QuizCollection;
+                            } as QuizCollection
                         })
-                    );
+                    )
 
                     const favoritesQuery = query(
-                        collectionGroup(db, "favorites"),
-                        where("userId", "==", user.uid)
-                    );
+                        collectionGroup(db, 'favorites'),
+                        where('userId', '==', userId)
+                    )
 
-                    const favoritesSnap = await getDocs(favoritesQuery);
+                    const favoritesSnap = await getDocs(favoritesQuery)
 
                     const favorites = await Promise.all(
                         favoritesSnap.docs.map(async (favoriteDoc) => {
                             const collectionId =
-                                favoriteDoc.ref.parent.parent?.id;
+                                favoriteDoc.ref.parent.parent?.id
 
                             if (!collectionId) {
-                                return null;
+                                return null
                             }
 
                             const collectionRef = doc(
                                 db,
-                                "collections",
+                                'collections',
                                 collectionId
-                            );
+                            )
 
-                            const collectionSnap =
-                                await getDoc(collectionRef);
+                            const collectionSnap = await getDoc(collectionRef)
 
                             if (!collectionSnap.exists()) {
-                                return null;
+                                return null
                             }
 
-                            const collectionData =
-                                collectionSnap.data();
+                            const collectionData = collectionSnap.data()
 
                             const quizzesSnap = await getDocs(
                                 collection(
                                     db,
-                                    "collections",
+                                    'collections',
                                     collectionId,
-                                    "quizItems"
+                                    'quizItems'
                                 )
-                            );
+                            )
 
                             const sectionsSnap = await getDocs(
                                 collection(
                                     db,
-                                    "collections",
+                                    'collections',
                                     collectionId,
-                                    "sections"
+                                    'sections'
                                 )
-                            );
+                            )
 
-                            let creator = null;
+                            let creator = null
 
                             if (collectionData.userId) {
                                 const userSnap = await getDoc(
                                     doc(
                                         db,
-                                        "users",
+                                        'users',
                                         collectionData.userId
                                     )
-                                );
+                                )
 
                                 if (userSnap.exists()) {
-                                    const userData = userSnap.data();
+                                    const userData = userSnap.data()
 
                                     creator = {
                                         name: userData.displayName,
                                         photoURL: userData.photoURL,
-                                    };
+                                    }
                                 }
                             }
 
@@ -176,51 +181,94 @@ export const useUserCollections = () => {
                                 quizCount: quizzesSnap.size,
                                 sectionCount: sectionsSnap.size,
                                 isOwner:
-                                    user.uid === collectionData.userId,
+                                    userId === collectionData.userId,
                                 isFavorite: true,
-                            } as QuizCollection;
+                            } as QuizCollection
                         })
-                    );
+                    )
 
                     const favoriteList = favorites.filter(
-                        (item): item is QuizCollection =>
-                            item !== null
-                    );
+                        (item): item is QuizCollection => item !== null
+                    )
 
-                    const map = new Map<string, QuizCollection>();
+                    const map = new Map<string, QuizCollection>()
 
-                    created.forEach((collection) => {
-                        map.set(collection.id, collection);
-                    });
+                    created.forEach((item) => {
+                        map.set(item.id, item)
+                    })
 
-                    favoriteList.forEach((collection) => {
-                        if (!map.has(collection.id)) {
-                            map.set(collection.id, collection);
+                    favoriteList.forEach((item) => {
+                        if (!map.has(item.id)) {
+                            map.set(item.id, item)
                         }
-                    });
+                    })
 
-                    setCollections(Array.from(map.values()));
-                    setLoading(false);
-                } catch (err) {
-                    console.error(err);
-                    setError(err as Error);
-                    setLoading(false);
+                    if (!active || currentVersion !== snapshotVersion) {
+                        return
+                    }
+
+                    setState({
+                        userId,
+                        collections: Array.from(map.values()),
+                        error: null,
+                    })
+                } catch (error) {
+                    if (!active || currentVersion !== snapshotVersion) {
+                        return
+                    }
+
+                    console.error(
+                        'Erro ao buscar coleções do usuário:',
+                        error
+                    )
+
+                    setState({
+                        userId,
+                        collections: [],
+                        error:
+                            error instanceof Error
+                                ? error
+                                : new Error('Erro ao buscar coleções.'),
+                    })
                 }
             },
-            (err) => {
-                console.error(err);
-                setError(err);
-                setLoading(false);
-            }
-        );
+            (error) => {
+                if (!active) return
 
-        return () => unsubscribe();
-    }, [user]);
+                snapshotVersion++
+
+                console.error(
+                    'Erro ao buscar coleções do usuário:',
+                    error
+                )
+
+                setState({
+                    userId,
+                    collections: [],
+                    error,
+                })
+            }
+        )
+
+        return () => {
+            active = false
+            unsubscribe()
+        }
+    }, [userId])
+
+    const isCurrentUser = state.userId === userId
+
+    const collections =
+        userId && isCurrentUser ? state.collections : []
+
+    const loading = Boolean(userId && !isCurrentUser)
+
+    const error = isCurrentUser ? state.error : null
 
     return {
         collections,
         loading,
         error,
         user,
-    };
-};
+    }
+}

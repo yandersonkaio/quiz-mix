@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { Check, X, ArrowRight } from 'lucide-react'
 import clsx from 'clsx'
@@ -132,7 +132,11 @@ function OptionButton({
     )
 }
 
-export function QuestionDisplay({
+export function QuestionDisplay(props: QuestionDisplayProps) {
+    return <QuestionDisplayContent key={props.question.id} {...props} />
+}
+
+function QuestionDisplayContent({
     question,
     onAnswer,
     showAnswersAfter,
@@ -166,13 +170,6 @@ export function QuestionDisplay({
             ? Number(latestAttempt) === question.correctAnswer
             : String(latestAttempt).trim().toLowerCase() ===
             question.blankAnswer?.trim().toLowerCase())
-
-    useEffect(() => {
-        setSelectedAnswer(null)
-        setIsSubmitted(false)
-        setIncorrectAnswers(new Set())
-        setInputValue('')
-    }, [question])
 
     const handleOptionClick = (answer: number | string) => {
         if (isUntilCorrect && isCorrect) return

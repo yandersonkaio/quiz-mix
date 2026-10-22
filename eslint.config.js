@@ -21,9 +21,6 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
 
-      // Temporariamente como aviso durante a refatoração
-      'react-hooks/set-state-in-effect': 'warn',
-
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { BookOpen, LoaderCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -23,36 +23,122 @@ export default function AddQuizToCollectionModal({
     onClose,
     collectionId,
 }: AddQuizToCollectionModalProps) {
+    if (!isOpen) return null
+
+    return (
+        <OpenAddQuizToCollectionModal
+            key={collectionId}
+            onClose={onClose}
+            collectionId={collectionId}
+        />
+    )
+}
+
+interface OpenModalProps {
+    onClose: () => void
+    collectionId: string
+}
+
+function OpenAddQuizToCollectionModal({
+    onClose,
+    collectionId,
+}: OpenModalProps) {
     const { userQuizzes, loading } = useUserQuizzes()
 
     const {
         quizzes: collectionQuizzes,
+        loading: collectionLoading,
         addQuizToCollection,
         updateQuizSection,
         removeQuizFromCollection,
         operationLoading,
     } = useCollectionQuizzes(collectionId)
 
-    const { sections } = useCollectionSections(collectionId)
+    const { sections, loading: sectionsLoading } =
+        useCollectionSections(collectionId)
 
-    const [selectedQuizzes, setSelectedQuizzes] = useState<
-        SelectedQuiz[]
-    >([])
+    if (collectionLoading || sectionsLoading) {
+        return (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 backdrop-blur-[2px] sm:p-6"
+                onClick={onClose}
+            >
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Carregando coleção"
+                    className="border-border bg-card text-card-foreground flex w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-2xl border px-5 py-12 shadow-2xl"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <LoaderCircle
+                        size={26}
+                        className="text-primary animate-spin"
+                        aria-hidden="true"
+                    />
+                    <p className="text-muted-foreground text-sm">
+                        Carregando quizzes da coleção...
+                    </p>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="border-border bg-muted text-foreground hover:bg-accent rounded-lg border px-4 py-2 text-sm transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        )
+    }
 
-    const [saving, setSaving] = useState(false)
+    return (
+        <AddQuizToCollectionModalContent
+            onClose={onClose}
+            userQuizzes={userQuizzes}
+            loading={loading}
+            collectionQuizzes={collectionQuizzes}
+            addQuizToCollection={addQuizToCollection}
+            updateQuizSection={updateQuizSection}
+            removeQuizFromCollection={removeQuizFromCollection}
+            operationLoading={operationLoading}
+            sections={sections}
+        />
+    )
+}
 
-    const isBusy = saving || operationLoading
+interface ModalContentProps {
+    onClose: () => void
+    userQuizzes: ReturnType<typeof useUserQuizzes>['userQuizzes']
+    loading: boolean
+    collectionQuizzes: ReturnType<typeof useCollectionQuizzes>['quizzes']
+    addQuizToCollection: ReturnType<typeof useCollectionQuizzes>['addQuizToCollection']
+    updateQuizSection: ReturnType<typeof useCollectionQuizzes>['updateQuizSection']
+    removeQuizFromCollection: ReturnType<typeof useCollectionQuizzes>['removeQuizFromCollection']
+    operationLoading: boolean
+    sections: ReturnType<typeof useCollectionSections>['sections']
+}
 
-    useEffect(() => {
-        if (!isOpen) return
+function AddQuizToCollectionModalContent({
+    onClose,
+    userQuizzes,
+    loading,
+    collectionQuizzes,
+    addQuizToCollection,
+    updateQuizSection,
+    removeQuizFromCollection,
+    operationLoading,
+    sections,
+}: ModalContentProps) {
 
-        setSelectedQuizzes(
+    const [selectedQuizzes, setSelectedQuizzes] = useState<SelectedQuiz[]>(
+        () =>
             collectionQuizzes.map((quiz) => ({
                 quizId: quiz.id,
                 sectionId: quiz.sectionId ?? null,
             }))
-        )
-    }, [isOpen, collectionQuizzes])
+    )
+
+    const [saving, setSaving] = useState(false)
+    const isBusy = saving || operationLoading
 
     const toggleQuiz = (quizId: string) => {
         setSelectedQuizzes((prev) =>
@@ -138,8 +224,6 @@ export default function AddQuizToCollectionModal({
         }
     }
 
-    if (!isOpen) return null
-
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 backdrop-blur-[2px] sm:p-6"
@@ -193,7 +277,6 @@ export default function AddQuizToCollectionModal({
                     </button>
                 </div>
 
-                {/* Conteúdo */}
                 <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
                     {loading ? (
                         <div
@@ -231,7 +314,6 @@ export default function AddQuizToCollectionModal({
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {/* Contador */}
                             <div className="flex items-center justify-between gap-3">
                                 <p className="text-muted-foreground text-sm">
                                     Seus quizzes
@@ -245,7 +327,6 @@ export default function AddQuizToCollectionModal({
                                 </span>
                             </div>
 
-                            {/* Lista de quizzes */}
                             <div className="space-y-3">
                                 {userQuizzes.map((quiz) => {
                                     const selected = selectedQuizzes.find(
@@ -261,7 +342,6 @@ export default function AddQuizToCollectionModal({
                                                 }`}
                                         >
                                             <div className="flex min-w-0 items-start gap-3">
-                                                {/* Checkbox */}
                                                 <input
                                                     id={`collection-quiz-${quiz.id}`}
                                                     type="checkbox"
@@ -271,7 +351,6 @@ export default function AddQuizToCollectionModal({
                                                     className="border-input text-primary focus:ring-ring mt-0.5 size-5 shrink-0 cursor-pointer rounded accent-primary disabled:cursor-not-allowed disabled:opacity-50"
                                                 />
 
-                                                {/* Informações */}
                                                 <div className="min-w-0 flex-1">
                                                     <label
                                                         htmlFor={`collection-quiz-${quiz.id}`}
@@ -299,7 +378,6 @@ export default function AddQuizToCollectionModal({
                                                         )}
                                                     </div>
 
-                                                    {/* Seção */}
                                                     {selected && (
                                                         <div className="border-border mt-4 border-t pt-4">
                                                             <label
