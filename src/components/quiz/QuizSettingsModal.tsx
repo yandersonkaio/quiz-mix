@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import {
@@ -9,7 +9,6 @@ import {
     LoaderCircle,
     Target,
     Trophy,
-    X,
     Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -17,6 +16,38 @@ import { toast } from 'sonner'
 import { useQuizData } from '@/hooks/useQuizData'
 import type { Quiz, QuizDifficulty } from '@/types/quiz'
 import { DifficultyBadge } from '@/components/quiz/DifficultyBadge'
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+import {
+    Drawer,
+    DrawerContent,
+    DrawerDescription,
+    DrawerHeader,
+    DrawerTitle,
+} from '@/components/ui/drawer'
+
+const mobileQuery = '(max-width: 767px)'
+
+function subscribeToMobileViewport(callback: () => void) {
+    const mediaQuery = window.matchMedia(mobileQuery)
+    mediaQuery.addEventListener('change', callback)
+
+    return () => mediaQuery.removeEventListener('change', callback)
+}
+
+function getMobileViewportSnapshot() {
+    return window.matchMedia(mobileQuery).matches
+}
+
+function getServerViewportSnapshot() {
+    return false
+}
 
 type QuizMode = 'challenge' | 'study'
 
@@ -38,8 +69,6 @@ const optionClass =
 const selectedClass = 'border-primary bg-primary/10 text-foreground ring-1 ring-primary/30'
 const unselectedClass = 'border-border bg-background text-foreground hover:bg-accent/60'
 
-// Montar o formulário somente com o modal aberto reinicia os campos a cada abertura,
-// sem perder os valores de uma pergunta/quiz anterior ou sobrescrever uma edição em andamento.
 export function QuizSettingsModal(props: QuizSettingsModalProps) {
     if (!props.isOpen) return null
 
@@ -52,6 +81,12 @@ function QuizSettingsContent({
     onSave,
     isCreating = false,
 }: QuizSettingsModalProps) {
+    const isMobile = useSyncExternalStore(
+        subscribeToMobileViewport,
+        getMobileViewportSnapshot,
+        getServerViewportSnapshot
+    )
+
     const [formData, setFormData] = useState<Partial<Quiz>>(() => ({
         ...(quizDetails ?? {}),
         name: quizDetails?.name ?? '',
@@ -127,288 +162,291 @@ function QuizSettingsContent({
         }
     }
 
-    return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-3 backdrop-blur-[2px] sm:p-6"
-            onClick={() => { if (!isBusy) onClose() }}
-        >
-            <div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="quiz-settings-title"
-                className="border-border bg-card text-card-foreground flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[calc(100dvh-3rem)]"
-                onClick={(event) => event.stopPropagation()}
-            >
-                {/* Cabeçalho fixo */}
-                <div className="border-border flex shrink-0 items-start justify-between gap-3 border-b px-5 py-4 sm:px-6">
-                    <div className="min-w-0">
-                        <h2 id="quiz-settings-title" className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
-                            {isCreating ? 'Configurações do Quiz' : 'Editar Configurações do Quiz'}
-                        </h2>
-                        <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-                            Configure como os participantes irão responder.
-                        </p>
+    const handleOpenChange = (open: boolean) => {
+        if (!open && !isBusy) onClose()
+    }
+
+    const formContent = (
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+            <div data-vaul-no-drag="" className="min-h-0 flex-1 space-y-7 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6 sm:py-6">
+                <div className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label htmlFor="quiz-name" className="text-foreground block text-sm font-medium">
+                            Nome do Quiz
+                        </label>
+                        <input
+                            id="quiz-name"
+                            type="text"
+                            value={formData.name ?? ''}
+                            onChange={(event) => setFormData((previous) => ({ ...previous, name: event.target.value }))}
+                            className={fieldClass}
+                            placeholder="Digite o nome do quiz"
+                            required
+                            disabled={isBusy}
+                        />
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={isBusy}
-                        aria-label="Fechar modal"
-                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-50"
-                    >
-                        <X size={20} />
-                    </button>
+                    <div className="space-y-1.5">
+                        <label htmlFor="quiz-description" className="text-foreground block text-sm font-medium">
+                            Descrição
+                        </label>
+                        <textarea
+                            id="quiz-description"
+                            value={formData.description ?? ''}
+                            onChange={(event) => setFormData((previous) => ({ ...previous, description: event.target.value }))}
+                            className={`${fieldClass} min-h-24 resize-y`}
+                            placeholder="Digite a descrição do quiz"
+                            rows={3}
+                            disabled={isBusy}
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label htmlFor="quiz-difficulty" className="text-foreground block text-sm font-medium">
+                            Dificuldade
+                        </label>
+                        <select
+                            id="quiz-difficulty"
+                            value={formData.difficulty ?? ''}
+                            onChange={(event) => setFormData((previous) => ({
+                                ...previous,
+                                difficulty: event.target.value ? event.target.value as QuizDifficulty : undefined,
+                            }))}
+                            className={fieldClass}
+                            disabled={isBusy}
+                        >
+                            <option value="">Sem classificação</option>
+                            <option value="easy">Fácil</option>
+                            <option value="medium">Médio</option>
+                            <option value="hard">Difícil</option>
+                        </select>
+
+                        {formData.difficulty && (
+                            <DifficultyBadge
+                                difficulty={formData.difficulty}
+                                className="mt-2"
+                            />
+                        )}
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-                    <div className="min-h-0 flex-1 space-y-7 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
-                        {/* Informações do quiz */}
-                        <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label htmlFor="quiz-name" className="text-foreground block text-sm font-medium">
-                                    Nome do Quiz
-                                </label>
-                                <input
-                                    id="quiz-name"
-                                    type="text"
-                                    value={formData.name ?? ''}
-                                    onChange={(event) => setFormData((previous) => ({ ...previous, name: event.target.value }))}
-                                    className={fieldClass}
-                                    placeholder="Digite o nome do quiz"
-                                    required
-                                    disabled={isBusy}
-                                />
+                <section className="space-y-3">
+                    <h3 className="text-foreground text-sm font-semibold">Como os participantes responderão?</h3>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <button
+                            type="button"
+                            onClick={() => setQuizMode('challenge')}
+                            aria-pressed={quizMode === 'challenge'}
+                            className={`${optionClass} ${quizMode === 'challenge' ? selectedClass : unselectedClass}`}
+                            disabled={isBusy}
+                        >
+                            <div className="flex w-full items-center justify-between">
+                                <Target size={22} strokeWidth={1.8} className={quizMode === 'challenge' ? 'text-primary' : 'text-muted-foreground'} />
+                                {quizMode === 'challenge' && <Check size={17} className="text-primary" />}
                             </div>
+                            <span className="font-semibold">Desafio</span>
+                            <span className="text-muted-foreground text-sm leading-relaxed">
+                                Teste seus conhecimentos e veja seu desempenho ao final.
+                            </span>
+                        </button>
 
-                            <div className="space-y-1.5">
-                                <label htmlFor="quiz-description" className="text-foreground block text-sm font-medium">
-                                    Descrição
-                                </label>
-                                <textarea
-                                    id="quiz-description"
-                                    value={formData.description ?? ''}
-                                    onChange={(event) => setFormData((previous) => ({ ...previous, description: event.target.value }))}
-                                    className={`${fieldClass} min-h-24 resize-y`}
-                                    placeholder="Digite a descrição do quiz"
-                                    rows={3}
-                                    disabled={isBusy}
-                                />
+                        <button
+                            type="button"
+                            onClick={() => setQuizMode('study')}
+                            aria-pressed={quizMode === 'study'}
+                            className={`${optionClass} ${quizMode === 'study' ? selectedClass : unselectedClass}`}
+                            disabled={isBusy}
+                        >
+                            <div className="flex w-full items-center justify-between">
+                                <BookOpen size={22} strokeWidth={1.8} className={quizMode === 'study' ? 'text-primary' : 'text-muted-foreground'} />
+                                {quizMode === 'study' && <Check size={17} className="text-primary" />}
                             </div>
+                            <span className="font-semibold">Estudo</span>
+                            <span className="text-muted-foreground text-sm leading-relaxed">
+                                Aprenda enquanto responde. Tente novamente até acertar.
+                            </span>
+                        </button>
+                    </div>
+                </section>
 
-                            <div className="space-y-1.5">
-                                <label htmlFor="quiz-difficulty" className="text-foreground block text-sm font-medium">
-                                    Dificuldade
-                                </label>
-                                <select
-                                    id="quiz-difficulty"
-                                    value={formData.difficulty ?? ''}
-                                    onChange={(event) => setFormData((previous) => ({
-                                        ...previous,
-                                        difficulty: event.target.value ? event.target.value as QuizDifficulty : undefined,
-                                    }))}
-                                    className={fieldClass}
-                                    disabled={isBusy}
-                                >
-                                    <option value="">Sem classificação</option>
-                                    <option value="easy">Fácil</option>
-                                    <option value="medium">Médio</option>
-                                    <option value="hard">Difícil</option>
-                                </select>
-
-                                {formData.difficulty && (
-                                    <DifficultyBadge
-                                        difficulty={formData.difficulty}
-                                        className="mt-2"
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Modo de quiz */}
+                {quizMode === 'challenge' ? (
+                    <>
                         <section className="space-y-3">
-                            <h3 className="text-foreground text-sm font-semibold">Como os participantes responderão?</h3>
+                            <h3 className="text-foreground text-sm font-semibold">
+                                Quando mostrar as respostas?
+                            </h3>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <button
                                     type="button"
-                                    onClick={() => setQuizMode('challenge')}
-                                    aria-pressed={quizMode === 'challenge'}
-                                    className={`${optionClass} ${quizMode === 'challenge' ? selectedClass : unselectedClass}`}
+                                    onClick={() => setFormData((previous) => ({
+                                        ...previous,
+                                        settings: {
+                                            showAnswersAfter: 'immediately',
+                                            timeLimitPerQuestion: previous.settings?.timeLimitPerQuestion,
+                                        },
+                                    }))}
+                                    aria-pressed={challengeAnswerMode === 'immediately'}
+                                    className={`${optionClass} ${challengeAnswerMode === 'immediately' ? selectedClass : unselectedClass}`}
                                     disabled={isBusy}
                                 >
-                                    <div className="flex w-full items-center justify-between">
-                                        <Target size={22} strokeWidth={1.8} className={quizMode === 'challenge' ? 'text-primary' : 'text-muted-foreground'} />
-                                        {quizMode === 'challenge' && <Check size={17} className="text-primary" />}
-                                    </div>
-                                    <span className="font-semibold">Desafio</span>
+                                    <Zap size={21} strokeWidth={1.8} className={challengeAnswerMode === 'immediately' ? 'text-primary' : 'text-muted-foreground'} />
+                                    <span className="font-semibold">Após cada resposta</span>
                                     <span className="text-muted-foreground text-sm leading-relaxed">
-                                        Teste seus conhecimentos e veja seu desempenho ao final.
+                                        Veja imediatamente se acertou ou errou.
                                     </span>
                                 </button>
 
                                 <button
                                     type="button"
-                                    onClick={() => setQuizMode('study')}
-                                    aria-pressed={quizMode === 'study'}
-                                    className={`${optionClass} ${quizMode === 'study' ? selectedClass : unselectedClass}`}
+                                    onClick={() => setFormData((previous) => ({
+                                        ...previous,
+                                        settings: {
+                                            showAnswersAfter: 'end',
+                                            timeLimitPerQuestion: previous.settings?.timeLimitPerQuestion,
+                                        },
+                                    }))}
+                                    aria-pressed={challengeAnswerMode === 'end'}
+                                    className={`${optionClass} ${challengeAnswerMode === 'end' ? selectedClass : unselectedClass}`}
                                     disabled={isBusy}
                                 >
-                                    <div className="flex w-full items-center justify-between">
-                                        <BookOpen size={22} strokeWidth={1.8} className={quizMode === 'study' ? 'text-primary' : 'text-muted-foreground'} />
-                                        {quizMode === 'study' && <Check size={17} className="text-primary" />}
-                                    </div>
-                                    <span className="font-semibold">Estudo</span>
+                                    <EyeOff size={21} strokeWidth={1.8} className={challengeAnswerMode === 'end' ? 'text-primary' : 'text-muted-foreground'} />
+                                    <span className="font-semibold">No final</span>
                                     <span className="text-muted-foreground text-sm leading-relaxed">
-                                        Aprenda enquanto responde. Tente novamente até acertar.
+                                        Responda todas as questões e veja seu resultado no final.
                                     </span>
                                 </button>
                             </div>
                         </section>
 
-                        {quizMode === 'challenge' ? (
-                            <>
-                                <section className="space-y-3">
-                                    <h3 className="text-foreground text-sm font-semibold">
-                                        Quando mostrar as respostas?
-                                    </h3>
-                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData((previous) => ({
-                                                ...previous,
-                                                settings: {
-                                                    showAnswersAfter: 'immediately',
-                                                    timeLimitPerQuestion: previous.settings?.timeLimitPerQuestion,
-                                                },
-                                            }))}
-                                            aria-pressed={challengeAnswerMode === 'immediately'}
-                                            className={`${optionClass} ${challengeAnswerMode === 'immediately' ? selectedClass : unselectedClass}`}
-                                            disabled={isBusy}
-                                        >
-                                            <Zap size={21} strokeWidth={1.8} className={challengeAnswerMode === 'immediately' ? 'text-primary' : 'text-muted-foreground'} />
-                                            <span className="font-semibold">Após cada resposta</span>
-                                            <span className="text-muted-foreground text-sm leading-relaxed">
-                                                Veja imediatamente se acertou ou errou.
-                                            </span>
-                                        </button>
+                        <section className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <Clock3 size={18} className="text-muted-foreground" />
+                                <h3 className="text-foreground text-sm font-semibold">Tempo por pergunta</h3>
+                            </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData((previous) => ({
-                                                ...previous,
-                                                settings: {
-                                                    showAnswersAfter: 'end',
-                                                    timeLimitPerQuestion: previous.settings?.timeLimitPerQuestion,
-                                                },
-                                            }))}
-                                            aria-pressed={challengeAnswerMode === 'end'}
-                                            className={`${optionClass} ${challengeAnswerMode === 'end' ? selectedClass : unselectedClass}`}
-                                            disabled={isBusy}
-                                        >
-                                            <EyeOff size={21} strokeWidth={1.8} className={challengeAnswerMode === 'end' ? 'text-primary' : 'text-muted-foreground'} />
-                                            <span className="font-semibold">No final</span>
-                                            <span className="text-muted-foreground text-sm leading-relaxed">
-                                                Responda todas as questões e veja seu resultado no final.
-                                            </span>
-                                        </button>
-                                    </div>
-                                </section>
+                            <div className="border-border bg-background rounded-xl border p-4">
+                                <label className="flex items-center gap-2.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={!hasTimeLimit}
+                                        onChange={(event) => setHasTimeLimit(!event.target.checked)}
+                                        className="border-input accent-primary size-4 shrink-0 rounded"
+                                        disabled={isBusy}
+                                    />
+                                    <span className="text-foreground text-sm font-medium">Sem limite de tempo</span>
+                                </label>
 
-                                <section className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <Clock3 size={18} className="text-muted-foreground" />
-                                        <h3 className="text-foreground text-sm font-semibold">Tempo por pergunta</h3>
-                                    </div>
-
-                                    <div className="border-border bg-background rounded-xl border p-4">
-                                        <label className="flex items-center gap-2.5">
-                                            <input
-                                                type="checkbox"
-                                                checked={!hasTimeLimit}
-                                                onChange={(event) => setHasTimeLimit(!event.target.checked)}
-                                                className="border-input accent-primary size-4 shrink-0 rounded"
-                                                disabled={isBusy}
-                                            />
-                                            <span className="text-foreground text-sm font-medium">Sem limite de tempo</span>
+                                {hasTimeLimit && (
+                                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                                        <label htmlFor="quiz-time-limit" className="text-muted-foreground text-sm">
+                                            Tempo por pergunta
                                         </label>
-
-                                        {hasTimeLimit && (
-                                            <div className="mt-4 flex flex-wrap items-center gap-3">
-                                                <label htmlFor="quiz-time-limit" className="text-muted-foreground text-sm">
-                                                    Tempo por pergunta
-                                                </label>
-                                                <input
-                                                    id="quiz-time-limit"
-                                                    type="number"
-                                                    min={1}
-                                                    value={formData.settings?.timeLimitPerQuestion ?? 30}
-                                                    onChange={(event) => setFormData((previous) => ({
-                                                        ...previous,
-                                                        settings: {
-                                                            showAnswersAfter: previous.settings?.showAnswersAfter ?? 'end',
-                                                            timeLimitPerQuestion: event.target.value ? Number(event.target.value) : undefined,
-                                                        },
-                                                    }))}
-                                                    className={`${fieldClass} w-24`}
-                                                    disabled={isBusy}
-                                                />
-                                                <span className="text-muted-foreground text-sm">segundos</span>
-                                            </div>
-                                        )}
+                                        <input
+                                            id="quiz-time-limit"
+                                            type="number"
+                                            min={1}
+                                            value={formData.settings?.timeLimitPerQuestion ?? 30}
+                                            onChange={(event) => setFormData((previous) => ({
+                                                ...previous,
+                                                settings: {
+                                                    showAnswersAfter: previous.settings?.showAnswersAfter ?? 'end',
+                                                    timeLimitPerQuestion: event.target.value ? Number(event.target.value) : undefined,
+                                                },
+                                            }))}
+                                            className={`${fieldClass} w-24`}
+                                            disabled={isBusy}
+                                        />
+                                        <span className="text-muted-foreground text-sm">segundos</span>
                                     </div>
-                                </section>
-                            </>
-                        ) : (
-                            <section className="space-y-3">
-                                <div className="border-border bg-muted/40 flex items-start gap-3 rounded-xl border p-4">
-                                    <BookOpen size={20} className="text-muted-foreground mt-0.5 shrink-0" />
-                                    <div className="space-y-1">
-                                        <h3 className="text-foreground text-sm font-semibold">Modo de Estudo</h3>
-                                        <p className="text-muted-foreground text-sm leading-relaxed">
-                                            O participante poderá tentar responder à questão até acertar. Não há limite de tempo.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="border-border bg-muted/40 flex items-start gap-3 rounded-xl border p-4">
-                                    <Trophy size={20} className="text-muted-foreground mt-0.5 shrink-0" />
-                                    <div className="space-y-1">
-                                        <h3 className="text-foreground text-sm font-semibold">Participa do ranking</h3>
-                                        <p className="text-muted-foreground text-sm leading-relaxed">
-                                            A classificação considera quantas tentativas foram necessárias. Quanto menos, melhor.
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-                        )}
-                    </div>
-
-                    {/* Rodapé fixo */}
-                    <div className="border-border bg-card flex shrink-0 gap-3 border-t px-5 py-4 sm:justify-end sm:px-6">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            disabled={isBusy}
-                            className="border-border bg-muted text-foreground hover:bg-accent flex h-11 flex-1 items-center justify-center rounded-xl border px-5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isBusy}
-                            className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-                        >
-                            {isBusy ? (
-                                <>
-                                    <LoaderCircle size={17} className="animate-spin" />
-                                    {isCreating ? 'Criando...' : 'Salvando...'}
-                                </>
-                            ) : (
-                                isCreating ? 'Criar Quiz' : 'Salvar'
-                            )}
-                        </button>
-                    </div>
-                </form>
+                                )}
+                            </div>
+                        </section>
+                    </>
+                ) : (
+                    <section className="space-y-3">
+                        <div className="border-border bg-muted/40 flex items-start gap-3 rounded-xl border p-4">
+                            <BookOpen size={20} className="text-muted-foreground mt-0.5 shrink-0" />
+                            <div className="space-y-1">
+                                <h3 className="text-foreground text-sm font-semibold">Modo de Estudo</h3>
+                                <p className="text-muted-foreground text-sm leading-relaxed">
+                                    O participante poderá tentar responder à questão até acertar. Não há limite de tempo.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="border-border bg-muted/40 flex items-start gap-3 rounded-xl border p-4">
+                            <Trophy size={20} className="text-muted-foreground mt-0.5 shrink-0" />
+                            <div className="space-y-1">
+                                <h3 className="text-foreground text-sm font-semibold">Participa do ranking</h3>
+                                <p className="text-muted-foreground text-sm leading-relaxed">
+                                    A classificação considera quantas tentativas foram necessárias. Quanto menos, melhor.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                )}
             </div>
-        </div>
+
+            <div className="border-border bg-card flex shrink-0 gap-3 border-t px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:justify-end sm:px-6 md:pb-4">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={isBusy}
+                    className="border-border bg-muted text-foreground hover:bg-accent flex h-11 flex-1 items-center justify-center rounded-xl border px-5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="submit"
+                    disabled={isBusy}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                >
+                    {isBusy ? (
+                        <>
+                            <LoaderCircle size={17} className="animate-spin" />
+                            {isCreating ? 'Criando...' : 'Salvando...'}
+                        </>
+                    ) : (
+                        isCreating ? 'Criar Quiz' : 'Salvar'
+                    )}
+                </button>
+            </div>
+        </form>
+    )
+
+    const title = isCreating ? 'Configurações do Quiz' : 'Editar Configurações do Quiz'
+    const description = 'Configure como os participantes irão responder.'
+
+    if (isMobile) {
+        return (
+            <Drawer open={true} onOpenChange={handleOpenChange}>
+                <DrawerContent className="border-border bg-card text-card-foreground flex h-[92dvh] max-h-[92dvh] flex-col gap-0 overflow-hidden rounded-t-2xl p-0">
+                    <DrawerHeader className="border-border relative shrink-0 border-b px-5 pt-5 pb-4 pr-14 text-left">
+                        <DrawerTitle className="text-foreground text-lg font-semibold tracking-tight">
+                            {title}
+                        </DrawerTitle>
+                        <DrawerDescription className="text-muted-foreground text-xs sm:text-sm">
+                            {description}
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    {formContent}
+                </DrawerContent>
+            </Drawer>
+        )
+    }
+
+    return (
+        <Dialog open={true} onOpenChange={handleOpenChange}>
+            <DialogContent className="border-border bg-card text-card-foreground flex max-h-[calc(100dvh-3rem)] w-[calc(100%-2rem)] max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl p-0 shadow-2xl">
+                <DialogHeader className="border-border shrink-0 border-b px-5 py-4 pr-14 text-left sm:px-6">
+                    <DialogTitle className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
+                        {title}
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
+                        {description}
+                    </DialogDescription>
+                </DialogHeader>
+                {formContent}
+            </DialogContent>
+        </Dialog>
     )
 }
