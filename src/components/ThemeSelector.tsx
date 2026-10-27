@@ -1,5 +1,14 @@
 
-import { Check, Coffee, Flower2, Leaf, Moon, Palette, Sun } from 'lucide-react'
+import {
+    Check,
+    Coffee,
+    Flower2,
+    Leaf,
+    Moon,
+    Palette,
+    Sun,
+    Waves,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { type Theme, useTheme } from '@/contexts/ThemeContext'
@@ -7,6 +16,7 @@ import { type Theme, useTheme } from '@/contexts/ThemeContext'
 const themes = [
     { id: 'light', label: 'Claro', icon: Sun },
     { id: 'dark', label: 'Escuro', icon: Moon },
+    { id: 'blue', label: 'Azul Clássico', icon: Waves },
     { id: 'mocha', label: 'Mocha', icon: Coffee },
     { id: 'forest', label: 'Floresta', icon: Leaf },
     { id: 'pink', label: 'Rosa', icon: Flower2 },
@@ -60,8 +70,8 @@ export function ThemeSelector() {
                 aria-controls="theme-options"
                 aria-haspopup="menu"
                 className={`text-foreground focus-visible:outline-ring flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${open
-                    ? 'bg-accent text-accent-foreground'
-                    : 'hover:bg-accent hover:text-accent-foreground'
+                        ? 'bg-accent text-accent-foreground'
+                        : 'hover:bg-accent hover:text-accent-foreground'
                     }`}
             >
                 <Palette className="h-5 w-5" />
@@ -92,15 +102,15 @@ export function ThemeSelector() {
                                     aria-checked={selected}
                                     onClick={() => selectTheme(item.id)}
                                     className={`flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors ${selected
-                                        ? 'bg-primary/10 text-foreground font-medium'
-                                        : 'hover:bg-accent hover:text-accent-foreground'
+                                            ? 'bg-primary/10 text-foreground font-medium'
+                                            : 'hover:bg-accent hover:text-accent-foreground'
                                         }`}
                                 >
                                     <span className="flex items-center gap-3">
                                         <Icon
                                             className={`h-4 w-4 ${selected
-                                                ? 'text-primary'
-                                                : 'text-muted-foreground'
+                                                    ? 'text-primary'
+                                                    : 'text-muted-foreground'
                                                 }`}
                                         />
 

@@ -1,7 +1,7 @@
 
 import { createContext, useContext } from 'react'
 
-export type Theme = 'light' | 'dark' | 'mocha' | 'forest' | 'pink'
+export type Theme = 'light' | 'dark' | 'blue' | 'mocha' | 'forest' | 'pink'
 
 export interface ThemeContextData {
     theme: Theme

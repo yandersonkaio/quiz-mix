@@ -2,8 +2,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { ThemeContext, type Theme } from './ThemeContext'
 
-const themes: Theme[] = ['light', 'dark', 'mocha', 'forest', 'pink']
-const darkThemes: Theme[] = ['dark', 'mocha', 'forest']
+const themes: Theme[] = ['light', 'dark', 'blue', 'mocha', 'forest', 'pink']
+const darkThemes: Theme[] = ['dark', 'blue', 'mocha', 'forest']
 
 function getInitialTheme(): Theme {
     try {
