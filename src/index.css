@@ -16,7 +16,9 @@
   .mocha,
   .mocha *,
   .forest,
-  .forest *
+  .forest *,
+  .blue,
+  .blue *
 ));
 
 /* ========================================
@@ -75,16 +77,6 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-
-  /* Sidebar */
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 /* ========================================
@@ -383,54 +375,107 @@
   --chart-5: #bc759d;
 }
 
+
+/* ========================================
+   BLUE THEME
+======================================== */
+.blue {
+  color-scheme: dark;
+
+  --background: #121526;
+  --foreground: #e2e9ff;
+
+  --card: #24273d;
+  --card-foreground: #e2e9ff;
+
+  --popover: #24273d;
+  --popover-foreground: #e2e9ff;
+
+  --primary: #7db3ff;
+  --primary-foreground: #101a30;
+
+  --secondary: #2c324e;
+  --secondary-foreground: #e2e9ff;
+
+  --muted: #2c324e;
+  --muted-foreground: #adb9d9;
+
+  --accent: #2d477a;
+  --accent-foreground: #eff5ff;
+
+  --border: #494968;
+  --input: #494968;
+  --ring: #7db3ff;
+
+  --destructive: #fb7185;
+
+  --selection: #365b98;
+  --selection-foreground: #ffffff;
+
+  --answer-correct: #204b3d;
+  --answer-correct-foreground: #a7f3d0;
+
+  --answer-incorrect: #622d42;
+  --answer-incorrect-foreground: #fecdd3;
+
+  --answer-selected: #284d85;
+  --answer-selected-foreground: #dbeafe;
+
+  --chart-1: #7db3ff;
+  --chart-2: #38bdf8;
+  --chart-3: #3b82f6;
+  --chart-4: #93c5fd;
+  --chart-5: #1d4ed8;
+}
+
 /* ========================================
    PRISMJS - DARK THEMES
 ======================================== */
 
-:is(.dark, .mocha, .forest) pre[class*="language-"],
-:is(.dark, .mocha, .forest) code[class*="language-"] {
+:is(.dark, .mocha, .forest, .blue) pre[class*="language-"],
+:is(.dark, .mocha, .forest, .blue) code[class*="language-"] {
   @apply bg-muted text-foreground;
 }
 
-:is(.dark, .mocha, .forest)
+:is(.dark, .mocha, .forest, .blue)
 :is(.token.comment, .token.prolog, .token.doctype, .token.cdata) {
   @apply text-gray-400;
 }
 
-:is(.dark, .mocha, .forest) .token.punctuation {
+:is(.dark, .mocha, .forest, .blue) .token.punctuation {
   @apply text-gray-300;
 }
 
-:is(.dark, .mocha, .forest)
+:is(.dark, .mocha, .forest, .blue)
 :is(.token.property, .token.tag, .token.constant, .token.symbol, .token.deleted) {
   @apply text-red-400;
 }
 
-:is(.dark, .mocha, .forest)
+:is(.dark, .mocha, .forest, .blue)
 :is(.token.boolean, .token.number) {
   @apply text-purple-400;
 }
 
-:is(.dark, .mocha, .forest)
+:is(.dark, .mocha, .forest, .blue)
 :is(.token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted) {
   @apply text-green-400;
 }
 
-:is(.dark, .mocha, .forest)
+:is(.dark, .mocha, .forest, .blue)
 :is(.token.operator, .token.entity, .token.url, .token.variable) {
   @apply text-gray-200;
 }
 
-:is(.dark, .mocha, .forest)
+:is(.dark, .mocha, .forest, .blue)
 :is(.token.atrule, .token.attr-value, .token.function, .token.class-name) {
   @apply text-blue-400;
 }
 
-:is(.dark, .mocha, .forest) .token.keyword {
+:is(.dark, .mocha, .forest, .blue) .token.keyword {
   @apply text-pink-400;
 }
 
-:is(.dark, .mocha, .forest)
+:is(.dark, .mocha, .forest, .blue)
 :is(.token.regex, .token.important) {
   @apply text-orange-400;
 }
